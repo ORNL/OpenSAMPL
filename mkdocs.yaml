@@ -1,0 +1,50 @@
+site_name: openSAMPL Documentation
+nav:
+- Home: index.md
+- Getting Started:
+  - getting-started/index.md
+  - Installation: getting-started/installation.md
+  - Quickstart: getting-started/quickstart.md
+- Guides:
+  - guides/index.md
+  - Configuration: guides/configuration.md
+  - CLI:
+    - Basic Usage: guides/opensampl-cli.md
+    - Expected Table Format: guides/expected_table_format.md
+    - Create: guides/create_probe_type.md
+  - Server: guides/opensampl-server.md
+- API:
+  - index: api/index.md
+  - cli: api/cli.md
+  - constants: api/constants.md
+  - db:
+    - access_orm: api/db/access_orm.md
+    - orm: api/db/orm.md
+  - helpers:
+    - create_vendor: api/helpers/create_vendor.md
+    - env: api/helpers/env.md
+    - source_writer: api/helpers/source_writer.md
+  - load_data: api/load_data.md
+  - server:
+    - cli: api/server/cli.md
+  - vendors:
+    - adva: api/vendors/adva.md
+    - base_probe: api/vendors/base_probe.md
+    - constants: api/vendors/constants.md
+plugins:
+- search
+- mkdocstrings:
+    handlers:
+      python:
+        paths:
+        - .
+markdown_extensions:
+- mkdocs-click
+theme:
+  name: material
+  features:
+  - navigation.sections
+  - navigation.tracking
+  - navigation.path
+  - navigation.tabs
+  - navigation.indexes

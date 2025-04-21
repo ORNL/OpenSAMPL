@@ -1,0 +1,44 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+on:
+  push:
+    branches:
+      - main
+    workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+jobs:
+  deploy:
+    environment:
+      url: ${{ steps.deployment.outputs.page_url }}
+      name: github-pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.7.3"
+      - name: Set up Python
+        run: uv python install
+      - name: Sync project, including dev dependencies
+        run: uv sync
+      - name: Build static content
+        run: |
+          uv run python ./scripts/gen_api_docs.py
+          uv run mkdocs build --clean
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'site'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

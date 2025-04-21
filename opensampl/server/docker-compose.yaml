@@ -1,0 +1,63 @@
+services:
+  db:
+    image: savannah.ornl.gov/opensampl/db:latest
+    ports:
+      - "5415:5432"
+    volumes:
+      - castdb:/home/postgres/pgdata/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    restart: always
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}" ]
+      interval: 5s
+      retries: 5
+      start_period: 10s
+      timeout: 3s
+    command: >
+      postgres
+        -c shared_preload_libraries=timescaledb,pg_cron
+        -c cron.database_name=${POSTGRES_DB}
+
+  grafana:
+    image: savannah.ornl.gov/opensampl/grafana:latest
+    build:
+      context: ./grafana
+    ports:
+      - "3015:3000"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+
+
+  migrations:
+    image: savannah.ornl.gov/opensampl/migrations:latest
+    restart: "no"
+    environment:
+      - DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - CHUNK_INTERVAL=${CHUNK_INTERVAL}
+      - RETENTION_POLICY=${RETENTION_POLICY}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    image: savannah.ornl.gov/opensampl/backend:latest
+    ports:
+      - "8015:8000"
+    restart: always
+    environment:
+      - DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - BACKEND_LOG_LEVEL=${BACKEND_LOG_LEVEL:-INFO}
+      - USE_API_KEY=${USE_API_KEY:-false}
+      - API_KEY=${API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  castdb:
+  grafana-data:

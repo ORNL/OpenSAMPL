@@ -1,0 +1,14 @@
+apiVersion: 1
+
+datasources:
+  - name: ${POSTGRES_DB}-datasource
+    type: grafana-postgresql-datasource
+    url: db:5432
+    database: ${POSTGRES_DB}
+    user: grafana
+    secureJsonData:
+      password: ${GF_SECURITY_ADMIN_PASSWORD}
+    jsonData:
+      sslmode: "disable"
+      timescaledb: true
+      searchPath: "castdb,public"
