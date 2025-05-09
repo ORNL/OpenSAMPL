@@ -1,9 +1,10 @@
 """ADVA clock implementation"""
+
 import gzip
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import TextIO, Tuple
+from typing import TextIO, Union
 
 import pandas as pd
 from loguru import logger
@@ -19,28 +20,13 @@ class AdvaProbe(BaseProbe):
     start_time: datetime
     vendor = ADVA
 
-    # def help_str(self):
-    #     return (
-    #         "The tool currently supports ADVA probe data files with the following naming convention:"
-    #         "> `<ip_address>CLOCK_PROBE-<probe_id>-YYYY-MM-DD-HH-MM-SS.txt.gz` "
-    #         "Example: "
-    #         "> `10.0.0.121CLOCK_PROBE-1-1-2024-01-02-18-24-56.txt.gz`"
-    #
-    #         "With the file format of having metadata at the beginning (on lines starting with `#`), followed by "
-    #         "tab separated `time value` measurements. "
-    #
-    #         "As ADVA probes have all their metadata and their time data in each file, there is no need to use the
-    #         `-m` "
-    #         "or `-t` options, though if you want to skip loading one or the other it becomes useful!"
-    #     )
-
-    def __init__(self, input_file, **kwargs):
+    def __init__(self, input_file: Union[str, Path]):
         """Initialize AdvaProbe object give input_file and determines probe identity from filename"""
-        super().__init__(input_file=input_file, **kwargs)
+        super().__init__(input_file=input_file)
         self.probe_key, self.timestamp = self.parse_file_name(self.input_file)
 
     @classmethod
-    def parse_file_name(cls, file_name: Path) -> Tuple[ProbeKey, datetime]:
+    def parse_file_name(cls, file_name: Path) -> tuple[ProbeKey, datetime]:
         """
         Parse file name into identifying parts
 
@@ -62,25 +48,20 @@ class AdvaProbe(BaseProbe):
             )
 
             # Convert timestamp to datetime object
-            timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").astimezone(tz=timezone.utc)
 
             return ProbeKey(probe_id=probe_id, ip_address=ip_address), timestamp
-        else:
-            raise ValueError(f"Could not parse file name {file_name} into probe key and timestamp for ADVA probe")
+        raise ValueError(f"Could not parse file name {file_name} into probe key and timestamp for ADVA probe")
 
     def _open_file(self) -> TextIO:
         """Open the input file, handling both .txt and .txt.gz formats"""
         if self.input_file.name.endswith(".gz"):
             return gzip.open(self.input_file, "rt")
-        else:
-            return open(self.input_file, "rt")
+        return self.input_file.open()
 
     def process_time_data(self) -> pd.DataFrame:
         """Process time data from ADVA probe files"""
-        if self.input_file.name.endswith(".gz"):
-            compression = "gzip"
-        else:
-            compression = None
+        compression = "gzip" if self.input_file.name.endswith(".gz") else None
 
         df = pd.read_csv(
             self.input_file,
@@ -128,11 +109,11 @@ class AdvaProbe(BaseProbe):
             for line in f:
                 if not line.startswith("#"):
                     break
-                line = line.lstrip("#").strip()
-                key, value = line.split(": ")
+                header = line.lstrip("#").strip()
+                key, value = header.split(": ")
                 if key in header_to_column:
                     headers[header_to_column.get(key)] = value
                 else:
                     logger.warning(f"Header contained unfamiliar key: {key} it is being skipped")
-        self.start_time = datetime.strptime(headers["start"], "%Y/%m/%d %H:%M:%S")
+        self.start_time = datetime.strptime(headers["start"], "%Y/%m/%d %H:%M:%S").astimezone(tz=timezone.utc)
         return headers

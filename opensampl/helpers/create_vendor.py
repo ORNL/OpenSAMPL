@@ -6,7 +6,7 @@
 
 import ast
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import yaml
 from loguru import logger
@@ -27,11 +27,11 @@ class MetadataField(BaseModel):
 class VendorConfig(VendorType):
     """Configuration definition for a new vendor type"""
 
-    metadata_fields: List[MetadataField]
+    metadata_fields: list[MetadataField]
     base_path: Path = Path(__file__).parent.parent
 
     @classmethod
-    def from_config_file(cls, config_path: Union[str, Path]):
+    def from_config_file(cls, config_path: Union[str, Path]) -> "VendorConfig":
         """Convert file config into Config object"""
         if isinstance(config_path, str):
             config_path = Path(config_path)
@@ -63,7 +63,7 @@ class VendorConfig(VendorType):
             data["parser_module"] = f"{name.lower()}"
 
         metadata_fields = data.get("metadata_fields")
-        if not metadata_fields or not isinstance(metadata_fields, Dict):
+        if not metadata_fields or not isinstance(metadata_fields, dict):
             return data
 
         fields = []
@@ -111,7 +111,7 @@ class {self.parser_class}(BaseProbe):
         """
         # TODO: Implement metadata processing logic specific to {self.name}
         raise NotImplementedError("Metadata processing not implemented for {self.parser_class}")
-'''
+'''  # noqa: N806
 
         probe_file.write_text(PROBE_TEMPLATE)
         logger.warning(
@@ -145,7 +145,7 @@ class {self.parser_class}(BaseProbe):
 
         # Add fields from config
         for field in self.metadata_fields:
-            class_body.append(
+            class_body.append(  # noqa: PERF401
                 ast.Assign(
                     targets=[ast.Name(id=field.name, ctx=ast.Store())],
                     value=ast.Call(
@@ -187,7 +187,7 @@ class {self.parser_class}(BaseProbe):
         orm_path = self.base_path / "db" / "orm.py"
 
         # Read existing file
-        with open(orm_path) as f:
+        with orm_path.open() as f:
             source = f.read()
             tree = ast.parse(source)
 
@@ -240,7 +240,7 @@ class {self.parser_class}(BaseProbe):
         file_text = constants_path.read_text()
         tree = ast.parse(file_text)
 
-        for i, node in enumerate(tree.body):
+        for _, node in enumerate(tree.body):
             if (
                 isinstance(node, ast.Assign)
                 and isinstance(node.targets[0], ast.Name)
@@ -254,8 +254,6 @@ class {self.parser_class}(BaseProbe):
             file_lines.insert(vm_end_lineno - 1, new_map_entry)
             file_lines.insert(vm_lineno - 1, new_vendor_str)
 
-        # constants2_path = self.base_path / 'vendors' / 'constants2.py'
-        # constants2_path.write_text('\n'.join(file_lines))
         with constants_path.open(mode="w") as f:
             f.write("\n".join(file_lines))
 

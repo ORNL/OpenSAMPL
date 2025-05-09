@@ -1,10 +1,11 @@
 """Abstract probe Base which provides scaffolding for vendor specific implementation"""
+
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, ClassVar, List, Optional
+from typing import Callable, ClassVar, Optional, Union
 
 import click
 import pandas as pd
@@ -18,17 +19,28 @@ from opensampl.load_data import load_probe_metadata, load_time_data
 from opensampl.vendors.constants import ProbeKey, VendorType
 
 
+class DummyTqdm:
+    """Dummy tqdm object which does not print to terminal"""
+
+    def __init__(self, *args: list, **kwargs: dict):
+        """Initialize dummy tqdm object"""
+        self.args = args
+        self.kwargs = kwargs
+
+    def update(self, n: int = 1) -> None:
+        """Fake an update call to tqdm."""
+        pass
+
+    def close(self) -> None:
+        """Close an instance of tqdm."""
+        pass
+
+
 @contextmanager
-def dummy_tqdm(*args, **kwargs):
+def dummy_tqdm(*args: list, **kwargs: dict) -> DummyTqdm:
     """Create a dummy tqdm object which will not print to terminal"""
-    class DummyTqdm:
-        def update(self, n=1):
-            pass
+    yield DummyTqdm(*args, **kwargs)
 
-        def close(self):
-            pass
-
-    yield DummyTqdm()
 
 class LoadConfig(BaseModel):
     """Model for storing probe loading configurations as provided by CLI"""
@@ -42,6 +54,7 @@ class LoadConfig(BaseModel):
     chunk_size: Optional[int] = None
     show_progress: bool = False
 
+
 class BaseProbe(ABC):
     """BaseProbe abstract object"""
 
@@ -51,7 +64,7 @@ class BaseProbe(ABC):
 
     @classmethod
     @property
-    def help_str(cls):
+    def help_str(cls) -> str:
         """Defines the help string for use in the CLI."""
         return (
             f"Processes a file or directory to load {cls.__name__} metadata and/or time series data.\n\n"
@@ -60,7 +73,7 @@ class BaseProbe(ABC):
         )
 
     @classmethod
-    def get_cli_options(cls) -> List[Callable]:
+    def get_cli_options(cls) -> list[Callable]:
         """Return the click options/arguments for the probe class."""
         default_archive = ENV_VARS.ARCHIVE_PATH.get_value()
         return [
@@ -108,7 +121,7 @@ class BaseProbe(ABC):
                 "-p",
                 is_flag=True,
                 help="If flag provided, show the tqdm progress bar when processing directories. For best experience, "
-                     "set LOG_LEVEL=ERROR when using this option.",
+                "set LOG_LEVEL=ERROR when using this option.",
             ),
             click.argument(
                 "filepath",
@@ -117,7 +130,7 @@ class BaseProbe(ABC):
         ]
 
     @classmethod
-    def process_single_file(
+    def process_single_file(  # noqa: PLR0913
         cls,
         filepath: Path,
         metadata: bool,
@@ -125,8 +138,8 @@ class BaseProbe(ABC):
         archive_dir: Path,
         no_archive: bool,
         chunk_size: Optional[int] = None,
-        pbar=None,
-        **kwargs,
+        pbar: Optional[Union[tqdm, DummyTqdm]] = None,
+        **kwargs: dict,
     ) -> None:
         """Process a single file with the given options."""
         try:
@@ -139,10 +152,12 @@ class BaseProbe(ABC):
             except requests.exceptions.HTTPError as e:
                 status_code = e.response.status_code
                 if status_code == 409:
-                    logger.warning(f"{filepath} violates unique constraint for metadata, implying already loaded.  "
-                                   f"Will move to archive if archiving is enabled")
+                    logger.warning(
+                        f"{filepath} violates unique constraint for metadata, implying already loaded.  "
+                        f"Will move to archive if archiving is enabled"
+                    )
                 else:
-                    raise e
+                    raise
 
             try:
                 if time_data:
@@ -157,7 +172,7 @@ class BaseProbe(ABC):
                         f"Will move to archive if archiving is enabled."
                     )
                 else:
-                    raise e
+                    raise
 
             if not no_archive:
                 probe.archive_file(archive_dir)
@@ -166,7 +181,7 @@ class BaseProbe(ABC):
                 pbar.update(1)
 
         except Exception as e:
-            logger.error(f"Error processing file {filepath}: {str(e)}", exc_info=True)
+            logger.error(f"Error processing file {filepath}: {e!s}", exc_info=True)
             raise
 
     def archive_file(self, archive_dir: Path):
@@ -176,7 +191,7 @@ class BaseProbe(ABC):
         Puts the file in the archive directory, with year/month/vendor/ipaddress_id hierarchy based on
         date that the file was processed.
         """
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         archive_path = archive_dir / str(now.year) / f"{now.month:02d}" / self.vendor.name / str(self.probe_key)
         archive_path.mkdir(parents=True, exist_ok=True)
         self.input_file.rename(archive_path / self.input_file.name)
@@ -197,7 +212,7 @@ class BaseProbe(ABC):
                 f = option(f)
             return click.command(name=cls.vendor.name.lower(), help=cls.help_str)(f)
 
-        def load_callback(**kwargs):
+        def load_callback(**kwargs: dict) -> click.command:
             """Load probe data from file or directory."""
             try:
                 config = cls._extract_load_config(kwargs)
@@ -209,8 +224,8 @@ class BaseProbe(ABC):
                     cls._process_directory(config, kwargs)
 
             except Exception as e:
-                logger.error(f"Error: {str(e)}")
-                raise click.Abort()
+                logger.error(f"Error: {e!s}")
+                raise click.Abort()  # noqa: RSE102,B904
 
         return make_command(load_callback)
 
@@ -246,7 +261,7 @@ class BaseProbe(ABC):
         return config
 
     @classmethod
-    def _prepare_archive(cls, archive_dir: Path, no_archive: bool):
+    def _prepare_archive(cls, archive_dir: Path, no_archive: bool) -> None:
         """
         Create the archive output directory if archiving is enabled.
 
@@ -260,7 +275,7 @@ class BaseProbe(ABC):
             archive_dir.mkdir(parents=True, exist_ok=True)
 
     @classmethod
-    def _process_file(cls, config: LoadConfig, extra_kwargs: dict):
+    def _process_file(cls, config: LoadConfig, extra_kwargs: dict) -> None:
         """
         Process a single probe data file.
 
@@ -281,7 +296,7 @@ class BaseProbe(ABC):
         )
 
     @classmethod
-    def _process_directory(cls, config: LoadConfig, extra_kwargs: dict):
+    def _process_directory(cls, config: LoadConfig, extra_kwargs: dict) -> None:
         """
         Process all files in a directory using a thread pool and optional progress bar.
 
@@ -299,7 +314,7 @@ class BaseProbe(ABC):
         logger.info(f"Found {len(files)} files in directory {config.filepath}")
         progress_context = tqdm if config.show_progress else dummy_tqdm
 
-        with progress_context(total=len(files), desc=f"Processing {config.filepath.name}") as pbar:
+        with progress_context(total=len(files), desc=f"Processing {config.filepath.name}") as pbar:  # noqa: SIM117
             with ThreadPoolExecutor(max_workers=config.max_workers) as executor:
                 futures = [
                     executor.submit(
@@ -319,8 +334,8 @@ class BaseProbe(ABC):
                 for future in futures:
                     try:
                         future.result()
-                    except Exception as e:
-                        logger.error(f"Error in thread: {str(e)}")
+                    except Exception as e:  # noqa: PERF203
+                        logger.error(f"Error in thread: {e!s}")
 
     @property
     def probe_id(self):
@@ -332,7 +347,7 @@ class BaseProbe(ABC):
         """Return ip_address of probe"""
         return self.probe_key.ip_address
 
-    def __init__(self, input_file, **kwargs):
+    def __init__(self, input_file: str):
         """Initialize probe given input file"""
         self.input_file = Path(input_file)
 
@@ -349,7 +364,7 @@ class BaseProbe(ABC):
 
         """
 
-    def send_time_data(self, chunk_size=None):
+    def send_time_data(self, chunk_size: Optional[int] = None):
         """
         Ingests time data into the database
 

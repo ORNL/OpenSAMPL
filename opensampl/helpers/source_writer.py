@@ -1,4 +1,5 @@
 """Helper for writing new source code based on new Vendor Configuration"""
+
 import astor
 import libcst as cst
 from black import FileMode, format_str
@@ -9,8 +10,8 @@ class OrmClassFormatter(cst.CSTTransformer):
 
     def _get_statement_type(self, stmt: cst.CSTNode) -> str:
         """Determine the type of given statement"""
-        if isinstance(stmt, cst.SimpleStatementLine):
-            if len(stmt.body) == 1:
+        if isinstance(stmt, cst.SimpleStatementLine):  # noqa: SIM102
+            if len(stmt.body) == 1:  # noqa: SIM102
                 if isinstance(stmt.body[0], cst.Assign):
                     if isinstance(stmt.body[0].targets[0], cst.Name):
                         name = stmt.body[0].targets[0].value
@@ -21,11 +22,15 @@ class OrmClassFormatter(cst.CSTTransformer):
                         func_name = str(value.func.value)
                         if "Column" in func_name:
                             return "column"
-                        elif "relationship" in func_name:
+                        if "relationship" in func_name:
                             return "relationship"
         return "other"
 
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.ClassDef:
+    def leave_ClassDef(  # noqa: N802
+        self,
+        original_node: cst.ClassDef,  # noqa: ARG002
+        updated_node: cst.ClassDef,
+    ) -> cst.ClassDef:
         """Update Class Definition"""
         # Group statements by type
         body = []
@@ -49,7 +54,7 @@ class OrmClassFormatter(cst.CSTTransformer):
         return updated_node.with_changes(body=updated_node.body.with_changes(body=body))
 
     @classmethod
-    def format(cls, tree):
+    def format(cls, tree: cst.Module) -> cst.Module:
         """Convert back to source, use black to format"""
         source = format_str(
             astor.to_source(tree),
@@ -58,5 +63,4 @@ class OrmClassFormatter(cst.CSTTransformer):
 
         # Parse with LibCST for formatting
         module = cst.parse_module(source)
-        module = module.visit(cls())
-        return module
+        return module.visit(cls())

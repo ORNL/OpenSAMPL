@@ -1,11 +1,12 @@
 """ORM for managing access to openSAMPL database and endpoints"""
+
 import secrets
 import uuid
-from datetime import datetime
-from typing import List, Union
+from datetime import datetime, timezone
+from typing import Optional, Union
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import Session, declarative_base, relationship
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import MetaData
 
@@ -29,7 +30,7 @@ class APIAccessKey(Base):
 
     def is_expired(self):
         """Check if API access key is expired."""
-        return self.expires_at is not None and datetime.utcnow() > self.expires_at
+        return self.expires_at is not None and datetime.now(tz=timezone.utc) > self.expires_at
 
 
 class Views(Base):
@@ -40,12 +41,12 @@ class Views(Base):
     name = Column(Text)
 
     @staticmethod
-    def get_view_by_name(session, name):
+    def get_view_by_name(session: Session, name: str) -> Optional[type["Views"]]:
         """Get view by name"""
         try:
             return session.query(Views).filter_by(name=name).one()
         except NoResultFound:
-            print(f"View with name {name} not found")
+            print(f"View with name {name} not found")  # noqa: T201
             return None
 
 
@@ -58,12 +59,12 @@ class Roles(Base):
     view_id = Column(Text, ForeignKey("views.view_id"))
 
     @staticmethod
-    def get_role_by_name(session, name):
+    def get_role_by_name(session: Session, name: str) -> Optional[type["Roles"]]:
         """Get role by name"""
         try:
             return session.query(Roles).filter_by(name=name).one()
         except NoResultFound:
-            print(f"Role with name {name} not found")
+            print(f"Role with name {name} not found")  # noqa: T201
             return None
 
 
@@ -75,12 +76,12 @@ class Users(Base):
     email = Column(Text)
 
     @staticmethod
-    def get_user_by_email(session, email):
+    def get_user_by_email(session: Session, email: str) -> Optional["Users"]:
         """Get user by email"""
         try:
             return session.query(Users).filter_by(email=email).one()
         except NoResultFound:
-            print(f"User with email {email} not found")
+            print(f"User with email {email} not found")  # noqa: T201
             return None
 
 
@@ -92,14 +93,14 @@ class UserRole(Base):
     role_id = Column(Text, ForeignKey("roles.role_id"), primary_key=True)
 
 
-def add_user_role(emails: Union[str, List[str]], role_name: str, session):
+def add_user_role(emails: Union[str, list[str]], role_name: str, session: Session):
     """Add user role to the database."""
     if isinstance(emails, str):
         emails = [emails]
 
     role = Roles.get_role_by_name(name=role_name)
     if role is None:
-        print(f"Role with name {role_name} not found")
+        print(f"Role with name {role_name} not found")  # noqa: T201
         return
 
     for email in emails:
@@ -109,17 +110,17 @@ def add_user_role(emails: Union[str, List[str]], role_name: str, session):
             user = Users(email=email)
             session.add(user)
             session.flush()  # Flush to get the generated user_id
-            print(f"New user created with email {email}")
+            print(f"New user created with email {email}")  # noqa: T201
 
         # Check if user already has the specified role
         if any(ur.role_id == role.role_id for ur in user.user_role):
-            print(f"User with email {email} already has role {role_name}")
+            print(f"User with email {email} already has role {role_name}")  # noqa: T201
             continue
 
         # Create a new entry in user_role table
         user_role = UserRole(user_id=user.user_id, role_id=role.role_id)
         session.add(user_role)
-        print(f"User with email {email} assigned role {role_name}")
+        print(f"User with email {email} assigned role {role_name}")  # noqa: T201
         session.commit()
 
 

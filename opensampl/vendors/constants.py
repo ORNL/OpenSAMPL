@@ -1,4 +1,5 @@
 """Defines constants for use in probe functions"""
+
 from pydantic import BaseModel
 
 
@@ -40,7 +41,7 @@ VENDOR_MAP = {
 }
 
 
-def get_vendor_parser(name):
+def get_vendor_parser(name: str):
     """Given a vendor name string, get the VendorType definition"""
     if name not in VENDOR_MAP:
         raise AttributeError(f"Unknown vendor: {name}")
@@ -54,7 +55,7 @@ def get_vendor_parser(name):
     return getattr(module, vendor_type.parser_class)
 
 
-def get_vendor_orm(name):
+def get_vendor_orm(name: str):
     """Given a vendor name string, get the vendor's metadata ORM model"""
     if name not in VENDOR_MAP:
         raise AttributeError(f"Unknown vendor: {name}")
