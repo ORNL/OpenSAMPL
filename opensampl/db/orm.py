@@ -1,6 +1,8 @@
 """Main openSAMPL database ORM"""
+
 import uuid
 from datetime import datetime
+from typing import Any
 
 from geoalchemy2 import Geometry, WKTElement
 from geoalchemy2.shape import to_shape
@@ -18,10 +20,11 @@ class BaseHelpers:
 
     def to_dict(self):
         """Convert to dictionary, including changes to make it serializable"""
-        def convert_value(value):
+
+        def convert_value(value: Any) -> Any:
             if isinstance(value, datetime):
                 return value.isoformat()
-            elif hasattr(value, "__geo_interface__"):
+            if hasattr(value, "__geo_interface__"):
                 return to_shape(value).__geo_interface__
             return value
 
@@ -47,17 +50,14 @@ class Locations(Base):
 
     probe_metadata = relationship("ProbeMetadata")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: dict):
         """Initialize Location object, including converting lat, lon, and z into point"""
         if "lat" in kwargs and "lon" in kwargs:
             lat = kwargs.pop("lat")
             lon = kwargs.pop("lon")
             z = kwargs.pop("z", None)
             projection = kwargs.pop("projection", 4326)
-            if z is not None:
-                point_str = f"POINT({lon} {lat} {z})"
-            else:
-                point_str = f"POINT({lon} {lat})"
+            point_str = f"POINT({lon} {lat} {z})" if z is not None else f"POINT({lon} {lat})"
             kwargs["geom"] = WKTElement(point_str, srid=projection)
         super().__init__(**kwargs)
 
@@ -101,7 +101,7 @@ class ProbeMetadata(Base):
     probe_data = relationship("ProbeData")
     adva_metadata = relationship("AdvaMetadata", back_populates="probe", uselist=False)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: dict):
         """Initialize Probe Metadata object, dealing with converting location name into uuid"""
         location_name = kwargs.pop("location_name", None)
         test_name = kwargs.pop("test_name", None)
@@ -112,15 +112,16 @@ class ProbeMetadata(Base):
         if test_name:
             self._test_name = test_name
 
-    def resolve_references(self, session=None):
+    def resolve_references(self, session: Session = None):
         """
+        Resolve references.
+
         Resolve the references to location and/or test entries when given just the name, and
         provides the correct foreign uuid key.
 
         :param session: sqlalchemy session, used to query for the location/test
         """
-        # If no session, attempt to figure it out from the object
-        if not session:
+        if not session:  # If no session, attempt to figure it out from the object
             session = Session.object_session(self)
             if not session:
                 logger.warning(
@@ -191,7 +192,7 @@ class AdvaMetadata(Base):
 
 
 @listens_for(ProbeMetadata, "before_insert")
-def resolve_uuid(mapper, connection, target):
+def resolve_uuid(mapper, connection, target: ProbeMetadata):  # noqa: ARG001,ANN001
     """Resolve the location_uuid and test_uuid entries for a probe before the object is inserted into the database."""
     session = Session.object_session(target)
     if session:

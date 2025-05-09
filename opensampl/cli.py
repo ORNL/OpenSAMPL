@@ -1,4 +1,6 @@
 """
+Define the command line interface for openSAMPL.
+
 The openSAMPL CLI package is a click based command line interface for the openSAMPL package. It provides a way to
 interact with the database and load data into it.
 """
@@ -6,7 +8,7 @@ interact with the database and load data into it.
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Optional, Union
 
 import click
 import yaml
@@ -19,7 +21,7 @@ from opensampl.helpers.env import set_env
 from opensampl.load_data import create_new_tables, write_to_table
 from opensampl.vendors.constants import VENDOR_MAP, get_vendor_parser
 
-BANNER=r"""
+BANNER = r"""
 
                         ____    _    __  __ ____  _
   ___  _ __   ___ _ __ / ___|  / \  |  \/  |  _ \| |
@@ -35,10 +37,11 @@ load_dotenv()
 level = ENV_VARS.LOG_LEVEL.get_value()
 logger.configure(handlers=[{"sink": sys.stderr, "level": level.upper()}])
 
+
 class CaseInsensitiveGroup(click.Group):
     """Defines Click group options as case-insensitive. By default, click groups are case-sensitive."""
 
-    def get_command(self, ctx, cmd_name):
+    def get_command(self, ctx, cmd_name: str) -> Optional[click.Command]:  # noqa: ARG002,ANN001
         """Normalize command name to lower case"""
         cmd_name = cmd_name.lower()
         # Match against lowercased command names
@@ -46,6 +49,7 @@ class CaseInsensitiveGroup(click.Group):
             if name.lower() == cmd_name:
                 return cmd
         return None
+
 
 def get_table_names():
     """Get all table names from the ORM in opensampl.db.orm"""
@@ -72,6 +76,7 @@ def init():
 @cli.group()
 def config():
     """View and manage environment variables used by openSAMPL"""
+
 
 @config.command()
 def file():
@@ -123,7 +128,7 @@ def show(explain: bool, var: str):
 @config.command("set")
 @click.argument("name")
 @click.argument("value")
-def config_set(name: str, value: str, temp: bool = None):
+def config_set(name: str, value: str, temp: Optional[bool] = None):
     """
     Set the value of an environment variable.
 
@@ -137,25 +142,25 @@ def config_set(name: str, value: str, temp: bool = None):
     """
     set_env(name=name, value=value, temp=temp)
 
+
 @cli.group(cls=CaseInsensitiveGroup)
 def load():
     """Load data into database"""
 
 
-for probe_name, vendor_type in VENDOR_MAP.items():
+for probe_name in VENDOR_MAP:
     load.add_command(get_vendor_parser(probe_name).get_cli_command(), name=probe_name)
 
 
-def path_or_string(value):
+def path_or_string(value: str) -> Union[dict, list]:
     """Get content from a file or use the string directly"""
     # Get content - either from file or use the string directly
     content = value
     try:
         path = Path(value)
         if path.exists() and path.is_file():
-            with open(path, "r") as f:
-                content = f.read()
-    except Exception:
+            content = path.read_text()
+    except Exception:  # noqa: S110
         # If any error occurs during path handling, treat as raw string
         pass
 
@@ -169,8 +174,8 @@ def path_or_string(value):
         except json.JSONDecodeError as json_err:
             # If both parsing attempts fail, raise an error
             raise click.BadParameter(
-                f"Could not parse input as YAML or JSON.\n" f"YAML error: {yaml_err}\n" f"JSON error: {json_err}"
-            )
+                f"Could not parse input as YAML or JSON.\nYAML error: {yaml_err}\nJSON error: {json_err}"
+            ) from json_err
 
 
 @load.command("table")
@@ -183,8 +188,10 @@ def path_or_string(value):
 )
 @click.argument("table_name", type=click.Choice(get_table_names()))
 @click.argument("filepath", type=path_or_string)
-def table_load(filepath: Union[Dict, List], table_name: str, if_exists: str):
+def table_load(filepath: Union[dict, list], table_name: str, if_exists: str):
     r"""
+    Perform a Table load into the database.
+
         Load data directly into a database table. Format can be yaml or json. Can be a list of dictionaries or a single
         dictionary.
 
@@ -208,8 +215,8 @@ def table_load(filepath: Union[Dict, List], table_name: str, if_exists: str):
             write_to_table(table_name, filepath, if_exists=if_exists)
         click.echo(f"Successfully wrote data to table {table_name}")
     except Exception as e:
-        click.echo(f"Error writing to table: {str(e)}", err=True)
-        raise click.Abort()
+        click.echo(f"Error writing to table: {e!s}", err=True)
+        raise click.Abort()  # noqa: RSE102,B904
 
 
 @cli.command(name="create")
@@ -221,10 +228,7 @@ def table_load(filepath: Union[Dict, List], table_name: str, if_exists: str):
     help="Update the database with the new probe type",
 )
 def create_probe_command(config_path: Path, update_db: bool):
-    """
-    ** beta **
-    Create a new probe type with scaffolding, based on a config file.
-    """
+    """Create a new probe type with scaffolding, based on a config file."""
     from opensampl.helpers.create_vendor import VendorConfig
 
     vendor_config = VendorConfig.from_config_file(config_path)

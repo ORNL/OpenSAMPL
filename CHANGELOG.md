@@ -43,8 +43,22 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 
 ## [1.0.1] - 2025-05-09
+### Added
+- 🔥 pytest as a dev dependency, used for running tests
+- 🔥 pytest-cov as a dev dependency, used for measuring test coverage
+- 🔥 pytest-mock as a dev dependency, used for mocking in tests
+- 🔥 added a multitude of linting rules
+- 🔥 added a lint and format checking GitHub Action
+- 🔥 added development instructions in the README
+
 ### Fixed
 - 🩹 Fix URL for the CHANGELOG
+- 🩹 Reformatted files to be ruff format compliant
+- 🩹 Fixed some typing annotation errors
 
 ### Removed
 - 🗡️ Remove version specification in README.md
+- 🗡️ Remove references to old indexes in pyproject.toml
+- 🗡️ Remove kwargs in `__init__` method of `BaseProbe`
+- 🗡️ Remove unused imports from many files
+- 🗡️ Remove commented-out code in some classes

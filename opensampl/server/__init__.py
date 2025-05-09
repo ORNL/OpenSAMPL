@@ -3,11 +3,11 @@
 import subprocess
 
 
-def check_command(command):
+def check_command(command: list[str]) -> bool:
     """Check if a command exists by running it and capturing output."""
     try:
-        subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return True
+        subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)  # noqa: S603,UP022
+        return True  # noqa: TRY300
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 

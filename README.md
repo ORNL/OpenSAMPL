@@ -14,6 +14,14 @@ python tools for adding clock data to a timescale db.
 pip install opensampl
 ```
 
+### Development Setup
+```bash
+uv venv
+uv sync --extra all
+source .venv/bin/activate
+```
+This will create a virtual environment and install the development dependencies.
+
 ### Environment Setup
 
 The tool requires several environment variables. Create a `.env` file in your project root:

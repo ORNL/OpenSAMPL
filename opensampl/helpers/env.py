@@ -1,4 +1,5 @@
 """Environment functions for openSAMPL"""
+
 import os
 from pathlib import Path
 
@@ -8,7 +9,7 @@ from loguru import logger
 from opensampl.constants import ENV_VARS
 
 
-def set_env(name: str, value: str, temp: bool = None):
+def set_env(name: str, value: str):
     """
     Set the value of an environment variable.
 

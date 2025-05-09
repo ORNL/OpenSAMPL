@@ -1,7 +1,8 @@
 """Main functionality for loading data into the database"""
+
 import json
 from functools import wraps
-from typing import Any, Callable, Dict, Literal, Optional
+from typing import Any, Callable, Literal, Optional
 
 import pandas as pd
 import requests
@@ -14,9 +15,9 @@ from opensampl.db.orm import Base
 from opensampl.vendors.constants import ProbeKey, VendorType
 
 conflict_actions = Literal["error", "replace", "update", "ignore"]
+request_methods = Literal["POST", "GET", "PUT", "DELETE"]
 
-
-def route_or_direct(route_endpoint: str, method="POST", send_file=False):
+def route_or_direct(route_endpoint: str, method: request_methods = "POST", send_file: bool = False):
     """
     Handle routing to backend or direct database operations based on environment configuration via decorator
 
@@ -28,9 +29,9 @@ def route_or_direct(route_endpoint: str, method="POST", send_file=False):
 
     """
 
-    def decorator(func: Callable):
+    def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: list, **kwargs: dict) -> Callable:
             session = kwargs.pop("session", None)
             backend_url = ENV_VARS.BACKEND_URL.get_value()
             route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
@@ -49,8 +50,8 @@ def route_or_direct(route_endpoint: str, method="POST", send_file=False):
                 pyld = func(*args, **kwargs)
                 if send_file:
                     request_params = pyld
-                    logger.debug(f'data={pyld.get("data")}')
-                    logger.debug(f'filesize in bytes={len(pyld.get("files").get("file")[1])}')
+                    logger.debug(f"data={pyld.get('data')}")
+                    logger.debug(f"filesize in bytes={len(pyld.get('files').get('file')[1])}")
                 else:
                     request_params = {
                         "json": pyld,
@@ -60,14 +61,14 @@ def route_or_direct(route_endpoint: str, method="POST", send_file=False):
                 # Extract data from the function
                 try:
                     response = requests.request(
-                        method=method, url=f"{backend_url}/{route_endpoint}", headers=headers, **request_params
+                        method=method, url=f"{backend_url}/{route_endpoint}", headers=headers, **request_params,
+                        timeout=300
                     )
                     response.raise_for_status()
                     logger.debug(f"Response: {response.json()}")
-                    # return response.json()
                 except requests.exceptions.RequestException as e:
                     logger.debug(f"Error making request to backend: {e}")
-                    raise e
+                    raise
             else:
                 if not session:
                     if not database_url:
@@ -87,7 +88,7 @@ def route_or_direct(route_endpoint: str, method="POST", send_file=False):
 @route_or_direct("write_to_table")
 def write_to_table(
     table: str,
-    data: Dict[str, Any],
+    data: dict[str, Any],
     if_exists: conflict_actions = "update",
     session: Optional[Session] = None,
 ):
@@ -118,7 +119,7 @@ def write_to_table(
         return {"table": table, "data": data, "if_exists": if_exists}
 
     try:
-        TableModel = resolve_table_model(table)
+        TableModel = resolve_table_model(table)  # noqa: N806
         inspector = inspect(TableModel)
         pk_columns = [col.key for col in inspector.primary_key]
         pk_conditions = build_pk_conditions(TableModel, pk_columns, data)
@@ -126,7 +127,7 @@ def write_to_table(
         unique_constraints = extract_unique_constraints(inspector, data)
 
         if not pk_conditions and not unique_constraints:
-            raise ValueError(f"Did not provide identifiable fields for {table}")
+            raise ValueError(f"Did not provide identifiable fields for {table}")  # noqa: TRY301
 
         existing = find_existing_entry(session, TableModel, pk_conditions, unique_constraints)
 
@@ -137,12 +138,12 @@ def write_to_table(
             session.add(TableModel(**data))
 
         session.commit()
-        return None
+        return None  # noqa: TRY300
 
     except Exception as e:
         session.rollback()
         logger.error(f"Error writing to table: {e}")
-        raise e
+        raise
 
 
 def resolve_table_model(table: str):
@@ -168,7 +169,10 @@ def resolve_table_model(table: str):
     raise ValueError(f"Table {table} not found in database schema")
 
 
-def build_pk_conditions(TableModel, pk_columns, data):
+def build_pk_conditions(
+        TableModel,  # noqa: N803,ANN001
+        pk_columns: list[str],
+        data: dict[str, Any]):
     """
     Construct primary key filter conditions from provided data.
 
@@ -193,7 +197,7 @@ def build_pk_conditions(TableModel, pk_columns, data):
     return pk_conditions
 
 
-def extract_unique_constraints(inspector, data):
+def extract_unique_constraints(inspector: inspect, data: dict[str, Any]):
     """
     Identify unique constraints that can be used to match existing entries.
 
@@ -217,7 +221,11 @@ def extract_unique_constraints(inspector, data):
     return unique_constraints
 
 
-def find_existing_entry(session, TableModel, pk_conditions, unique_constraints):
+def find_existing_entry(
+        session: Session,
+        TableModel,  # noqa: N803,ANN001
+        pk_conditions: list[tuple[str, Any]],
+        unique_constraints: list[list[tuple[str, Any]]]):
     """
     Attempt to retrieve an existing entry using primary key or unique constraints.
 
@@ -240,9 +248,7 @@ def find_existing_entry(session, TableModel, pk_conditions, unique_constraints):
 
     all_constraints = []
     for constraint_columns in unique_constraints:
-        constraint_condition = and_(
-            *(getattr(TableModel, col) == val for col, val in constraint_columns)
-        )
+        constraint_condition = and_(*(getattr(TableModel, col) == val for col, val in constraint_columns))
         all_constraints.append(constraint_condition)
 
     if all_constraints:
@@ -251,7 +257,14 @@ def find_existing_entry(session, TableModel, pk_conditions, unique_constraints):
     return None
 
 
-def handle_existing_entry(existing, TableModel, data, pk_columns, inspector, if_exists, session):
+def handle_existing_entry(  # noqa: PLR0913
+        existing,  # noqa: ANN001
+        TableModel,  # noqa: N803, ANN001
+        data: dict[str, Any],
+        pk_columns: list[str],
+        inspector: inspect,
+        if_exists: conflict_actions,
+        session: Optional[Session]):
     """
     Handle update logic for an existing database entry based on if_exists policy.
 
@@ -299,7 +312,6 @@ def handle_existing_entry(existing, TableModel, data, pk_columns, inspector, if_
             setattr(existing, col.key, new_value)
 
 
-
 @route_or_direct("load_time_data", send_file=True)
 def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Session] = None):
     """Load time series data"""
@@ -325,7 +337,7 @@ def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Se
         )
 
         if not probe:
-            raise ValueError(f"Probe with key {probe_key} not found")
+            raise ValueError(f"Probe with key {probe_key} not found")  # noqa: TRY301
 
         df = data[["time", "value"]].copy()  # Only keep required columns.
         df["probe_uuid"] = probe.uuid
@@ -350,14 +362,14 @@ def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Se
     except Exception as e:
         session.rollback()
         logger.error(f"Error loading time data: {e}")
-        raise e
+        raise
 
 
 @route_or_direct("load_probe_metadata")
 def load_probe_metadata(
     vendor: VendorType,
     probe_key: ProbeKey,
-    data: Dict[str, Any],
+    data: dict[str, Any],
     session: Optional[Session] = None,
 ):
     """Write object to table"""
@@ -394,11 +406,11 @@ def load_probe_metadata(
     except Exception as e:
         session.rollback()
         logger.exception(f"Error writing to table: {e}")
-        raise e
+        raise
 
 
 @route_or_direct("create_new_tables", method="GET")
-def create_new_tables(create_schema=True, session: Optional[Session] = None):
+def create_new_tables(create_schema: bool = True, session: Optional[Session] = None):
     """Use the ORM definition to create all tables, optionally creating the schema as well"""
     route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
     if route_to_backend:
@@ -411,4 +423,4 @@ def create_new_tables(create_schema=True, session: Optional[Session] = None):
     except Exception as e:
         session.rollback()
         logger.error(f"Error writing to table: {e}")
-        raise e
+        raise

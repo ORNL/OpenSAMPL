@@ -1,4 +1,6 @@
 """CLI interface for openSAMPL-server"""
+from __future__ import annotations
+
 import importlib.resources as pkg_resources
 import os
 import shlex
@@ -18,7 +20,8 @@ def get_default_env():
     with pkg_resources.path("opensampl.server", "default.env") as path:
         return str(path)
 
-BANNER=r"""
+
+BANNER = r"""
                         ____    _    __  __ ____  _
   ___  _ __   ___ _ __ / ___|  / \  |  \/  |  _ \| |
  / _ \| '_ \ / _ \ '_ \\___ \ / _ \ | |\/| | |_) | |
@@ -30,14 +33,14 @@ BANNER=r"""
     tools for viewing and storing clock data
 """
 
+
 def get_compose_command():
     """Detect the available docker-compose command."""
     if check_command(["docker-compose", "--version"]):
         return "docker-compose"
-    elif check_command(["docker", "compose", "--version"]):
+    if check_command(["docker", "compose", "--version"]):
         return "docker compose"
-    else:
-        raise ImportError("Neither 'docker compose' nor 'docker-compose' is installed. Please install Docker Compose.")
+    raise ImportError("Neither 'docker compose' nor 'docker-compose' is installed. Please install Docker Compose.")
 
 
 def get_cast_compose_file():
@@ -51,7 +54,7 @@ def get_cast_compose_file():
         sys.exit(1)
 
 
-def build_docker_compose_base(env_file):
+def build_docker_compose_base(env_file: click.Path | str) -> list:
     """Build the docker compose command, including env file and compose file"""
     compose_command = get_compose_command()
     compose_file = get_cast_compose_file()
@@ -73,7 +76,7 @@ def cli():
     help="Path to the .env file to use.",
 )
 @click.argument("extra_args", nargs=-1)
-def up(env_file, extra_args):
+def up(env_file: click.Path | str, extra_args: list):
     """Start the opensampl server. Configures the local environment to use the backend"""
     load_dotenv(env_file)
 
@@ -84,10 +87,10 @@ def up(env_file, extra_args):
         command.extend(extra_args)
 
     logger.debug(f"Running: {command}")
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
 
     for line in process.stdout:
-        print(line, end="")  # Print each line as it arrives
+        print(line, end="")  # noqa: T201 Print each line as it arrives
 
     process.wait()
 
@@ -111,16 +114,16 @@ def up(env_file, extra_args):
     help="Path to the .env file to use.",
 )
 @click.argument("extra_args", nargs=-1)
-def down(env_file, extra_args):
+def down(env_file: click.Path, extra_args: list) -> None:
     """Stop the opensampl server."""
     command = build_docker_compose_base(env_file)
     command.extend(["down"])
     if extra_args:
         command.extend(extra_args)
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
 
     for line in process.stdout:
-        print(line, end="")  # Print each line as it arrives
+        print(line, end="")  # noqa: T201 Print each line as it arrives
 
     process.wait()
 
@@ -132,11 +135,11 @@ def down(env_file, extra_args):
     default=get_default_env(),
     help="Path to the .env file to use.",
 )
-def logs(env_file):
+def logs(env_file: click.Path) -> None:
     """Show the logs from the opensampl server."""
     command = build_docker_compose_base(env_file)
     command.extend(["logs", "-f"])
-    subprocess.run(command, check=True)
+    subprocess.run(command, check=True)  # noqa: S603
 
 
 @cli.command()
@@ -146,14 +149,14 @@ def logs(env_file):
     default=get_default_env(),
     help="Path to the .env file to use.",
 )
-def ps(env_file):
+def ps(env_file: click.Path) -> None:
     """Docker compose ps of the opensampl server"""
     command = build_docker_compose_base(env_file)
     command.extend(["ps"])
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
 
     for line in process.stdout:
-        print(line, end="")  # Print each line as it arrives
+        print(line, end="")  # noqa: T201 Print each line as it arrives
 
     process.wait()
 
@@ -166,17 +169,17 @@ def ps(env_file):
     help="Path to the .env file to use.",
 )
 @click.argument("run-commands", nargs=-1)
-def run(env_file, run_commands):
+def run(env_file: click.Path, run_commands: list) -> None:
     """Run command: add anything you would after docker compose run"""
     command = build_docker_compose_base(env_file)
     logger.info(run_commands)
     command.extend(["run", "--rm"])
     command.extend(list(run_commands))
     logger.info(command)
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
 
     for line in process.stdout:
-        print(line, end="")  # Print each line as it arrives
+        print(line, end="")  # noqa: T201  Print each line as it arrives
 
     process.wait()
 
