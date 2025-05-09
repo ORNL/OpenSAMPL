@@ -40,3 +40,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [1.0.0] - 2025-05-09
 - Initial commit
+
+
+## [1.0.1] - 2025-05-09
+### Fixed
+- 🩹 Fix URL for the CHANGELOG
+
+### Removed
+- 🗡️ Remove version specification in README.md

@@ -11,7 +11,7 @@ python tools for adding clock data to a timescale db.
 1. Ensure you have Python 3.9 or higher installed
 2. Pip install the latest version of opensampl: 
 ```bash
-pip install opensampl==0.2.0
+pip install opensampl
 ```
 
 ### Environment Setup

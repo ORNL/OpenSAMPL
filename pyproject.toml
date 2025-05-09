@@ -1,6 +1,6 @@
 [project]
 name = "opensampl"
-version = "1.0.0"
+version = "1.0.1"
 description = "Python tools for adding clock data to a timescale db."
 authors = [
     { name = "Midgie MacFarland", email = "macfarlandmj@ornl.gov" },
@@ -34,7 +34,7 @@ dependencies = [
 Homepage = "https://github.com/ORNL/OpenSAMPL"
 Repository = "https://github.com/ORNL/OpenSAMPL"
 Documentation = "https://ornl.github.io/OpenSAMPL"
-Changelog = "https://github.com/ORNL/OpenSAMPL/CHANGELOG.md"
+Changelog = "https://github.com/ORNL/OpenSAMPL/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 server = []
