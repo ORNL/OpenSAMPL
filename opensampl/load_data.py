@@ -17,6 +17,7 @@ from opensampl.vendors.constants import ProbeKey, VendorType
 conflict_actions = Literal["error", "replace", "update", "ignore"]
 request_methods = Literal["POST", "GET", "PUT", "DELETE"]
 
+
 def route_or_direct(route_endpoint: str, method: request_methods = "POST", send_file: bool = False):
     """
     Handle routing to backend or direct database operations based on environment configuration via decorator
@@ -61,8 +62,11 @@ def route_or_direct(route_endpoint: str, method: request_methods = "POST", send_
                 # Extract data from the function
                 try:
                     response = requests.request(
-                        method=method, url=f"{backend_url}/{route_endpoint}", headers=headers, **request_params,
-                        timeout=300
+                        method=method,
+                        url=f"{backend_url}/{route_endpoint}",
+                        headers=headers,
+                        **request_params,
+                        timeout=300,
                     )
                     response.raise_for_status()
                     logger.debug(f"Response: {response.json()}")
@@ -170,9 +174,10 @@ def resolve_table_model(table: str):
 
 
 def build_pk_conditions(
-        TableModel,  # noqa: N803,ANN001
-        pk_columns: list[str],
-        data: dict[str, Any]):
+    TableModel,  # noqa: N803,ANN001
+    pk_columns: list[str],
+    data: dict[str, Any],
+):
     """
     Construct primary key filter conditions from provided data.
 
@@ -222,10 +227,11 @@ def extract_unique_constraints(inspector: inspect, data: dict[str, Any]):
 
 
 def find_existing_entry(
-        session: Session,
-        TableModel,  # noqa: N803,ANN001
-        pk_conditions: list[tuple[str, Any]],
-        unique_constraints: list[list[tuple[str, Any]]]):
+    session: Session,
+    TableModel,  # noqa: N803,ANN001
+    pk_conditions: list[tuple[str, Any]],
+    unique_constraints: list[list[tuple[str, Any]]],
+):
     """
     Attempt to retrieve an existing entry using primary key or unique constraints.
 
@@ -258,13 +264,14 @@ def find_existing_entry(
 
 
 def handle_existing_entry(  # noqa: PLR0913
-        existing,  # noqa: ANN001
-        TableModel,  # noqa: N803, ANN001
-        data: dict[str, Any],
-        pk_columns: list[str],
-        inspector: inspect,
-        if_exists: conflict_actions,
-        session: Optional[Session]):
+    existing,  # noqa: ANN001
+    TableModel,  # noqa: N803, ANN001
+    data: dict[str, Any],
+    pk_columns: list[str],
+    inspector: inspect,
+    if_exists: conflict_actions,
+    session: Optional[Session],
+):
     """
     Handle update logic for an existing database entry based on if_exists policy.
 

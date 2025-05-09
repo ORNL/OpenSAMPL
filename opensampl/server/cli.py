@@ -1,4 +1,5 @@
 """CLI interface for openSAMPL-server"""
+
 from __future__ import annotations
 
 import importlib.resources as pkg_resources

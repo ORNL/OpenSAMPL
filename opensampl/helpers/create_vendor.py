@@ -145,7 +145,7 @@ class {self.parser_class}(BaseProbe):
 
         # Add fields from config
         for field in self.metadata_fields:
-            class_body.append( # noqa: PERF401
+            class_body.append(  # noqa: PERF401
                 ast.Assign(
                     targets=[ast.Name(id=field.name, ctx=ast.Store())],
                     value=ast.Call(

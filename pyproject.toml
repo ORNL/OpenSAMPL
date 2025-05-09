@@ -28,6 +28,7 @@ dependencies = [
     "python-multipart>=0.0.20,<0.0.21",
     "astor",
     "libcst",
+    "ty>=0.0.0a7",
 ]
 
 [project.urls]

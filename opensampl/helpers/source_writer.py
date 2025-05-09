@@ -27,9 +27,9 @@ class OrmClassFormatter(cst.CSTTransformer):
         return "other"
 
     def leave_ClassDef(  # noqa: N802
-            self,
-            original_node: cst.ClassDef,  # noqa: ARG002
-            updated_node: cst.ClassDef,
+        self,
+        original_node: cst.ClassDef,  # noqa: ARG002
+        updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         """Update Class Definition"""
         # Group statements by type
