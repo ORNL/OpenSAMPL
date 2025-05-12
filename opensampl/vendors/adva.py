@@ -53,7 +53,7 @@ class AdvaProbe(BaseProbe):
             return ProbeKey(probe_id=probe_id, ip_address=ip_address), timestamp
         raise ValueError(f"Could not parse file name {file_name} into probe key and timestamp for ADVA probe")
 
-    def _open_file(self) -> TextIO:
+    def _open_file(self) -> Union[TextIO, gzip.GzipFile]:
         """Open the input file, handling both .txt and .txt.gz formats"""
         if self.input_file.name.endswith(".gz"):
             return gzip.open(self.input_file, "rt")

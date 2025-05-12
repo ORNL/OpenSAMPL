@@ -69,7 +69,7 @@ class VendorConfig(VendorType):
         fields = []
         for field, sql_type in metadata_fields.items():
             if sql_type:
-                fields.append(MetadataField(name=field, type=sql_type))
+                fields.append(MetadataField(name=field, sqlalchemy_type=sql_type))
             else:
                 fields.append(MetadataField(name=field))
         data["metadata_fields"] = fields
@@ -239,7 +239,8 @@ class {self.parser_class}(BaseProbe):
 
         file_text = constants_path.read_text()
         tree = ast.parse(file_text)
-
+        vm_lineno = None
+        vm_end_lineno = None
         for _, node in enumerate(tree.body):
             if (
                 isinstance(node, ast.Assign)

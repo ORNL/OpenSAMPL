@@ -6,6 +6,7 @@ from typing import Any, Callable, Literal, Optional
 
 import pandas as pd
 import requests
+import requests.exceptions
 from loguru import logger
 from sqlalchemy import UniqueConstraint, and_, create_engine, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -32,7 +33,7 @@ def route_or_direct(route_endpoint: str, method: request_methods = "POST", send_
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args: list, **kwargs: dict) -> Callable:
+        def wrapper(*args: list, **kwargs: dict) -> Optional[Callable]:
             session = kwargs.pop("session", None)
             backend_url = ENV_VARS.BACKEND_URL.get_value()
             route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
@@ -80,7 +81,7 @@ def route_or_direct(route_endpoint: str, method: request_methods = "POST", send_
                             "Provide Session or Set DATABASE_URL env var to use direct database operations or set "
                             "ROUTE_TO_BACKEND to true and configure BACKEND_URL to use backend routing"
                         )
-                    session = sessionmaker(create_engine(database_url))()
+                    session = sessionmaker(create_engine(database_url))()  # ty: ignore[no-matching-overload]
 
                 return func(*args, **kwargs, session=session)
 
@@ -116,6 +117,8 @@ def write_to_table(
         SQLAlchemyError: For database errors
 
     """
+    if not isinstance(session, Session):
+        raise TypeError("Session must be a SQLAlchemy session")
     if if_exists not in ["error", "replace", "update", "ignore"]:
         raise ValueError("on_conflict must be one of: 'error', 'replace', 'update', 'ignore'")
 
@@ -202,7 +205,7 @@ def build_pk_conditions(
     return pk_conditions
 
 
-def extract_unique_constraints(inspector: inspect, data: dict[str, Any]):
+def extract_unique_constraints(inspector: Any, data: dict[str, Any]):
     """
     Identify unique constraints that can be used to match existing entries.
 
@@ -248,17 +251,19 @@ def find_existing_entry(
 
     """
     if pk_conditions:
-        existing = session.query(TableModel).filter(and_(*pk_conditions)).first()
+        existing = session.query(TableModel).filter(and_(*pk_conditions)).first()  # ty: ignore[missing-argument]
         if existing:
             return existing
 
     all_constraints = []
     for constraint_columns in unique_constraints:
-        constraint_condition = and_(*(getattr(TableModel, col) == val for col, val in constraint_columns))
+        constraint_condition = and_(  # ty: ignore[missing-argument]
+            *(getattr(TableModel, col) == val for col, val in constraint_columns)
+        )
         all_constraints.append(constraint_condition)
 
     if all_constraints:
-        return session.query(TableModel).filter(and_(*all_constraints)).first()
+        return session.query(TableModel).filter(and_(*all_constraints)).first()  # ty: ignore[missing-argument]
 
     return None
 
@@ -268,7 +273,7 @@ def handle_existing_entry(  # noqa: PLR0913
     TableModel,  # noqa: N803, ANN001
     data: dict[str, Any],
     pk_columns: list[str],
-    inspector: inspect,
+    inspector: Any,
     if_exists: conflict_actions,
     session: Optional[Session],
 ):
@@ -322,6 +327,8 @@ def handle_existing_entry(  # noqa: PLR0913
 @route_or_direct("load_time_data", send_file=True)
 def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Session] = None):
     """Load time series data"""
+    if not isinstance(session, Session):
+        raise TypeError("Session must be a SQLAlchemy session")
     route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
     if route_to_backend:
         csv_data = data.to_csv(index=False).encode("utf-8")
@@ -352,7 +359,7 @@ def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Se
         # Ensure correct dtypes
         df = df.astype({"time": "datetime64[ns]", "value": "float64", "probe_uuid": str})
 
-        dtype = {column.name: column.type for column in ProbeData.__table__.columns}
+        dtype = {column.name: column.type_ for column in ProbeData.__table__.columns}
 
         # Write directly to database using pandas
         df.to_sql(
@@ -380,6 +387,8 @@ def load_probe_metadata(
     session: Optional[Session] = None,
 ):
     """Write object to table"""
+    if not isinstance(session, Session):
+        raise TypeError("Session must be a SQLAlchemy session")
     route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
     if route_to_backend:
         return {
@@ -419,6 +428,8 @@ def load_probe_metadata(
 @route_or_direct("create_new_tables", method="GET")
 def create_new_tables(create_schema: bool = True, session: Optional[Session] = None):
     """Use the ORM definition to create all tables, optionally creating the schema as well"""
+    if not isinstance(session, Session):
+        raise TypeError("Session must be a SQLAlchemy session")
     route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
     if route_to_backend:
         return {"create_schema": create_schema}

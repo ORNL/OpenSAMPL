@@ -7,6 +7,7 @@ import os
 import shlex
 import subprocess
 import sys
+from typing import TextIO, cast
 
 import click
 from dotenv import load_dotenv
@@ -51,7 +52,7 @@ def get_cast_compose_file():
         with pkg_resources.path("opensampl.server", filename) as path:
             return str(path)
     except ImportError:
-        click.echo("Error: docker-compose.yaml file not found in package.", error=True)
+        click.echo("Error: docker-compose.yaml file not found in package.", err=True)
         sys.exit(1)
 
 
@@ -89,10 +90,10 @@ def up(env_file: click.Path | str, extra_args: list):
 
     logger.debug(f"Running: {command}")
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
-
-    for line in process.stdout:
-        print(line, end="")  # noqa: T201 Print each line as it arrives
-
+    stdout = cast("TextIO", process.stdout)
+    if stdout:
+        for line in stdout:
+            print(line, end="")  # noqa: T201 Print each line as it arrives
     process.wait()
 
     set_env(name="BACKEND_URL", value="http://localhost:8015")
@@ -122,9 +123,10 @@ def down(env_file: click.Path, extra_args: list) -> None:
     if extra_args:
         command.extend(extra_args)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
-
-    for line in process.stdout:
-        print(line, end="")  # noqa: T201 Print each line as it arrives
+    stdout = cast("TextIO", process.stdout)
+    if stdout:
+        for line in stdout:
+            print(line, end="")  # noqa: T201 Print each line as it arrives
 
     process.wait()
 
@@ -155,10 +157,10 @@ def ps(env_file: click.Path) -> None:
     command = build_docker_compose_base(env_file)
     command.extend(["ps"])
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
-
-    for line in process.stdout:
-        print(line, end="")  # noqa: T201 Print each line as it arrives
-
+    stdout = cast("TextIO", process.stdout)
+    if stdout:
+        for line in stdout:
+            print(line, end="")  # noqa: T201 Print each line as it arrives
     process.wait()
 
 
@@ -178,9 +180,10 @@ def run(env_file: click.Path, run_commands: list) -> None:
     command.extend(list(run_commands))
     logger.info(command)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
-
-    for line in process.stdout:
-        print(line, end="")  # noqa: T201  Print each line as it arrives
+    stdout = cast("TextIO", process.stdout)
+    if stdout:
+        for line in stdout:
+            print(line, end="")  # noqa: T201  Print each line as it arrives
 
     process.wait()
 

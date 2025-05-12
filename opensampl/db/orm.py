@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from geoalchemy2 import Geometry, WKTElement
 from geoalchemy2.shape import to_shape
@@ -101,7 +101,7 @@ class ProbeMetadata(Base):
     probe_data = relationship("ProbeData")
     adva_metadata = relationship("AdvaMetadata", back_populates="probe", uselist=False)
 
-    def __init__(self, **kwargs: dict):
+    def __init__(self, **kwargs: Any):
         """Initialize Probe Metadata object, dealing with converting location name into uuid"""
         location_name = kwargs.pop("location_name", None)
         test_name = kwargs.pop("test_name", None)
@@ -112,7 +112,7 @@ class ProbeMetadata(Base):
         if test_name:
             self._test_name = test_name
 
-    def resolve_references(self, session: Session = None):
+    def resolve_references(self, session: Optional[Session] = None):
         """
         Resolve references.
 

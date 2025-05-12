@@ -8,7 +8,7 @@ interact with the database and load data into it.
 import json
 import sys
 from pathlib import Path
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import click
 import yaml
@@ -34,7 +34,7 @@ BANNER = r"""
 
 env_file = find_dotenv()
 load_dotenv()
-level = ENV_VARS.LOG_LEVEL.get_value()
+level = str(ENV_VARS.LOG_LEVEL.get_value())
 logger.configure(handlers=[{"sink": sys.stderr, "level": level.upper()}])
 
 
@@ -128,7 +128,7 @@ def show(explain: bool, var: str):
 @config.command("set")
 @click.argument("name")
 @click.argument("value")
-def config_set(name: str, value: str, temp: Optional[bool] = None):
+def config_set(name: str, value: str):
     """
     Set the value of an environment variable.
 
@@ -140,7 +140,7 @@ def config_set(name: str, value: str, temp: Optional[bool] = None):
         opensampl config set BACKEND_URL http://localhost:8000
 
     """
-    set_env(name=name, value=value, temp=temp)
+    set_env(name=name, value=value)
 
 
 @cli.group(cls=CaseInsensitiveGroup)
@@ -188,7 +188,9 @@ def path_or_string(value: str) -> Union[dict, list]:
 )
 @click.argument("table_name", type=click.Choice(get_table_names()))
 @click.argument("filepath", type=path_or_string)
-def table_load(filepath: Union[dict, list], table_name: str, if_exists: str):
+def table_load(
+    filepath: Union[dict, list], table_name: str, if_exists: Literal["update", "error", "replace", "ignore"]
+):
     r"""
     Perform a Table load into the database.
 
