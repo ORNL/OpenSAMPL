@@ -62,3 +62,14 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🗡️ Remove kwargs in `__init__` method of `BaseProbe`
 - 🗡️ Remove unused imports from many files
 - 🗡️ Remove commented-out code in some classes
+
+## [1.0.2] - 2025-05-12
+### Added
+- 🔥 `black` added as a dependency for auto-creation of probe types
+- 🔥 `ty` added as a dependency for type-checking
+
+### Fixed
+- 🩹 `ty` type checking errors addressed
+
+### Changed
+- ⚡ linting github action now confirms that the documentation can be built

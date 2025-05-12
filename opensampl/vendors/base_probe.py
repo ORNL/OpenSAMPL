@@ -1,6 +1,7 @@
 """Abstract probe Base which provides scaffolding for vendor specific implementation"""
 
 from abc import ABC, abstractmethod
+from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -10,6 +11,7 @@ from typing import Callable, ClassVar, Optional, Union
 import click
 import pandas as pd
 import requests
+import requests.exceptions
 from loguru import logger
 from pydantic import BaseModel
 from tqdm import tqdm
@@ -37,7 +39,7 @@ class DummyTqdm:
 
 
 @contextmanager
-def dummy_tqdm(*args: list, **kwargs: dict) -> DummyTqdm:
+def dummy_tqdm(*args: list, **kwargs: dict) -> Generator:
     """Create a dummy tqdm object which will not print to terminal"""
     yield DummyTqdm(*args, **kwargs)
 
@@ -130,7 +132,7 @@ class BaseProbe(ABC):
         ]
 
     @classmethod
-    def process_single_file(  # noqa: PLR0913
+    def process_single_file(  # noqa: PLR0913,PLR0912,C901
         cls,
         filepath: Path,
         metadata: bool,
@@ -150,7 +152,10 @@ class BaseProbe(ABC):
                     probe.send_metadata()
                     logger.debug(f"Metadata loading complete for {filepath}")
             except requests.exceptions.HTTPError as e:
-                status_code = e.response.status_code
+                resp = e.response
+                if resp is None:
+                    raise
+                status_code = resp.status_code
                 if status_code == 409:
                     logger.warning(
                         f"{filepath} violates unique constraint for metadata, implying already loaded.  "
@@ -165,7 +170,10 @@ class BaseProbe(ABC):
                     probe.send_time_data(chunk_size=chunk_size)
                     logger.debug(f"Time series data loading complete for {filepath}")
             except requests.exceptions.HTTPError as e:
-                status_code = e.response.status_code
+                resp = e.response
+                if resp is None:
+                    raise
+                status_code = resp.status_code
                 if status_code == 409:
                     logger.warning(
                         f"{filepath} violates unique constraint for time data, implying already loaded. "
@@ -212,7 +220,7 @@ class BaseProbe(ABC):
                 f = option(f)
             return click.command(name=cls.vendor.name.lower(), help=cls.help_str)(f)
 
-        def load_callback(**kwargs: dict) -> click.command:
+        def load_callback(**kwargs: dict) -> None:
             """Load probe data from file or directory."""
             try:
                 config = cls._extract_load_config(kwargs)

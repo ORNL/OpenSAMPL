@@ -1,5 +1,7 @@
 """Helper for writing new source code based on new Vendor Configuration"""
 
+from typing import Any
+
 import astor
 import libcst as cst
 from black import FileMode, format_str
@@ -54,7 +56,7 @@ class OrmClassFormatter(cst.CSTTransformer):
         return updated_node.with_changes(body=updated_node.body.with_changes(body=body))
 
     @classmethod
-    def format(cls, tree: cst.Module) -> cst.Module:
+    def format(cls, tree: Any) -> cst.Module:
         """Convert back to source, use black to format"""
         source = format_str(
             astor.to_source(tree),
