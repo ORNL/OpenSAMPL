@@ -337,6 +337,7 @@ def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Se
         }
 
     from opensampl.db.orm import ProbeData, ProbeMetadata
+
     if not isinstance(session, Session):
         raise TypeError("Session must be a SQLAlchemy session")
     try:

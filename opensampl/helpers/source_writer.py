@@ -15,11 +15,11 @@ class OrmClassFormatter(cst.CSTTransformer):
         if isinstance(stmt, cst.SimpleStatementLine):  # noqa: SIM102
             if len(stmt.body) == 1:  # noqa: SIM102
                 if isinstance(stmt.body[0], cst.Assign):
-                    if isinstance(stmt.body[0].targets[0], cst.Name): # ty: ignore[unresolved-attribute]
-                        name = stmt.body[0].targets[0].value # ty: ignore[unresolved-attribute]
+                    if isinstance(stmt.body[0].targets[0], cst.Name):  # ty: ignore[unresolved-attribute]
+                        name = stmt.body[0].targets[0].value  # ty: ignore[unresolved-attribute]
                         if name.startswith("__"):
                             return "dunder"
-                    value = stmt.body[0].value # ty: ignore[unresolved-attribute]
+                    value = stmt.body[0].value  # ty: ignore[unresolved-attribute]
                     if isinstance(value, cst.Call):
                         func_name = str(value.func.value)
                         if "Column" in func_name:
