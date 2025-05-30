@@ -117,13 +117,14 @@ def write_to_table(
         SQLAlchemyError: For database errors
 
     """
-    if not isinstance(session, Session):
-        raise TypeError("Session must be a SQLAlchemy session")
     if if_exists not in ["error", "replace", "update", "ignore"]:
         raise ValueError("on_conflict must be one of: 'error', 'replace', 'update', 'ignore'")
 
     if ENV_VARS.ROUTE_TO_BACKEND.get_value():
         return {"table": table, "data": data, "if_exists": if_exists}
+
+    if not isinstance(session, Session):
+        raise TypeError("Session must be a SQLAlchemy session")
 
     try:
         TableModel = resolve_table_model(table)  # noqa: N806
@@ -201,7 +202,7 @@ def build_pk_conditions(
             pk_conditions.append(getattr(TableModel, pk) == data[pk])
         else:
             logger.debug(f"{pk} is primary but not in data")
-    logger.debug(f"{pk_conditions=}")
+    logger.debug(f"pk_conditions={', '.join([str(x) for x in pk_conditions])}")
     return pk_conditions
 
 
@@ -225,7 +226,7 @@ def extract_unique_constraints(inspector: Any, data: dict[str, Any]):
             cols = [col.key for col in constraint.columns]
             if all(col in data for col in cols):
                 unique_constraints.append([(col, data[col]) for col in cols])
-    logger.debug(f"{unique_constraints=}")
+    logger.debug(f"unique_constraints={', '.join([str(x) for x in unique_constraints])}")
     return unique_constraints
 
 
@@ -327,8 +328,6 @@ def handle_existing_entry(  # noqa: PLR0913
 @route_or_direct("load_time_data", send_file=True)
 def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Session] = None):
     """Load time series data"""
-    if not isinstance(session, Session):
-        raise TypeError("Session must be a SQLAlchemy session")
     route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
     if route_to_backend:
         csv_data = data.to_csv(index=False).encode("utf-8")
@@ -338,7 +337,8 @@ def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Se
         }
 
     from opensampl.db.orm import ProbeData, ProbeMetadata
-
+    if not isinstance(session, Session):
+        raise TypeError("Session must be a SQLAlchemy session")
     try:
         # Verify probe exists and get UUID
         probe = (
@@ -357,9 +357,10 @@ def load_time_data(probe_key: ProbeKey, data: pd.DataFrame, session: Optional[Se
         df["probe_uuid"] = probe.uuid
 
         # Ensure correct dtypes
-        df = df.astype({"time": "datetime64[ns]", "value": "float64", "probe_uuid": str})
+        df["time"] = pd.to_datetime(df["time"], utc=True, errors="raise")
+        df = df.astype({"value": "float64", "probe_uuid": str})
 
-        dtype = {column.name: column.type_ for column in ProbeData.__table__.columns}
+        dtype = {column.name: column.type for column in ProbeData.__table__.columns}
 
         # Write directly to database using pandas
         df.to_sql(
@@ -387,8 +388,6 @@ def load_probe_metadata(
     session: Optional[Session] = None,
 ):
     """Write object to table"""
-    if not isinstance(session, Session):
-        raise TypeError("Session must be a SQLAlchemy session")
     route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
     if route_to_backend:
         return {
@@ -396,6 +395,9 @@ def load_probe_metadata(
             "probe_key": probe_key.model_dump(),
             "data": data,
         }
+
+    if not isinstance(session, Session):
+        raise TypeError("Session must be a SQLAlchemy session")
 
     try:
         from opensampl.db.orm import ProbeMetadata
@@ -428,11 +430,13 @@ def load_probe_metadata(
 @route_or_direct("create_new_tables", method="GET")
 def create_new_tables(create_schema: bool = True, session: Optional[Session] = None):
     """Use the ORM definition to create all tables, optionally creating the schema as well"""
-    if not isinstance(session, Session):
-        raise TypeError("Session must be a SQLAlchemy session")
     route_to_backend = ENV_VARS.ROUTE_TO_BACKEND.get_value()
     if route_to_backend:
         return {"create_schema": create_schema}
+
+    if not isinstance(session, Session):
+        raise TypeError("Session must be a SQLAlchemy session")
+
     try:
         if create_schema:
             session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {Base.metadata.schema}"))
