@@ -48,7 +48,7 @@ def get_compose_command():
 def get_cast_compose_file():
     """Get the fully qualified path to the docker-compose.yaml file included inside the package."""
     try:
-        filename = "docker-compose.yaml"
+        filename = os.getenv("OPENSAMPL_COMPOSE_FILE", "docker-compose.yaml")
         with pkg_resources.path("opensampl.server", filename) as path:
             return str(path)
     except ImportError:

@@ -1,6 +1,6 @@
 [project]
 name = "opensampl"
-version = "1.0.2"
+version = "1.0.3"
 description = "Python tools for adding clock data to a timescale db."
 authors = [
     { name = "Midgie MacFarland", email = "macfarlandmj@ornl.gov" },
@@ -96,4 +96,3 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 docstring-code-format = true
-
