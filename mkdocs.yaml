@@ -15,22 +15,35 @@ nav:
   - Server: guides/opensampl-server.md
 - API:
   - index: api/index.md
+  - ats6502:
+    - context: api/ats6502/context.md
+    - modem: api/ats6502/modem.md
+    - readings: api/ats6502/readings.md
   - cli: api/cli.md
-  - constants: api/constants.md
+  - config:
+    - base: api/config/base.md
   - db:
     - access_orm: api/db/access_orm.md
     - orm: api/db/orm.md
   - helpers:
     - create_vendor: api/helpers/create_vendor.md
-    - env: api/helpers/env.md
+    - insert_markers: api/helpers/insert_markers.md
     - source_writer: api/helpers/source_writer.md
+  - load:
+    - data: api/load/data.md
+    - probe: api/load/probe.md
+    - routing: api/load/routing.md
+    - table_factory: api/load/table_factory.md
   - load_data: api/load_data.md
+  - metrics: api/metrics.md
+  - references: api/references.md
   - server:
     - cli: api/server/cli.md
   - vendors:
     - adva: api/vendors/adva.md
     - base_probe: api/vendors/base_probe.md
     - constants: api/vendors/constants.md
+    - microsemi_twst: api/vendors/microsemi_twst.md
 plugins:
 - search
 - mkdocstrings:

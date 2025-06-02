@@ -2,25 +2,43 @@
 
 from __future__ import annotations
 
-import importlib.resources as pkg_resources
 import os
-import shlex
 import subprocess
 import sys
+from pathlib import Path
 from typing import TextIO, cast
 
 import click
-from dotenv import load_dotenv
+from dotenv import find_dotenv
 from loguru import logger
 
-from opensampl.helpers.env import set_env
-from opensampl.server import check_command
+from opensampl.config.server import ServerConfig
 
 
-def get_default_env():
-    """Get the default env file's absolute path regardless of where opensampl-server call originates"""
-    with pkg_resources.path("opensampl.server", "default.env") as path:
-        return str(path)
+def load_config(env_file: str | None = None) -> ServerConfig:
+    """
+    Load the configuration settings
+
+    Either from provided env_file, OPENSAMPL_ENV_FILE environment variable, or from the dotenv file found through
+    loaddotenv's find_dotenv
+
+    Args:
+        env_file: str
+
+    Returns:
+        BaseSettings model
+
+    """
+    if not env_file:
+        env_file = os.getenv("OPENSAMPL_ENV_FILE", None)
+
+    if not env_file:
+        dotenv_file = find_dotenv()
+        env_file = dotenv_file
+    else:
+        env_file = str(Path(env_file).resolve())
+
+    return ServerConfig(_env_file=env_file) # ty: ignore[unknown-argument]
 
 
 BANNER = r"""
@@ -36,53 +54,34 @@ BANNER = r"""
 """
 
 
-def get_compose_command():
-    """Detect the available docker-compose command."""
-    if check_command(["docker-compose", "--version"]):
-        return "docker-compose"
-    if check_command(["docker", "compose", "--version"]):
-        return "docker compose"
-    raise ImportError("Neither 'docker compose' nor 'docker-compose' is installed. Please install Docker Compose.")
-
-
-def get_cast_compose_file():
-    """Get the fully qualified path to the docker-compose.yaml file included inside the package."""
-    try:
-        filename = os.getenv("OPENSAMPL_COMPOSE_FILE", "docker-compose.yaml")
-        with pkg_resources.path("opensampl.server", filename) as path:
-            return str(path)
-    except ImportError:
-        click.echo("Error: docker-compose.yaml file not found in package.", err=True)
-        sys.exit(1)
-
-
-def build_docker_compose_base(env_file: click.Path | str) -> list:
-    """Build the docker compose command, including env file and compose file"""
-    compose_command = get_compose_command()
-    compose_file = get_cast_compose_file()
-    command = shlex.split(compose_command)
-    command.extend(["--env-file", env_file, "-f", compose_file])
-    return command
-
-
 @click.group()
-def cli():
+@click.option("--env-file",
+              type=click.Path(exists=True),
+              help="Path to the file with cli configuration settings defined")
+@click.pass_context
+def cli(ctx: click.Context, env_file: str):
     """Command line interface for the opensampl server."""
+    ctx.ensure_object(dict)
+    conf = load_config(env_file)
+    ctx.obj["conf"] = conf
+
+    logger.configure(handlers=[{"sink": sys.stderr, "level": conf.LOG_LEVEL.upper()}])
 
 
 @cli.command()
-@click.option(
-    "--env-file",
-    type=click.Path(exists=True, readable=True),
-    default=get_default_env(),
-    help="Path to the .env file to use.",
-)
+@click.pass_context
 @click.argument("extra_args", nargs=-1)
-def up(env_file: click.Path | str, extra_args: list):
+def up(ctx: click.Context, extra_args: list):
     """Start the opensampl server. Configures the local environment to use the backend"""
-    load_dotenv(env_file)
+    config = ctx.obj["conf"]
 
-    command = build_docker_compose_base(env_file)
+    config.BACKEND_URL = "http://localhost:8015"
+    config.ROUTE_TO_BACKEND = True
+    config.DATABASE_URL = config.get_db_url()
+    if str(config.docker_env_values.get("USE_API_KEY", "false")).lower == "true":
+        config.API_KEY = config.docker_env_values.get("API_KEYS", "").split(",")[0].strip()
+
+    command = config.build_docker_compose_base()
     command.extend(["up", "-d"])
 
     if extra_args:
@@ -96,29 +95,19 @@ def up(env_file: click.Path | str, extra_args: list):
             print(line, end="")  # noqa: T201 Print each line as it arrives
     process.wait()
 
-    set_env(name="BACKEND_URL", value="http://localhost:8015")
-    set_env(name="ROUTE_TO_BACKEND", value="true")
-    set_env(
-        name="DATABASE_URL",
-        value=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@localhost:5415/{os.getenv('POSTGRES_DB')}",
-    )
-    if os.getenv("USE_API_KEY", "false") == "true":
-        set_env(name="API_KEY", value=os.getenv("API_KEYS", "").split(",")[0].strip())
+    config.save_config()
 
-    click.echo('See grafana interface at "http://localhost:3015"')
+    if not extra_args or "grafana" in extra_args:
+        click.echo('See grafana interface at "http://localhost:3015"')
 
 
 @cli.command()
-@click.option(
-    "--env-file",
-    type=click.Path(exists=True, readable=True),
-    default=get_default_env(),
-    help="Path to the .env file to use.",
-)
+@click.pass_context
 @click.argument("extra_args", nargs=-1)
-def down(env_file: click.Path, extra_args: list) -> None:
+def down(ctx: click.Context, extra_args: list) -> None:
     """Stop the opensampl server."""
-    command = build_docker_compose_base(env_file)
+    config = ctx.obj["conf"]
+    command = config.build_docker_compose_base()
     command.extend(["down"])
     if extra_args:
         command.extend(extra_args)
@@ -132,29 +121,22 @@ def down(env_file: click.Path, extra_args: list) -> None:
 
 
 @cli.command()
-@click.option(
-    "--env-file",
-    type=click.Path(exists=True, readable=True),
-    default=get_default_env(),
-    help="Path to the .env file to use.",
-)
-def logs(env_file: click.Path) -> None:
+@click.pass_context
+def logs(ctx: click.Context) -> None:
     """Show the logs from the opensampl server."""
-    command = build_docker_compose_base(env_file)
+    config = ctx.obj["conf"]
+    command = config.build_docker_compose_base()
     command.extend(["logs", "-f"])
     subprocess.run(command, check=True)  # noqa: S603
 
 
 @cli.command()
-@click.option(
-    "--env-file",
-    type=click.Path(exists=True, readable=True),
-    default=get_default_env(),
-    help="Path to the .env file to use.",
-)
-def ps(env_file: click.Path) -> None:
+@click.pass_context
+def ps(ctx: click.Context) -> None:
     """Docker compose ps of the opensampl server"""
-    command = build_docker_compose_base(env_file)
+    config = ctx.obj["conf"]
+    command = config.build_docker_compose_base()
+    click.echo(command)
     command.extend(["ps"])
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)  # noqa: S603
     stdout = cast("TextIO", process.stdout)
@@ -165,16 +147,12 @@ def ps(env_file: click.Path) -> None:
 
 
 @cli.command()
-@click.option(
-    "--env-file",
-    type=click.Path(exists=True, readable=True),
-    default=get_default_env(),
-    help="Path to the .env file to use.",
-)
+@click.pass_context
 @click.argument("run-commands", nargs=-1)
-def run(env_file: click.Path, run_commands: list) -> None:
+def run(ctx: click.Context, run_commands: list) -> None:
     """Run command: add anything you would after docker compose run"""
-    command = build_docker_compose_base(env_file)
+    config = ctx.obj["conf"]
+    command = config.build_docker_compose_base()
     logger.info(run_commands)
     command.extend(["run", "--rm"])
     command.extend(list(run_commands))

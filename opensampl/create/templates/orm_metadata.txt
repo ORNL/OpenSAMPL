@@ -1,0 +1,6 @@
+class ${metadata_orm}(Base):
+    __tablename__ = "${metadata_table}"
+    
+    probe_uuid = Column(String, ForeignKey("probe_metadata.uuid"), primary_key=True)
+${metadata_columns}
+    probe = relationship("ProbeMetadata", back_populates="${metadata_table}")

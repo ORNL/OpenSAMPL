@@ -38,7 +38,31 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 -->
 
-## [Unreleased] - YYYY-MM-DD
+## [1.1.0] - 2025-06-23
+### Added
+- 🔥 Microsemi TWST Vendor Support
+- 🔥 Microsemi TWST 6502 data parser script
+
+### Changed
+- ⚡ All probe data now has a metric type and reference for the measurement
+
+### Deprecated
+- ☠️ Placeholder for features about to vanish into the void.
+- ☠️ …
+
+### Removed
+- 🗡️ Placeholder for chopped-off code.
+- 🗡️ …
+
+### Fixed
+- 🩹 Placeholder for bugs crushed under your boot.
+- 🩹 …
+
+### Security
+- 🔐 Placeholder for vulnerabilities sealed shut.
+- 🔐 …
+
+## [1.0.3] - YYYY-MM-DD
 ### Added
 - 🔥 Environment variable OPENSAMPL_COMPOSE_FILE used to identify compose file used for opensampl-server 
 
