@@ -46,7 +46,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - ⚡ Order of changelog, newest on top
 
 ### Fixed
-- 🩹Bug in load_data introduced by ruff auto fix
+- 🩹 Bugs in load_data introduced by ty type checking changes
 
 
 ## [1.0.2] - 2025-05-12
