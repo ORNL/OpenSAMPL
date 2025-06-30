@@ -60,7 +60,7 @@ class Locations(Base):
             lat = kwargs.pop("lat")
             lon = kwargs.pop("lon")
             z = kwargs.pop("z", None)
-            projection = kwargs.pop("projection", 4326)
+            projection = int(kwargs.pop("projection", 4326))
             point_str = f"POINT({lon} {lat} {z})" if z is not None else f"POINT({lon} {lat})"
             kwargs["geom"] = WKTElement(point_str, srid=projection)
         super().__init__(**kwargs)
