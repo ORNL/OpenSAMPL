@@ -1,7 +1,8 @@
 [project]
 name = "opensampl"
-version = "1.0.2"
+version = "1.0.3"
 description = "Python tools for adding clock data to a timescale db."
+license = {file = "LICENSE"}
 authors = [
     { name = "Midgie MacFarland", email = "macfarlandmj@ornl.gov" },
     { name = "Cory Watson", email = "watsoncl1@ornl.gov" },
@@ -29,6 +30,7 @@ dependencies = [
     "libcst",
     "jinja2>=3.1.6",
     "black>=25.1.0",
+    "tabulate>=0.9.0,<1",
 ]
 
 [project.urls]

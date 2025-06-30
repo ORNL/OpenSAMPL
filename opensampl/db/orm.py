@@ -12,8 +12,13 @@ from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, declarative_base, relationship
 from sqlalchemy.schema import MetaData
 
+# Prevent pytest from collecting this module as a test module
+collect_ignore = ["orm.py"]
+
 SCHEMA_NAME = "castdb"
 
+# Create base with schema for PostgreSQL, without schema for SQLite
+Base = declarative_base()
 
 class BaseHelpers:
     """Mixin for Base class that adds some helper methods"""
@@ -30,9 +35,8 @@ class BaseHelpers:
 
         return {c.name: convert_value(getattr(self, c.name)) for c in self.__table__.columns}
 
-
-Base = declarative_base(cls=BaseHelpers, metadata=MetaData(schema=SCHEMA_NAME))
-
+# Add BaseHelpers to Base
+Base.to_dict = BaseHelpers.to_dict
 
 class Locations(Base):
     """

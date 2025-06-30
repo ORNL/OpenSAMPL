@@ -17,6 +17,7 @@ from loguru import logger
 
 from opensampl.constants import ENV_VARS
 from opensampl.db.orm import Base
+from opensampl.helpers.config_manager import ConfigManager
 from opensampl.helpers.env import set_env
 from opensampl.load_data import create_new_tables, write_to_table
 from opensampl.vendors.constants import VENDOR_MAP, get_vendor_parser
@@ -143,6 +144,69 @@ def config_set(name: str, value: str):
     set_env(name=name, value=value)
 
 
+@config.command("set-config")
+@click.argument("name")
+@click.argument("value")
+def config_set_config(name: str, value: str):
+    """
+    Set a configuration value in the openSAMPL configuration file.
+
+    This sets values in either $HOME/.config/opensampl/config or /etc/opensampl/config
+    depending on which exists. User config takes precedence over system config.
+
+    Examples
+    --------
+        opensampl config set-config SYSTEMD_SERVICE_NAME my-opensampl
+        opensampl config set-config SYSTEMD_USER opensampl
+
+    """
+    config_manager = ConfigManager()
+    config_manager.set_config_value(name, value)
+    click.echo(f"Set {name}={value} in {config_manager.get_config_path()}")
+
+
+@config.command("get-config")
+@click.argument("name")
+def config_get_config(name: str):
+    """
+    Get a configuration value from the openSAMPL configuration file.
+
+    Examples
+    --------
+        opensampl config get-config SYSTEMD_SERVICE_NAME
+
+    """
+    config_manager = ConfigManager()
+    value = config_manager.get_config_value(name)
+    if value is not None:
+        click.echo(value)
+    else:
+        click.echo(f"Configuration '{name}' not found", err=True)
+
+
+@config.command("show-config")
+def config_show_config():
+    """
+    Show all configuration values from the openSAMPL configuration file.
+
+    Examples
+    --------
+        opensampl config show-config
+
+    """
+    config_manager = ConfigManager()
+    config = config_manager.read_config()
+    
+    if not config:
+        click.echo("No configuration found")
+        return
+    
+    from tabulate import tabulate
+    
+    data = [{"Variable": key, "Value": value} for key, value in config.items()]
+    click.echo(tabulate(data, headers="keys", tablefmt="simple"))
+
+
 @cli.group(cls=CaseInsensitiveGroup)
 def load():
     """Load data into database"""
@@ -237,6 +301,59 @@ def create_probe_command(config_path: Path, update_db: bool):
     vendor_config.create()
     if update_db:
         create_new_tables()
+
+
+@cli.command()
+@click.option(
+    "--service-name",
+    default="opensampl",
+    help="Name for the systemd service",
+)
+@click.option(
+    "--user",
+    default="opensampl",
+    help="User to run the systemd service as",
+)
+@click.option(
+    "--working-directory",
+    type=click.Path(path_type=Path),
+    default="/opt/opensampl",
+    help="Working directory for the systemd service",
+)
+@click.option(
+    "--uninstall",
+    is_flag=True,
+    help="Uninstall the systemd service instead of installing it",
+)
+def register(service_name: str, user: str, working_directory: Path, uninstall: bool):
+    """
+    Register openSAMPL as a systemd service.
+
+    This command creates and installs a systemd service for openSAMPL that will
+    automatically start the server on boot. The service can be configured via
+    configuration files in $HOME/.config/opensampl/ or /etc/opensampl/.
+
+    Examples
+    --------
+        sudo opensampl register
+        sudo opensampl register --service-name my-opensampl --user myuser
+        sudo opensampl register --uninstall
+
+    """
+    config_manager = ConfigManager()
+    
+    if uninstall:
+        if config_manager.uninstall_systemd_service(service_name):
+            click.echo(f"Successfully uninstalled systemd service '{service_name}'")
+        else:
+            click.echo("Failed to uninstall systemd service", err=True)
+            raise click.Abort()
+    else:
+        if config_manager.install_systemd_service(service_name, user, working_directory):
+            click.echo(f"Successfully registered systemd service '{service_name}'")
+        else:
+            click.echo("Failed to register systemd service", err=True)
+            raise click.Abort()
 
 
 if __name__ == "__main__":

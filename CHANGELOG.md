@@ -73,3 +73,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - ⚡ linting github action now confirms that the documentation can be built
+
+## [1.0.3] - 2025-05-15
+### Added
+- 🔥 a LICENSE file for the MIT license was added to the repository
+- 🔥 additional testing modules
+
+### Changed
+- ⚡ pyproject.toml was updated 

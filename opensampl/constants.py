@@ -67,6 +67,34 @@ class ENV_VARS:  # noqa: N801
         name="API_KEY",
         description="Access key for interacting with the backend",
     )
+    SYSTEMD_SERVICE_NAME = EnvVar(
+        name="SYSTEMD_SERVICE_NAME",
+        description="Name for the systemd service",
+        default="opensampl",
+    )
+    SYSTEMD_USER = EnvVar(
+        name="SYSTEMD_USER",
+        description="User to run the systemd service as",
+        default="opensampl",
+    )
+    SYSTEMD_WORKING_DIRECTORY = EnvVar(
+        name="SYSTEMD_WORKING_DIRECTORY",
+        description="Working directory for the systemd service",
+        type_=Path,
+        default="/opt/opensampl",
+    )
+    SYSTEMD_CONFIG_DIR = EnvVar(
+        name="SYSTEMD_CONFIG_DIR",
+        description="Configuration directory for the systemd service",
+        type_=Path,
+        default="/etc/opensampl",
+    )
+    SYSTEMD_USER_CONFIG_DIR = EnvVar(
+        name="SYSTEMD_USER_CONFIG_DIR",
+        description="User configuration directory (overrides SYSTEMD_CONFIG_DIR if set)",
+        type_=Path,
+        default="$HOME/.config/opensampl",
+    )
 
     @classmethod
     def __iter__(cls) -> Iterator[EnvVar]:
@@ -85,3 +113,18 @@ class ENV_VARS:  # noqa: N801
     def all(cls) -> list[EnvVar]:
         """Get all EnvVar objects as list"""
         return [value for key, value in cls.__dict__.items() if isinstance(value, EnvVar)]
+
+    @classmethod
+    def get_config_dir(cls) -> Path:
+        """Get the active configuration directory."""
+        user_config_dir = cls.SYSTEMD_USER_CONFIG_DIR.get_value()
+        system_config_dir = cls.SYSTEMD_CONFIG_DIR.get_value()
+        
+        # Expand $HOME in user config dir
+        if user_config_dir and str(user_config_dir).startswith("$HOME"):
+            user_config_dir = Path(os.path.expandvars(str(user_config_dir)))
+        
+        # Check if user config exists, otherwise use system config
+        if user_config_dir and user_config_dir.exists():
+            return user_config_dir
+        return system_config_dir
