@@ -119,11 +119,11 @@ class ENV_VARS:  # noqa: N801
         """Get the active configuration directory."""
         user_config_dir = cls.SYSTEMD_USER_CONFIG_DIR.get_value()
         system_config_dir = cls.SYSTEMD_CONFIG_DIR.get_value()
-        
+
         # Expand $HOME in user config dir
         if user_config_dir and str(user_config_dir).startswith("$HOME"):
             user_config_dir = Path(os.path.expandvars(str(user_config_dir)))
-        
+
         # Check if user config exists, otherwise use system config
         if user_config_dir and user_config_dir.exists():
             return user_config_dir

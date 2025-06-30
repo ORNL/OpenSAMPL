@@ -196,13 +196,13 @@ def config_show_config():
     """
     config_manager = ConfigManager()
     config = config_manager.read_config()
-    
+
     if not config:
         click.echo("No configuration found")
         return
-    
+
     from tabulate import tabulate
-    
+
     data = [{"Variable": key, "Value": value} for key, value in config.items()]
     click.echo(tabulate(data, headers="keys", tablefmt="simple"))
 
@@ -341,19 +341,18 @@ def register(service_name: str, user: str, working_directory: Path, uninstall: b
 
     """
     config_manager = ConfigManager()
-    
+
     if uninstall:
         if config_manager.uninstall_systemd_service(service_name):
             click.echo(f"Successfully uninstalled systemd service '{service_name}'")
         else:
             click.echo("Failed to uninstall systemd service", err=True)
             raise click.Abort()
+    elif config_manager.install_systemd_service(service_name, user, working_directory):
+        click.echo(f"Successfully registered systemd service '{service_name}'")
     else:
-        if config_manager.install_systemd_service(service_name, user, working_directory):
-            click.echo(f"Successfully registered systemd service '{service_name}'")
-        else:
-            click.echo("Failed to register systemd service", err=True)
-            raise click.Abort()
+        click.echo("Failed to register systemd service", err=True)
+        raise click.Abort()
 
 
 if __name__ == "__main__":

@@ -25,12 +25,12 @@ class ConfigManager:
         user_config = self.user_config_dir / self.config_file
         if user_config.exists():
             return user_config
-        
+
         # Try to use system config, but fall back to user config if not accessible
         system_config = self.system_config_dir / self.config_file
         if system_config.exists():
             return system_config
-        
+
         # Default to user config directory if system directory is not accessible
         try:
             # Test if we can write to system directory
@@ -47,10 +47,10 @@ class ConfigManager:
         """Read configuration from the active config file."""
         config_path = self.get_config_path()
         config = {}
-        
+
         if config_path.exists():
             try:
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     for line in f:
                         line = line.strip()
                         if line and not line.startswith("#"):
@@ -59,16 +59,16 @@ class ConfigManager:
                                 config[key.strip()] = value.strip()
             except Exception as e:
                 logger.warning(f"Failed to read config file {config_path}: {e}")
-        
+
         return config
 
     def write_config(self, config: dict[str, str]) -> None:
         """Write configuration to the active config file."""
         config_path = self.get_config_path()
-        
+
         # Ensure directory exists
         config_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         try:
             with open(config_path, "w") as f:
                 f.write("# openSAMPL Configuration\n")
@@ -121,14 +121,14 @@ WantedBy=multi-user.target
 
             # Create service content
             service_content = self.create_systemd_service(service_name, user, working_dir)
-            
+
             # Write service file
             service_file = Path(f"/etc/systemd/system/{service_name}.service")
             service_file.write_text(service_content)
-            
+
             # Create working directory
             working_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Set ownership
             if user != "root":
                 try:
@@ -137,22 +137,23 @@ WantedBy=multi-user.target
                     logger.warning(f"User '{user}' not found, using current user")
                     # Use current user if specified user doesn't exist
                     import pwd
+
                     current_user = pwd.getpwuid(os.getuid()).pw_name
                     shutil.chown(working_dir, user=current_user, group=current_user)
-            
+
             # Reload systemd
             subprocess.run(["systemctl", "daemon-reload"], check=True)
-            
+
             # Enable service
             subprocess.run(["systemctl", "enable", f"{service_name}.service"], check=True)
-            
+
             logger.info(f"Systemd service '{service_name}' installed and enabled successfully")
             logger.info(f"Working directory: {working_dir}")
             logger.info(f"Configuration directory: {self.get_config_path()}")
             logger.info("Use 'systemctl start opensampl' to start the service")
-            
+
             return True
-            
+
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to install systemd service: {e}")
             return False
@@ -171,21 +172,21 @@ WantedBy=multi-user.target
             # Stop and disable service
             subprocess.run(["systemctl", "stop", f"{service_name}.service"], check=False)
             subprocess.run(["systemctl", "disable", f"{service_name}.service"], check=False)
-            
+
             # Remove service file
             service_file = Path(f"/etc/systemd/system/{service_name}.service")
             if service_file.exists():
                 service_file.unlink()
-            
+
             # Reload systemd
             subprocess.run(["systemctl", "daemon-reload"], check=True)
-            
+
             logger.info(f"Systemd service '{service_name}' uninstalled successfully")
             return True
-            
+
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to uninstall systemd service: {e}")
             return False
         except Exception as e:
             logger.error(f"Unexpected error uninstalling systemd service: {e}")
-            return False 
+            return False
