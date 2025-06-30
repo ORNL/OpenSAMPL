@@ -38,9 +38,38 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 -->
 
-## [1.0.0] - 2025-05-09
-- Initial commit
+## [Unreleased] - YYYY-MM-DD
+### Added
+- 🔥 Environment variable OPENSAMPL_COMPOSE_FILE used to identify compose file used for opensampl-server
+- 🧪 Included additional tests
+- 📄 updated documentation including a systemd_service guide
+- ⚙️ `opensampl register` click endpoint to configure systemd service
+- 🧩 `opensample config` to look at the configuration in `/etc/opensampl` or `$HOME/.config/opensampl`
 
+### Changed
+- ⚡ Order of changelog, newest on top
+
+### Fixed
+- 🩹 Bugs in load_data introduced by ty type checking changes
+
+## [1.0.3] - 2025-05-15
+### Added
+- 🔥 a LICENSE file for the MIT license was added to the repository
+- 🔥 additional testing modules
+
+### Changed
+- ⚡ pyproject.toml was updated 
+
+## [1.0.2] - 2025-05-12
+### Added
+- 🔥 `black` added as a dependency for auto-creation of probe types
+- 🔥 `ty` added as a dependency for type-checking
+
+### Fixed
+- 🩹 `ty` type checking errors addressed
+
+### Changed
+- ⚡ linting github action now confirms that the documentation can be built
 
 ## [1.0.1] - 2025-05-09
 ### Added
@@ -63,21 +92,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🗡️ Remove unused imports from many files
 - 🗡️ Remove commented-out code in some classes
 
-## [1.0.2] - 2025-05-12
-### Added
-- 🔥 `black` added as a dependency for auto-creation of probe types
-- 🔥 `ty` added as a dependency for type-checking
 
-### Fixed
-- 🩹 `ty` type checking errors addressed
+## [1.0.0] - 2025-05-09
+- Initial commit
 
-### Changed
-- ⚡ linting github action now confirms that the documentation can be built
-
-## [1.0.3] - 2025-05-15
-### Added
-- 🔥 a LICENSE file for the MIT license was added to the repository
-- 🔥 additional testing modules
-
-### Changed
-- ⚡ pyproject.toml was updated 
