@@ -1,16 +1,19 @@
 """Shared test fixtures for opensampl tests."""
 
-import pytest
-from unittest.mock import MagicMock, Mock, patch
-import pandas as pd
 from datetime import datetime, timezone
+from typing import Any
+from unittest.mock import Mock, patch
 from uuid import uuid4
-from sqlalchemy.orm import sessionmaker
+
+import pandas as pd
+import pytest
+
 from opensampl.config.base import BaseConfig
-from opensampl.vendors.constants import ProbeKey, VendorType
 from opensampl.metrics import MetricType
 from opensampl.references import ReferenceType
+from opensampl.vendors.constants import ProbeKey, VendorType
 from tests.utils.mockdb import MockDB
+
 
 @pytest.fixture(scope="session")
 def test_db():
@@ -19,7 +22,7 @@ def test_db():
 
 
 @pytest.fixture
-def mock_session(test_db):
+def mock_session(test_db: MockDB):
     """Create a real database session using MockDB."""
     session = test_db.Session()
     # Set the current session for MockDB event listeners
@@ -35,23 +38,23 @@ def mock_session(test_db):
 
 
 @pytest.fixture
-def mock_table_factory_with_mockdb(test_db):
+def mock_table_factory_with_mockdb(test_db: MockDB):
     """Mock TableFactory.resolve_table to use MockDB table mappings."""
-    def mock_resolve_table(self):
+    def mock_resolve_table(self) -> Any: # noqa: ANN001
         """Resolve table using MockDB mappings instead of Base.registry."""
         table_name = self.name
         if table_name in test_db.table_mappings:
             return test_db.table_mappings[table_name]
         raise ValueError(f"Table {table_name} not found in MockDB schema")
-    
-    with patch('opensampl.load.table_factory.TableFactory.resolve_table', mock_resolve_table):
+
+    with patch("opensampl.load.table_factory.TableFactory.resolve_table", mock_resolve_table):
         yield
 
 
 @pytest.fixture
 def mock_config():
     """Mock BaseConfig for testing."""
-    with patch('opensampl.load.routing.BaseConfig') as mock:
+    with patch("opensampl.load.routing.BaseConfig") as mock:
 
         config = Mock(spec=BaseConfig)
         config.ROUTE_TO_BACKEND = False
@@ -59,21 +62,20 @@ def mock_config():
         config.LOG_LEVEL = "DEBUG"
 
         mock.return_value = config
-        # config.check_routing_dependencies = Mock()  # Mock to avoid validation
         yield mock
 
 
 @pytest.fixture
 def mock_config_backend():
     """Mock BaseConfig with backend routing enabled."""
-    with patch('opensampl.load.routing.BaseConfig') as mock:
+    with patch("opensampl.load.routing.BaseConfig") as mock:
         config = Mock(spec=BaseConfig)
         config.ROUTE_TO_BACKEND = True
         config.BACKEND_URL = "http://localhost:8000"
         config.API_KEY = "test-api-key"
         config.INSECURE_REQUESTS = False
         config.LOG_LEVEL = "DEBUG"
-        
+
         mock.return_value = config
         yield mock
 
