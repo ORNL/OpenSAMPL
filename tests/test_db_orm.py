@@ -3,6 +3,8 @@
 import pkgutil
 from pathlib import Path
 
+import opensampl.db
+
 
 def test_db_package_import():
     """Test that the db package can be imported."""

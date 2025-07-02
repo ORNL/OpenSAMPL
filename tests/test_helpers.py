@@ -3,6 +3,8 @@
 import pkgutil
 from pathlib import Path
 
+import opensampl.helpers
+
 
 def test_helpers_package_import():
     """Test that the helpers package can be imported."""

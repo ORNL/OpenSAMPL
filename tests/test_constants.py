@@ -1,8 +1,9 @@
 """Tests for the constants module."""
 
 import pytest
+from pathlib import Path
 
-from opensampl.constants import *
+from opensampl.constants import ENV_VARS, EnvVar
 
 
 def test_constants_import():
@@ -12,52 +13,88 @@ def test_constants_import():
     assert constants is not None
 
 
-def test_constants_exist():
-    """Test that essential constants are defined."""
-    # Database related constants
-    assert hasattr(constants, "DEFAULT_DB_HOST")
-    assert hasattr(constants, "DEFAULT_DB_PORT")
-    assert hasattr(constants, "DEFAULT_DB_NAME")
+def test_env_vars_class_exists():
+    """Test that the ENV_VARS class exists and has expected attributes."""
+    assert hasattr(ENV_VARS, "ROUTE_TO_BACKEND")
+    assert hasattr(ENV_VARS, "BACKEND_URL")
+    assert hasattr(ENV_VARS, "DATABASE_URL")
+    assert hasattr(ENV_VARS, "ARCHIVE_PATH")
+    assert hasattr(ENV_VARS, "LOG_LEVEL")
+    assert hasattr(ENV_VARS, "API_KEY")
+    assert hasattr(ENV_VARS, "SYSTEMD_SERVICE_NAME")
+    assert hasattr(ENV_VARS, "SYSTEMD_USER")
+    assert hasattr(ENV_VARS, "SYSTEMD_WORKING_DIRECTORY")
+    assert hasattr(ENV_VARS, "SYSTEMD_CONFIG_DIR")
+    assert hasattr(ENV_VARS, "SYSTEMD_USER_CONFIG_DIR")
 
-    # API related constants
-    assert hasattr(constants, "API_TIMEOUT")
-    assert hasattr(constants, "API_RETRY_COUNT")
 
-    # File path constants
-    assert hasattr(constants, "CONFIG_DIR")
-    assert hasattr(constants, "DATA_DIR")
+def test_env_var_instances():
+    """Test that ENV_VARS attributes are EnvVar instances."""
+    for var in ENV_VARS.all():
+        assert isinstance(var, EnvVar)
 
 
 @pytest.mark.parametrize(
-    "constant_name,expected_type",
+    "var_name,expected_type",
     [
-        ("DEFAULT_DB_HOST", str),
-        ("DEFAULT_DB_PORT", int),
-        ("DEFAULT_DB_NAME", str),
-        ("API_TIMEOUT", int),
-        ("API_RETRY_COUNT", int),
-        ("CONFIG_DIR", str),
-        ("DATA_DIR", str),
+        ("ROUTE_TO_BACKEND", bool),
+        ("BACKEND_URL", str),
+        ("DATABASE_URL", str),
+        ("ARCHIVE_PATH", Path),
+        ("LOG_LEVEL", str),
+        ("API_KEY", str),
+        ("SYSTEMD_SERVICE_NAME", str),
+        ("SYSTEMD_USER", str),
+        ("SYSTEMD_WORKING_DIRECTORY", Path),
+        ("SYSTEMD_CONFIG_DIR", Path),
+        ("SYSTEMD_USER_CONFIG_DIR", Path),
     ],
 )
-def test_constant_types(constant_name, expected_type):
-    """Test that constants have the correct types."""
-    constant = globals().get(constant_name)
-    assert constant is not None, f"Constant {constant_name} is not defined"
-    assert isinstance(constant, expected_type), f"Constant {constant_name} should be of type {expected_type.__name__}"
+def test_env_var_types(var_name, expected_type):
+    """Test that environment variables have the correct types."""
+    var = getattr(ENV_VARS, var_name)
+    assert isinstance(var, EnvVar)
+    assert var.type_ == expected_type
 
 
-def test_constant_values():
-    """Test that constants have valid values."""
-    # Database constants
-    assert DEFAULT_DB_HOST in ["localhost", "127.0.0.1"]
-    assert 1024 <= DEFAULT_DB_PORT <= 65535
-    assert DEFAULT_DB_NAME
+def test_env_var_defaults():
+    """Test that environment variables have appropriate default values."""
+    # Test some key defaults
+    assert ENV_VARS.LOG_LEVEL.default == "INFO"
+    assert ENV_VARS.SYSTEMD_SERVICE_NAME.default == "opensampl"
+    assert ENV_VARS.SYSTEMD_USER.default == "opensampl"
+    assert ENV_VARS.SYSTEMD_WORKING_DIRECTORY.default == "/opt/opensampl"
+    assert ENV_VARS.SYSTEMD_CONFIG_DIR.default == "/etc/opensampl"
+    assert ENV_VARS.SYSTEMD_USER_CONFIG_DIR.default == "$HOME/.config/opensampl"
 
-    # API constants
-    assert API_TIMEOUT > 0
-    assert API_RETRY_COUNT >= 0
 
-    # Path constants
-    assert CONFIG_DIR
-    assert DATA_DIR
+def test_env_vars_iteration():
+    """Test that ENV_VARS can be iterated over."""
+    vars_list = ENV_VARS.all()
+    assert len(vars_list) > 0
+    assert all(isinstance(var, EnvVar) for var in vars_list)
+
+
+def test_env_vars_get_method():
+    """Test the get method of ENV_VARS."""
+    # Test getting a known variable
+    result = ENV_VARS.get("LOG_LEVEL")
+    assert result is not None
+    
+    # Test getting a non-existent variable
+    result = ENV_VARS.get("NON_EXISTENT_VAR")
+    assert result is None
+
+
+def test_env_vars_all_method():
+    """Test the all method of ENV_VARS."""
+    all_vars = ENV_VARS.all()
+    assert isinstance(all_vars, list)
+    assert len(all_vars) > 0
+    assert all(isinstance(var, EnvVar) for var in all_vars)
+
+
+def test_get_config_dir_method():
+    """Test the get_config_dir method."""
+    config_dir = ENV_VARS.get_config_dir()
+    assert isinstance(config_dir, Path)
