@@ -38,31 +38,27 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 -->
 
-## [1.1.0] - 2025-06-23
+## [1.1.0] - 2025-07-02
 ### Added
-- 🔥 Microsemi TWST Vendor Support
-- 🔥 Microsemi TWST 6502 data parser script
+- 🔥 Microsemi TWST Probe Support
+- 🔥 Microsemi TWST 6502 modem data parser script
+- 🔥 Data characteristic specification in database & code
+- 🔥 `[collect]` package extra for dependencies relating to collecting data from probes
+- 🔥 MockDB to facilitate testing
+- 🔥 License Information 
 
 ### Changed
-- ⚡ All probe data now has a metric type and reference for the measurement
-
-### Deprecated
-- ☠️ Placeholder for features about to vanish into the void.
-- ☠️ …
+- ⚡ Now using Pydantic-settings for environment variable management
+- ⚡ More thorough error handling around duplicate entries
 
 ### Removed
-- 🗡️ Placeholder for chopped-off code.
-- 🗡️ …
+- 🗡️ `black` removed as dependency, probe type creation no longer depends on it 
 
 ### Fixed
-- 🩹 Placeholder for bugs crushed under your boot.
-- 🩹 …
+- 🩹 Updated create functionality for adding new vendors
 
-### Security
-- 🔐 Placeholder for vulnerabilities sealed shut.
-- 🔐 …
 
-## [1.0.3] - YYYY-MM-DD
+## [1.0.3] - 2025-06-02
 ### Added
 - 🔥 Environment variable OPENSAMPL_COMPOSE_FILE used to identify compose file used for opensampl-server 
 

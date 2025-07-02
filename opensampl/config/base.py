@@ -22,7 +22,7 @@ class BaseConfig(BaseSettings):
     logging, and API access settings.
     """
 
-    model_config = SettingsConfigDict(env_file=".env", extras="ignore", env_nested_delimiter="__")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", env_nested_delimiter="__")
     env_file: Path = Field(description="Path to the env file to get variables from.")
 
     ROUTE_TO_BACKEND: bool = Field(
