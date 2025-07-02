@@ -38,7 +38,7 @@ class MetadataField(BaseModel):
     primary_key: Optional[bool] = False
 
 
-class DEFAULT_METADATA: # noqa N801
+class DEFAULT_METADATA:  # noqa N801
     """Default metadata fields for vendor configurations."""
 
     ADDITIONAL_FIELDS = MetadataField(name="additional_metadata", sqlalchemy_type="JSONB")
@@ -182,7 +182,7 @@ class VendorConfig(VendorType):
             metadata_orm=self.metadata_orm,
             metadata_table=self.metadata_table,
             metadata_columns=metadata_columns,
-            name_lower=self.name.lower()
+            name_lower=self.name.lower(),
         )
 
     @staticmethod

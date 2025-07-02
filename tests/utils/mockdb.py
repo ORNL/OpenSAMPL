@@ -17,11 +17,12 @@ from opensampl.references import REF_TYPES, ReferenceType
 class MockDB:
     """Object for SpatialiteDB used in tests"""
 
-    def __init__(self, Base: Any=None): #noqa: N803
+    def __init__(self, Base: Any = None):  # noqa: N803
         """Create spatialite db that is in alignment with our postgres one"""
         if Base is None:
             from opensampl.db.orm import Base as PgBase
-            Base = PgBase # noqa: N806
+
+            Base = PgBase  # noqa: N806
 
         self.PgBase = Base
         self.sqlite_metadata = MetaData()
@@ -54,11 +55,9 @@ class MockDB:
         ]
 
         autoinc = False
-        if (
-            hasattr(column, "identity")
-            and column.identity is not None
-            and column.primary_key
-        ) and (isinstance(column.type, Integer) or "int" in str(column.type).lower()):
+        if (hasattr(column, "identity") and column.identity is not None and column.primary_key) and (
+            isinstance(column.type, Integer) or "int" in str(column.type).lower()
+        ):
             autoinc = True
 
         server_default = column.server_default
@@ -123,7 +122,7 @@ class MockDB:
             funcs = self._copy_custom_methods(cls, None)
             attrs.update(funcs)
             # Create the MockDB class
-            sqlite_cls = type(cls.__name__, (self.SqliteBase, ), attrs)
+            sqlite_cls = type(cls.__name__, (self.SqliteBase,), attrs)
 
             self.table_mappings[cls.__name__] = sqlite_cls
             self.table_mappings[cls.__tablename__] = sqlite_cls
@@ -139,7 +138,6 @@ class MockDB:
 
         # Load default metric and reference types after everything is set up
         self._load_default_data()
-
 
     def _load_spatialite(self) -> None:
         """Load SpatiaLite extension and initialize spatial metadata."""
@@ -159,7 +157,8 @@ class MockDB:
 
                 # Create geometry columns table if it doesn't exist
                 # (InitSpatialMetaData should create this, but let's be explicit)
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                     CREATE TABLE IF NOT EXISTS geometry_columns (
                         f_table_name TEXT NOT NULL,
                         f_geometry_column TEXT NOT NULL,
@@ -169,7 +168,8 @@ class MockDB:
                         spatial_index_enabled INTEGER NOT NULL DEFAULT 0,
                         PRIMARY KEY (f_table_name, f_geometry_column)
                     )
-                """))
+                """)
+                )
                 conn.commit()
 
         except Exception:
@@ -188,11 +188,7 @@ class MockDB:
                     # This is a GeoAlchemy2 geometry column
                     geometry_type = self._get_geometry_type_code(column.type.geometry_type)
                     srid = getattr(column.type, "srid", 4326)
-                    geometry_columns.append({
-                        "column_name": col_name,
-                        "geometry_type": geometry_type,
-                        "srid": srid
-                    })
+                    geometry_columns.append({"column_name": col_name, "geometry_type": geometry_type, "srid": srid})
 
             # Register each geometry column
             if geometry_columns:
@@ -200,17 +196,19 @@ class MockDB:
                     for geom_col in geometry_columns:
                         conn.execute(
                             text(
-                        """
+                                """
                         INSERT OR IGNORE INTO geometry_columns
                         (f_table_name, f_geometry_column, geometry_type, coord_dimension, srid, spatial_index_enabled)
                         VALUES (:table_name, :column_name, :geometry_type, 2, :srid, 0)
                         """
-                            ), {
-                            "table_name": table_name,
-                            "column_name": geom_col["column_name"],
-                            "geometry_type": geom_col["geometry_type"],
-                            "srid": geom_col["srid"]
-                        })
+                            ),
+                            {
+                                "table_name": table_name,
+                                "column_name": geom_col["column_name"],
+                                "geometry_type": geom_col["geometry_type"],
+                                "srid": geom_col["srid"],
+                            },
+                        )
                     conn.commit()
 
         except Exception:
@@ -225,7 +223,7 @@ class MockDB:
             "MULTIPOINT": 4,
             "MULTILINESTRING": 5,
             "MULTIPOLYGON": 6,
-            "GEOMETRYCOLLECTION": 7
+            "GEOMETRYCOLLECTION": 7,
         }
         return geometry_types.get(geometry_type_name.upper(), 1)  # Default to POINT
 
@@ -246,8 +244,10 @@ class MockDB:
         # Handle __init__ method specially to work with MockDB class hierarchy
         if original_cls.__name__ == "Locations":
             from geoalchemy2 import WKTElement
+
             mock_db = self
-            def mock_init(self, **kwargs: dict) -> None: # noqa: ANN001
+
+            def mock_init(self, **kwargs: dict) -> None:  # noqa: ANN001
                 # Handle lat/lon conversion first
                 if "lat" in kwargs and "lon" in kwargs:
                     lat = kwargs.pop("lat")
@@ -282,16 +282,20 @@ class MockDB:
                     return
 
             if hasattr(self, "_location_name"):
-                location = session.query(
-                    mockdb_instance.table_mappings.get("Locations")
-                ).filter_by(name=self._location_name).first()
+                location = (
+                    session.query(mockdb_instance.table_mappings.get("Locations"))
+                    .filter_by(name=self._location_name)
+                    .first()
+                )
                 self.location_uuid = location.uuid if location else None
                 delattr(self, "_location_name")  # Clean up after resolving
 
             if hasattr(self, "_test_name"):
-                test_meta = session.query(
-                    mockdb_instance.table_mappings.get("TestMetadata")
-                ).filter_by(name=self._test_name).first()
+                test_meta = (
+                    session.query(mockdb_instance.table_mappings.get("TestMetadata"))
+                    .filter_by(name=self._test_name)
+                    .first()
+                )
                 self.test_uuid = test_meta.uuid if test_meta else None
                 delattr(self, "_test_name")
 
@@ -325,8 +329,9 @@ class MockDB:
         """Register resolve_uuid event listener for MockDB ProbeMetadata class."""
         mock_probe_metadata = self.table_mappings.get("ProbeMetadata")
         if mock_probe_metadata:
+
             @listens_for(mock_probe_metadata, "before_insert")
-            def mock_resolve_uuid(mapper, connection, target: mock_probe_metadata) -> None: # noqa: ARG001,ANN001
+            def mock_resolve_uuid(mapper, connection, target: mock_probe_metadata) -> None:  # noqa: ARG001,ANN001
                 # Get session from the MockDB Session class
                 session = self._get_current_session(target)
                 if session:
@@ -336,31 +341,34 @@ class MockDB:
         """Register set_probe_data_defaults event listener for MockDB ProbeData class."""
         mock_probe_data = self.table_mappings.get("ProbeData")
         if mock_probe_data:
+
             @listens_for(mock_probe_data, "before_insert")
-            def mock_set_probe_data_defaults(mapper, connection, target: mock_probe_data) -> None: # noqa: ARG001,ANN001
+            def mock_set_probe_data_defaults(mapper, connection, target: mock_probe_data) -> None:  # noqa: ARG001,ANN001
                 try:
                     session = self._get_current_session(target)
 
                     if session is None:
-                        raise RuntimeError("No session could be resolved from target") # noqa: TRY301
+                        raise RuntimeError("No session could be resolved from target")  # noqa: TRY301
 
                     # Set default reference_uuid if not provided
                     if target.reference_uuid is None:
                         # Use the actual default reference UUID if available
-                        default_ref_uuid = getattr(self,
-                                                   "_default_reference_uuid", "00000000-0000-0000-0000-000000000001")
+                        default_ref_uuid = getattr(
+                            self, "_default_reference_uuid", "00000000-0000-0000-0000-000000000001"
+                        )
                         target.reference_uuid = default_ref_uuid
 
                     # Set default metric_type_uuid if not provided
                     if target.metric_type_uuid is None:
                         # Use the actual default metric UUID if available
-                        default_metric_uuid = getattr(self,
-                                                      "_default_metric_uuid",
-                                                      "00000000-0000-0000-0000-000000000002")
+                        default_metric_uuid = getattr(
+                            self, "_default_metric_uuid", "00000000-0000-0000-0000-000000000002"
+                        )
                         target.metric_type_uuid = default_metric_uuid
 
                 except Exception as e:
                     from loguru import logger
+
                     logger.warning(f"Failed to set default values for ProbeData: {e}")
                     # Continue without setting defaults rather than failing the insert
 
@@ -406,13 +414,14 @@ class MockDB:
         except Exception:
             session.rollback()
             import traceback
+
             traceback.print_exc()
         finally:
             session.close()
 
     def _load_metric_types(self, session: Session) -> str:
         """Load metric types from opensampl.metrics.METRICS and return the UNKNOWN one's UUID."""
-        MetricTypeTable = self.table_mappings.get("MetricType") # noqa: N806
+        MetricTypeTable = self.table_mappings.get("MetricType")  # noqa: N806
         if not MetricTypeTable:
             return None
 
@@ -429,7 +438,7 @@ class MockDB:
 
     def _load_reference_types(self, session: Session) -> str:
         """Load reference types from opensampl.references.REF_TYPES and return the UNKNOWN one's UUID."""
-        ReferenceTypeTable = self.table_mappings.get("ReferenceType") # noqa: N806
+        ReferenceTypeTable = self.table_mappings.get("ReferenceType")  # noqa: N806
         if not ReferenceTypeTable:
             return None
 
@@ -446,33 +455,24 @@ class MockDB:
 
     def _load_default_reference(self, session: Session, unknown_ref_type_uuid: str) -> str:
         """Load a default reference entry using the UNKNOWN reference type."""
-        ReferenceTable = self.table_mappings.get("Reference") # noqa: N806
+        ReferenceTable = self.table_mappings.get("Reference")  # noqa: N806
         if not ReferenceTable or not unknown_ref_type_uuid:
             return None
 
-        default_ref = ReferenceTable(
-            reference_type_uuid=unknown_ref_type_uuid,
-            compound_reference_uuid=None
-        )
+        default_ref = ReferenceTable(reference_type_uuid=unknown_ref_type_uuid, compound_reference_uuid=None)
         session.add(default_ref)
         session.flush()
         return default_ref.uuid
 
     def _load_defaults_table(self, session: Session, default_ref_uuid: str, default_metric_uuid: str) -> None:
         """Load entries into the defaults table for default UUIDs."""
-        Defaults = self.table_mappings.get("Defaults") # noqa: N806
+        Defaults = self.table_mappings.get("Defaults")  # noqa: N806
         if not Defaults:
             return
 
         default_entries = [
-            {
-                "table_name": "reference",
-                "uuid": default_ref_uuid
-            },
-            {
-                "table_name": "metric_type",
-                "uuid": default_metric_uuid
-            }
+            {"table_name": "reference", "uuid": default_ref_uuid},
+            {"table_name": "metric_type", "uuid": default_metric_uuid},
         ]
 
         for default_data in default_entries:

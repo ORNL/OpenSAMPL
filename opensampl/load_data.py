@@ -74,14 +74,14 @@ def write_to_table(
 
 @route("load_time_data", send_file=True)
 def load_time_data(
-        probe_key: ProbeKey,
-        metric_type: MetricType,
-        reference_type: ReferenceType,
-        data: pd.DataFrame,
-        _config: BaseConfig,
-        compound_key: Optional[dict[str, Any]] = None,
-        strict: bool = True,
-        session: Optional[Session] = None,
+    probe_key: ProbeKey,
+    metric_type: MetricType,
+    reference_type: ReferenceType,
+    data: pd.DataFrame,
+    _config: BaseConfig,
+    compound_key: Optional[dict[str, Any]] = None,
+    strict: bool = True,
+    session: Optional[Session] = None,
 ):
     """
     Write time data to probe_data table
@@ -105,7 +105,7 @@ def load_time_data(
                 "probe_key_str": json.dumps(probe_key.model_dump()),
                 "metric_type_str": json.dumps(metric_type.model_dump()),
                 "reference_type_str": json.dumps(reference_type.model_dump()),
-                "compound_key_str": json.dumps(compound_key)
+                "compound_key_str": json.dumps(compound_key),
             },
             "files": {"file": ("time_data.csv", csv_data, "text/csv")},
         }
@@ -116,20 +116,22 @@ def load_time_data(
     try:
         from opensampl.load.data import DataFactory
 
-        data_definition = DataFactory(probe_key=probe_key,
-                                      metric_type=metric_type,
-                                      reference_type=reference_type,
-                                      compound_key=compound_key,
-                                      strict=strict,
-                                      session=session)
+        data_definition = DataFactory(
+            probe_key=probe_key,
+            metric_type=metric_type,
+            reference_type=reference_type,
+            compound_key=compound_key,
+            strict=strict,
+            session=session,
+        )
 
         if any(x is None for x in [data_definition.probe, data_definition.metric, data_definition.reference]):
-            raise RuntimeError(f"Not all required definition fields filled: {data_definition.dump_factory()}") # noqa: TRY301
+            raise RuntimeError(f"Not all required definition fields filled: {data_definition.dump_factory()}")  # noqa: TRY301
 
         df = data[["time", "value"]].copy()  # Only keep required columns.
-        df["probe_uuid"] = data_definition.probe.uuid           # ty: ignore[possibly-unbound-attribute]
-        df["reference_uuid"] = data_definition.reference.uuid   # ty: ignore[possibly-unbound-attribute]
-        df["metric_type_uuid"] = data_definition.metric.uuid    # ty: ignore[possibly-unbound-attribute]
+        df["probe_uuid"] = data_definition.probe.uuid  # ty: ignore[possibly-unbound-attribute]
+        df["reference_uuid"] = data_definition.reference.uuid  # ty: ignore[possibly-unbound-attribute]
+        df["metric_type_uuid"] = data_definition.metric.uuid  # ty: ignore[possibly-unbound-attribute]
 
         # Ensure correct dtypes
         df["time"] = pd.to_datetime(df["time"], utc=True, errors="raise")
@@ -181,9 +183,7 @@ def load_probe_metadata(
         )
         logger.debug(f"{probe=}")
         if not probe:
-            probe_info = {"probe_id": probe_key.probe_id,
-                          "ip_address": probe_key.ip_address,
-                          "vendor": vendor.name}
+            probe_info = {"probe_id": probe_key.probe_id, "ip_address": probe_key.ip_address, "vendor": vendor.name}
             model = data.pop("model", None)
             if model:
                 probe_info["model"] = str(model)

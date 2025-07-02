@@ -85,7 +85,7 @@ class TableFactory:
         if cols != [] and all(col in data for col in cols):
             col_data_map = {col: data[col] for col in cols}
             logger.debug(f"column filter= {col_data_map}")
-            return and_(*(getattr(self.model, k) == v for k, v in col_data_map.items())) # ty: ignore[missing-argument]
+            return and_(*(getattr(self.model, k) == v for k, v in col_data_map.items()))  # ty: ignore[missing-argument]
         logger.debug(f"some or all columns from {cols} missing in data")
         return None
 
@@ -124,7 +124,7 @@ class TableFactory:
         unique_filters = [
             y for y in [self.create_col_filter(data=data, cols=x) for x in self.unique_constraints] if y is not None
         ]
-        unique_filter = and_(*unique_filters) if unique_filters != [] else None # ty: ignore[missing-argument]
+        unique_filter = and_(*unique_filters) if unique_filters != [] else None  # ty: ignore[missing-argument]
         self.print_filter_debug(unique_filter, "Unique Constraint")
 
         if all(x is None for x in [primary_filter, id_filter, unique_filter]):

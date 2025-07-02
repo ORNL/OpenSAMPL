@@ -126,12 +126,9 @@ class BaseConfig(BaseSettings):
             values_dict = self.model_dump(exclude=set(self._ignore_in_set))
         else:
             values_dict = self.model_dump(include=set(values))
-        logger.debug(
-            f"setting the following variables in env: {values_dict}"
-        )
+        logger.debug(f"setting the following variables in env: {values_dict}")
         for key, val in values_dict.items():
             self.set_by_name(name=key, value=val)
-
 
     def check_routing_dependencies(self) -> "BaseConfig":
         """

@@ -41,6 +41,7 @@ async def collect_data(status_reader: ModemStatusReader, context_reader: ModemCo
     """
     await asyncio.gather(status_reader.collect_readings(), context_reader.get_context())
 
+
 def collect_files(host: str, output_dir: str, dump_interval: int, total_duration: Optional[int] = None):
     """
     Continuously collect blocks of modem measurements and save to timestamped CSV files.
@@ -96,20 +97,14 @@ def main(ip_address: str, dump_interval: int, total_duration: int, output_dir: s
     """
     collect_files(host=ip_address, dump_interval=dump_interval, total_duration=total_duration, output_dir=output_dir)
 
+
 @click.command()
-@click.option("--ip",
-              required=True,
-              help="IP address of the modem")
-@click.option("--dump-interval",
-              default=300,
-              help="Duration between file dumps in seconds (default: 300 = 5 minutes)")
-@click.option("--total-duration",
-              default=None,
-              type=int,
-              help="Total duration to run in seconds (default: run indefinitely)")
-@click.option("--output-dir",
-              default="./output",
-              help="Output directory for CSV files (default: ./output)")
+@click.option("--ip", required=True, help="IP address of the modem")
+@click.option("--dump-interval", default=300, help="Duration between file dumps in seconds (default: 300 = 5 minutes)")
+@click.option(
+    "--total-duration", default=None, type=int, help="Total duration to run in seconds (default: run indefinitely)"
+)
+@click.option("--output-dir", default="./output", help="Output directory for CSV files (default: ./output)")
 def main_click(ip: str, dump_interval: int, total_duration: int, output_dir: str):
     """
     Click command-line interface for modem data collection.
@@ -125,6 +120,7 @@ def main_click(ip: str, dump_interval: int, total_duration: int, output_dir: str
 
     """
     collect_files(host=ip, dump_interval=dump_interval, total_duration=total_duration, output_dir=output_dir)
+
 
 if __name__ == "__main__":
     main_click()

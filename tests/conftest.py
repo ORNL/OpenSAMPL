@@ -40,7 +40,8 @@ def mock_session(test_db: MockDB):
 @pytest.fixture
 def mock_table_factory_with_mockdb(test_db: MockDB):
     """Mock TableFactory.resolve_table to use MockDB table mappings."""
-    def mock_resolve_table(self) -> Any: # noqa: ANN001
+
+    def mock_resolve_table(self) -> Any:  # noqa: ANN001
         """Resolve table using MockDB mappings instead of Base.registry."""
         table_name = self.name
         if table_name in test_db.table_mappings:
@@ -55,7 +56,6 @@ def mock_table_factory_with_mockdb(test_db: MockDB):
 def mock_config():
     """Mock BaseConfig for testing."""
     with patch("opensampl.load.routing.BaseConfig") as mock:
-
         config = Mock(spec=BaseConfig)
         config.ROUTE_TO_BACKEND = False
         config.DATABASE_URL = "sqlite:///:memory:"
@@ -117,26 +117,23 @@ def sample_reference_type():
 @pytest.fixture
 def sample_time_data():
     """Sample pandas DataFrame with time series data."""
-    return pd.DataFrame({
-        "time": [
-            datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 12, 1, 0, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 12, 2, 0, tzinfo=timezone.utc),
-        ],
-        "value": [1.23456, 1.23457, 1.23458],
-        "extra_column": ["a", "b", "c"]  # Should be filtered out
-    })
+    return pd.DataFrame(
+        {
+            "time": [
+                datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 1, 12, 1, 0, tzinfo=timezone.utc),
+                datetime(2024, 1, 1, 12, 2, 0, tzinfo=timezone.utc),
+            ],
+            "value": [1.23456, 1.23457, 1.23458],
+            "extra_column": ["a", "b", "c"],  # Should be filtered out
+        }
+    )
 
 
 @pytest.fixture
 def sample_table_data():
     """Sample data dictionary for table operations."""
-    return {
-        "name": "Test Location",
-        "lat": 35.9132,
-        "lon": -84.0401,
-        "public": True
-    }
+    return {"name": "Test Location", "lat": 35.9132, "lon": -84.0401, "public": True}
 
 
 @pytest.fixture

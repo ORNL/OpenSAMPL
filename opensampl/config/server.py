@@ -4,6 +4,7 @@ Pydantic BaseSettings Object used to access and set the openSAMPL-server configu
 This module provides the main configuration class for openSAMPL-server, handling environment variables,
 configuration validation, and settings management.
 """
+
 import shlex
 from importlib.resources import as_file, files
 from pathlib import Path
@@ -32,15 +33,9 @@ class ServerConfig(BaseConfig):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", env_prefix="OPENSAMPL_SERVER__")
 
-    COMPOSE_FILE: str = Field(
-        default="",
-        description="Fully resolved path to the Docker Compose file."
-    )
+    COMPOSE_FILE: str = Field(default="", description="Fully resolved path to the Docker Compose file.")
 
-    DOCKER_ENV_FILE: str = Field(
-        default="",
-        description="Fully resolved path to the Docker .env file."
-    )
+    DOCKER_ENV_FILE: str = Field(default="", description="Fully resolved path to the Docker .env file.")
 
     docker_env_values: dict[str, Any] = Field(default_factory=dict, init=False)
 
@@ -124,4 +119,3 @@ class ServerConfig(BaseConfig):
         if all(x is not None for x in [user, password, db]):
             return f"postgresql://{user}:{password}@localhost:5415/{db}"
         raise ValueError("Database environment variables POSTGRES_USER, POSTGRES_PASSWORD, or POSTGRES_DB are not set.")
-

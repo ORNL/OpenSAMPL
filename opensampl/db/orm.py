@@ -57,7 +57,7 @@ class BaseHelpers:
         """
         return None
 
-    def resolve_references(self, session: Optional[Session] = None) -> None: # noqa: ARG002
+    def resolve_references(self, session: Optional[Session] = None) -> None:  # noqa: ARG002
         """
         Resolve UUIDs for other entries in the database given a unique constraint.
 
@@ -90,6 +90,7 @@ Base = declarative_base(cls=BaseHelpers, metadata=MetaData(schema=SCHEMA_NAME))
 
 
 # --- SUPPORTED TABLES ----
+
 
 class Locations(Base):
     """
@@ -180,7 +181,6 @@ class ProbeMetadata(Base):
     adva_metadata = relationship("AdvaMetadata", back_populates="probe", uselist=False)
 
     # --- CUSTOM PROBE METADATA RELATIONSHIP ---
-
 
     def __init__(self, **kwargs: Any):
         """
@@ -326,8 +326,10 @@ class Reference(Base):
     compound_reference_uuid = Column(
         String(36),
         nullable=True,
-        comment=("Optional foreign key if the reference type is Compound. Which table it references is determined via "
-                 "reference_table field in reference_type table"),
+        comment=(
+            "Optional foreign key if the reference type is Compound. Which table it references is determined via "
+            "reference_table field in reference_type table"
+        ),
     )
     __table_args__ = (
         UniqueConstraint("reference_type_uuid", "compound_reference_uuid", name="uq_ref_type_uuid_cnstr"),
@@ -387,6 +389,7 @@ class AdvaMetadata(Base):
 
     probe = relationship("ProbeMetadata", back_populates="adva_metadata")
 
+
 class Defaults(Base):
     """Table for storing the default uuid for lookup tables"""
 
@@ -394,6 +397,7 @@ class Defaults(Base):
 
     table_name = Column(Text, primary_key=True, comment="Name of the table/category this entry belongs to")
     uuid = Column(String(36), nullable=False, comment="Optional UUID reference resolved from name_value")
+
 
 class MicrochipTWSTMetadata(Base):
     """
@@ -411,10 +415,12 @@ class MicrochipTWSTMetadata(Base):
         JSONB, comment="Additional metadata found in the file headers that did not match existing columns"
     )
 
+
 # --- CUSTOM TABLES ---      !! Do not remove line, used as reference when inserting metadata table
 
 
 # --- TABLE FUNCTIONS ---
+
 
 @listens_for(ProbeMetadata, "before_insert")
 def resolve_uuid(mapper, connection, target: ProbeMetadata):  # noqa: ARG001,ANN001
@@ -450,7 +456,7 @@ def set_probe_data_defaults(mapper, connection, target: ProbeData):  # noqa: ARG
         session = Session.object_session(target)
 
         if session is None:
-            raise RuntimeError("No session could be resolved from target") # noqa: TRY301
+            raise RuntimeError("No session could be resolved from target")  # noqa: TRY301
 
         # Set default reference_uuid if not provided
         if target.reference_uuid is None:
@@ -465,6 +471,7 @@ def set_probe_data_defaults(mapper, connection, target: ProbeData):  # noqa: ARG
     except Exception as e:
         logger.warning(f"Failed to set default values for ProbeData: {e}")
         # Continue without setting defaults rather than failing the insert
+
 
 def get_table_names():
     """

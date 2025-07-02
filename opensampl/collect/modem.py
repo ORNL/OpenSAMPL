@@ -15,6 +15,7 @@ try:
     import telnetlib3
 except ImportError:
     import sys
+
     logger.warning("Collect extra must be installed in order to use Modem data collection functionality.")
     sys.exit(1)
 

@@ -59,7 +59,7 @@ class VENDORS:
         parser_class="MicrochipTWSTProbe",
         parser_module="microchip.twst",
         metadata_table="microchip_twst_metadata",
-        metadata_orm="MicrochipTWSTMetadata"
+        metadata_orm="MicrochipTWSTMetadata",
     )
 
     # --- CUSTOM VENDORS ---      !! Do not remove line, used as reference when inserting vendor

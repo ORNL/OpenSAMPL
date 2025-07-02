@@ -187,7 +187,7 @@ class BaseProbe(ABC):
                 else:
                     raise
             except IntegrityError as e:
-                if isinstance(e.orig, psycopg2.errors.UniqueViolation): # ty: ignore[unresolved-attribute]
+                if isinstance(e.orig, psycopg2.errors.UniqueViolation):  # ty: ignore[unresolved-attribute]
                     logger.warning(
                         f"{filepath} violates unique constraint for time data, implying already loaded. "
                         f"Will move to archive if archiving is enabled."
@@ -384,41 +384,45 @@ class BaseProbe(ABC):
 
         """
 
-    def send_data(self,
-               data: pd.DataFrame,
-               metric: MetricType,
-               reference_type: ReferenceType,
-               compound_reference: Optional[dict[str, Any]] = None):
+    def send_data(
+        self,
+        data: pd.DataFrame,
+        metric: MetricType,
+        reference_type: ReferenceType,
+        compound_reference: Optional[dict[str, Any]] = None,
+    ):
         """Ingests data into the database"""
         if self.chunk_size:
             for chunk_start in range(0, len(data), self.chunk_size):
-                chunk = data.iloc[chunk_start: chunk_start + self.chunk_size]
-                load_time_data(probe_key=self.probe_key,
-                               metric_type=metric,
-                               reference_type=reference_type,
-                               data=chunk,
-                               compound_key=compound_reference)
+                chunk = data.iloc[chunk_start : chunk_start + self.chunk_size]
+                load_time_data(
+                    probe_key=self.probe_key,
+                    metric_type=metric,
+                    reference_type=reference_type,
+                    data=chunk,
+                    compound_key=compound_reference,
+                )
         else:
-            load_time_data(probe_key=self.probe_key,
-                           metric_type=metric,
-                           reference_type=reference_type,
-                           data=data,
-                           compound_key=compound_reference)
+            load_time_data(
+                probe_key=self.probe_key,
+                metric_type=metric,
+                reference_type=reference_type,
+                data=data,
+                compound_key=compound_reference,
+            )
 
-    def send_time_data(self,
-                       data: pd.DataFrame,
-                       reference_type: ReferenceType,
-                       compound_reference: Optional[dict[str, Any]] = None):
+    def send_time_data(
+        self, data: pd.DataFrame, reference_type: ReferenceType, compound_reference: Optional[dict[str, Any]] = None
+    ):
         """
         Ingests time data into the database
 
         :param chunk_size: How many records to send at a time. If None, sends all at once. default: None
         :return:
         """
-        self.send_data(data=data,
-                       metric=METRICS.PHASE_OFFSET,
-                       reference_type=reference_type,
-                       compound_reference=compound_reference)
+        self.send_data(
+            data=data, metric=METRICS.PHASE_OFFSET, reference_type=reference_type, compound_reference=compound_reference
+        )
 
     @abstractmethod
     def process_metadata(self) -> dict:

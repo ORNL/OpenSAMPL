@@ -38,7 +38,7 @@ def load_config(env_file: str | None = None) -> ServerConfig:
     else:
         env_file = str(Path(env_file).resolve())
 
-    return ServerConfig(_env_file=env_file) # ty: ignore[unknown-argument]
+    return ServerConfig(_env_file=env_file)  # ty: ignore[unknown-argument]
 
 
 BANNER = r"""
@@ -55,9 +55,9 @@ BANNER = r"""
 
 
 @click.group()
-@click.option("--env-file",
-              type=click.Path(exists=True),
-              help="Path to the file with cli configuration settings defined")
+@click.option(
+    "--env-file", type=click.Path(exists=True), help="Path to the file with cli configuration settings defined"
+)
 @click.pass_context
 def cli(ctx: click.Context, env_file: str):
     """Command line interface for the opensampl server."""

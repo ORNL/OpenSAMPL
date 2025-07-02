@@ -14,23 +14,24 @@ from tests.utils.mockdb import MockDB
 class TestWriteToTable:
     """Integration tests for write_to_table with real database operations."""
 
-    def test_write_to_table(self, mock_config: Mock, mock_session: Session, sample_table_data: dict,
-                            test_db: MockDB, mock_table_factory_with_mockdb: Any):
+    def test_write_to_table(
+        self,
+        mock_config: Mock,
+        mock_session: Session,
+        sample_table_data: dict,
+        test_db: MockDB,
+        mock_table_factory_with_mockdb: Any,
+    ):
         """Test write_to_table with actual database writes."""
         # Get the real table class for locations
-        Locations = test_db.table_mappings["Locations"] # noqa: N806
+        Locations = test_db.table_mappings["Locations"]  # noqa: N806
 
         # Verify table is empty initially
         count_before = mock_session.query(Locations).count()
         assert count_before == 0
 
         # Call write_to_table with real database operation
-        result = write_to_table(
-            table="locations",
-            data=sample_table_data,
-            if_exists="update",
-            session=mock_session
-        )
+        result = write_to_table(table="locations", data=sample_table_data, if_exists="update", session=mock_session)
 
         # Verify data was written to database
         locations = mock_session.query(Locations).all()
@@ -42,22 +43,19 @@ class TestWriteToTable:
         assert location.geom is not None  # Should have geometry from lat/lon
         assert result is None
 
-    def test_conflict_handling(self,
-                               mock_config: Mock,
-                               mock_session: Session,
-                               sample_table_data: dict,
-                               test_db: MockDB,
-                               mock_table_factory_with_mockdb: Any):
+    def test_conflict_handling(
+        self,
+        mock_config: Mock,
+        mock_session: Session,
+        sample_table_data: dict,
+        test_db: MockDB,
+        mock_table_factory_with_mockdb: Any,
+    ):
         """Test write_to_table conflict handling with real database."""
-        Locations = test_db.table_mappings["Locations"] # noqa: N806
+        Locations = test_db.table_mappings["Locations"]  # noqa: N806
 
         # First insert
-        write_to_table(
-            table="locations",
-            data=sample_table_data,
-            if_exists="update",
-            session=mock_session
-        )
+        write_to_table(table="locations", data=sample_table_data, if_exists="update", session=mock_session)
 
         # Verify first insert
         count_after_first = mock_session.query(Locations).count()
@@ -67,12 +65,7 @@ class TestWriteToTable:
         updated_data = sample_table_data.copy()
         updated_data["lat"] = sample_table_data["lat"] + 4
 
-        write_to_table(
-            table="locations",
-            data=updated_data,
-            if_exists="update",
-            session=mock_session
-        )
+        write_to_table(table="locations", data=updated_data, if_exists="update", session=mock_session)
 
         # Should still be only one record
         locations = mock_session.query(Locations).all()
@@ -81,8 +74,10 @@ class TestWriteToTable:
     def test_backend_routing(self, sample_table_data: dict):
         """Test backend routing behavior with proper HTTP mocking."""
         # Setup mock config for backend routing
-        with patch("opensampl.load.routing.requests.request") as mock_request, \
-            patch("opensampl.load.routing.BaseConfig") as mock_config_class:
+        with (
+            patch("opensampl.load.routing.requests.request") as mock_request,
+            patch("opensampl.load.routing.BaseConfig") as mock_config_class,
+        ):
             mock_config = Mock()
             mock_config.ROUTE_TO_BACKEND = True
             mock_config.BACKEND_URL = "http://localhost:8000"
@@ -98,11 +93,7 @@ class TestWriteToTable:
             mock_response.raise_for_status = Mock()
             mock_request.return_value = mock_response
 
-            write_to_table(
-                table="locations",
-                data=sample_table_data,
-                if_exists="update"
-            )
+            write_to_table(table="locations", data=sample_table_data, if_exists="update")
 
             # Verify backend call was made correctly
             mock_request.assert_called_once()
@@ -125,12 +116,13 @@ class TestWriteToTable:
                 data=sample_table_data,
                 _config=mock_config(),
                 if_exists="invalid_action",
-                session=mock_session
+                session=mock_session,
             )
 
     def test_session_validation(self, mock_config: Mock, sample_table_data: dict):
         """Test session validation with real isinstance check."""
         from opensampl.load_data import write_to_table
+
         original_func = getattr(write_to_table, "__wrapped__", write_to_table)
 
         with pytest.raises(TypeError, match="Session must be a SQLAlchemy session"):
@@ -139,7 +131,7 @@ class TestWriteToTable:
                 data=sample_table_data,
                 _config=mock_config(),
                 if_exists="update",
-                session="not_a_session"  # String instead of session
+                session="not_a_session",  # String instead of session
             )
 
 
@@ -277,26 +269,26 @@ class TestLoadProbeMetadata:
     #     assert payload["probe_key"] == sample_probe_key
     #     assert payload["data"] == sample_probe_metadata
 
-    def test_real_session_flow(self,
-                               mock_config: Mock,
-                               mock_session: Session,
-                               sample_probe_key: ProbeKey,
-                               sample_adva_metadata: dict,
-                               test_db: MockDB,
-                               mock_table_factory_with_mockdb: Any): #noqaARG002
+    def test_real_session_flow(
+        self,
+        mock_config: Mock,
+        mock_session: Session,
+        sample_probe_key: ProbeKey,
+        sample_adva_metadata: dict,
+        test_db: MockDB,
+        mock_table_factory_with_mockdb: Any,
+    ):  # noqaARG002
         """Test probe metadata creation with real session and database models."""
         # Use real database models from MockDB
         from opensampl.vendors.constants import VENDORS
-        ProbeMetadata = test_db.table_mappings.get("ProbeMetadata") # noqa: N806
+
+        ProbeMetadata = test_db.table_mappings.get("ProbeMetadata")  # noqa: N806
         count_before = mock_session.query(ProbeMetadata).count()
         assert count_before == 0
 
         with patch("opensampl.load_data.ProbeMetadata", ProbeMetadata):
             result = load_probe_metadata(
-                vendor=VENDORS.ADVA,
-                probe_key=sample_probe_key,
-                data=sample_adva_metadata,
-                session=mock_session
+                vendor=VENDORS.ADVA, probe_key=sample_probe_key, data=sample_adva_metadata, session=mock_session
             )
             assert result is None
 
@@ -307,6 +299,7 @@ class TestLoadProbeMetadata:
         assert entry.uuid is not None
         assert entry.probe_id == sample_probe_key.probe_id
         assert entry.ip_address == sample_probe_key.ip_address
+
 
 class TestMockDb:
     """Tests for the mock database itself"""
@@ -319,12 +312,12 @@ class TestMockDb:
         assert "ProbeData" in test_db.table_mappings
 
         # Verify models have expected attributes
-        Locations = test_db.table_mappings["Locations"] # noqa: N806
+        Locations = test_db.table_mappings["Locations"]  # noqa: N806
         assert hasattr(Locations, "__tablename__")
         assert hasattr(Locations, "uuid")
         assert hasattr(Locations, "name")
 
-        ProbeMetadata = test_db.table_mappings["ProbeMetadata"] # noqa: N806
+        ProbeMetadata = test_db.table_mappings["ProbeMetadata"]  # noqa: N806
         assert hasattr(ProbeMetadata, "__tablename__")
         assert hasattr(ProbeMetadata, "uuid")
         assert hasattr(ProbeMetadata, "name")
@@ -340,7 +333,7 @@ class TestMockDb:
         assert result[0] == 1
 
         # Test that we can create a model instance
-        Locations = test_db.table_mappings["Locations"] # noqa: N806
+        Locations = test_db.table_mappings["Locations"]  # noqa: N806
         location = Locations(name="Test Location", public=True)
 
         # Verify model has expected attributes

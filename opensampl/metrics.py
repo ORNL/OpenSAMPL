@@ -1,17 +1,11 @@
 """Functions and objects for managing openSAMPL Metric Types"""
+
 from typing import Any, Union
 
 from pydantic import BaseModel, field_serializer, field_validator
 
-type_map = {
-    "int": int,
-    "float": float,
-    "str": str,
-    "bool": bool,
-    "list": list,
-    "dict": dict,
-    "jsonb": Any
-}
+type_map = {"int": int, "float": float, "str": str, "bool": bool, "list": list, "dict": dict, "jsonb": Any}
+
 
 class MetricType(BaseModel):
     """Object for defining different metric types"""
@@ -40,28 +34,31 @@ class MetricType(BaseModel):
                 return type_map[value]
         return value
 
+
 class METRICS:
     """Class for storing metric types"""
 
     # --- SUPPORTED METRICS ----
     PHASE_OFFSET = MetricType(
-        name= "Phase Offset",
-        description= "Difference in seconds between the probe's time reading and the reference time reading",
-        unit= "s",
-        value_type= float
+        name="Phase Offset",
+        description="Difference in seconds between the probe's time reading and the reference time reading",
+        unit="s",
+        value_type=float,
     )
     EB_NO = MetricType(
-        name= "Eb/No",
-        description= ("Energy per bit to noise power spectral density ratio measured at the clock probe. "
-                "Indicates the quality of the received signal relative to noise."),
-        unit= "dB",
-        value_type= float
+        name="Eb/No",
+        description=(
+            "Energy per bit to noise power spectral density ratio measured at the clock probe. "
+            "Indicates the quality of the received signal relative to noise."
+        ),
+        unit="dB",
+        value_type=float,
     )
     UNKNOWN = MetricType(
-        name= "UNKNOWN",
-        description= "Unknown or unspecified metric type, with value_type of jsonb due to flexibility",
-        unit= "unknown",
-        value_type= Any
+        name="UNKNOWN",
+        description="Unknown or unspecified metric type, with value_type of jsonb due to flexibility",
+        unit="unknown",
+        value_type=Any,
     )
 
     # --- CUSTOM METRICS ---      !! Do not remove line, used as reference when inserting metric

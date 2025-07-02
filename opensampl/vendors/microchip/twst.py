@@ -35,7 +35,7 @@ class MicrochipTWSTProbe(BaseProbe):
         ip_address = file_name.name.split("_6502-Modem_")[0]
         return ProbeKey(probe_id="modem", ip_address=ip_address)
 
-    def __init__(self, input_file:  Union[str, Path]):
+    def __init__(self, input_file: Union[str, Path]):
         """Initialize MicrochipTWST object give input_file and determines probe identity from filename"""
         super().__init__(input_file=input_file)
         self.probe_key = self.parse_file_name(self.input_file)
@@ -52,7 +52,7 @@ class MicrochipTWSTProbe(BaseProbe):
 
         grouped_dfs = {
             (chan, meas): group.reset_index(drop=True)
-            for (chan, meas), group in df.groupby(["channel", "measurement"]) # ty: ignore[not-iterable]
+            for (chan, meas), group in df.groupby(["channel", "measurement"])  # ty: ignore[not-iterable]
         }
 
         for key, df in grouped_dfs.items():
@@ -67,10 +67,7 @@ class MicrochipTWSTProbe(BaseProbe):
             else:
                 raise ValueError(f"Unknown measurement type {reading}")
             try:
-                self.send_data(data=df,
-                               metric=metric,
-                               reference_type=REF_TYPES.PROBE,
-                               compound_reference=compound_key)
+                self.send_data(data=df, metric=metric, reference_type=REF_TYPES.PROBE, compound_reference=compound_key)
             except requests.HTTPError as e:
                 resp = e.response
                 if resp is None:
@@ -81,11 +78,8 @@ class MicrochipTWSTProbe(BaseProbe):
                     continue
                 raise
             except IntegrityError as e:
-                if isinstance(e.orig, psycopg2.errors.UniqueViolation): # ty: ignore[unresolved-attribute]
-                    logger.warning(
-                        f"Chan: meas={key} already loaded for time frame, continuing.."
-                    )
-
+                if isinstance(e.orig, psycopg2.errors.UniqueViolation):  # ty: ignore[unresolved-attribute]
+                    logger.warning(f"Chan: meas={key} already loaded for time frame, continuing..")
 
     def get_header(self) -> dict:
         """Retrieve the yaml formatted header information from the input file loaded into a dict"""
@@ -111,11 +105,10 @@ class MicrochipTWSTProbe(BaseProbe):
         header = self.get_header()
         for chan, info in header.get("remotes").items():
             # TODO: we will have to make sure channel 1 is the same probe somehow
-            remote_probe_key = ProbeKey(ip_address=self.probe_key.ip_address,
-                                        probe_id=f"chan:{chan}")
-            load_probe_metadata(vendor=self.vendor,
-                                probe_key=remote_probe_key,
-                                data={"additional_metadata": info, "model": "ATS 6502"})
+            remote_probe_key = ProbeKey(ip_address=self.probe_key.ip_address, probe_id=f"chan:{chan}")
+            load_probe_metadata(
+                vendor=self.vendor, probe_key=remote_probe_key, data={"additional_metadata": info, "model": "ATS 6502"}
+            )
         modem_data = header.get("local")
         self.metadata_parsed = True
         return {"additional_metadata": modem_data, "model": "ATS 6502"}

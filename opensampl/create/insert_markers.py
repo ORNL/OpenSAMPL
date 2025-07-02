@@ -12,6 +12,7 @@ from pydantic import BaseModel
 opensampl_root = Path(__file__).parent.parent
 template_dir = opensampl_root / "create" / "templates"
 
+
 class InsertMarker(BaseModel):
     """
     Definition for a code insertion marker.
@@ -32,7 +33,7 @@ class InsertMarker(BaseModel):
         return template_dir / self.template_name
 
 
-class INSERT_MARKERS: # noqa N801
+class INSERT_MARKERS:  # noqa N801
     """
     Predefined insertion markers for various openSAMPL components.
 
@@ -43,25 +44,25 @@ class INSERT_MARKERS: # noqa N801
     VENDOR = InsertMarker(
         filepath=opensampl_root / "vendors" / "constants.py",
         template_name="vendor_template.txt",
-        comment_marker="# --- CUSTOM VENDORS ---"
+        comment_marker="# --- CUSTOM VENDORS ---",
     )
     METRICS = InsertMarker(
         filepath=opensampl_root / "metrics.py",
         template_name="metric_template.txt",
-        comment_marker="# --- CUSTOM METRICS ---"
+        comment_marker="# --- CUSTOM METRICS ---",
     )
     REFERENCES = InsertMarker(
         filepath=opensampl_root / "references.py",
         template_name="reference_template.txt",
-        comment_marker="# --- CUSTOM REFERENCE TYPES ---"
+        comment_marker="# --- CUSTOM REFERENCE TYPES ---",
     )
     ORM_CLASS = InsertMarker(
         filepath=opensampl_root / "db" / "orm.py",
         template_name="orm_metadata.txt",
-        comment_marker="# --- CUSTOM TABLES ---"
+        comment_marker="# --- CUSTOM TABLES ---",
     )
     ORM_RELATIONSHIP = InsertMarker(
         filepath=opensampl_root / "db" / "orm.py",
         template_name="orm_relationship.txt",
-        comment_marker="# --- CUSTOM PROBE METADATA RELATIONSHIP ---"
+        comment_marker="# --- CUSTOM PROBE METADATA RELATIONSHIP ---",
     )
