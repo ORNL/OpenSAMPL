@@ -46,6 +46,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🔥 `[collect]` package extra for dependencies relating to collecting data from probes
 - 🔥 MockDB to facilitate testing
 - 🔥 License Information 
+- 🧪 Additional tests for vendors, CLI, config, and load data
 
 ### Changed
 - ⚡ Now using Pydantic-settings for environment variable management
