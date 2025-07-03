@@ -83,11 +83,7 @@ build-backend = "hatchling.build"
 [tool.ruff]
 line-length = 120
 exclude = [".git", "__pycache__", "venv", "env", ".venv", ".env", "build", "dist", "docs"]
-include = ["opensampl/**/*.py", "tests/**/*.py"]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ['ARG002'] # Ignore unused method in tests, because of mocking
-"tests/test_load_data.py" = ['ERA001'] # Ignore commented out code for now
+include = ["opensampl/**/*.py"]
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "C", "I", "D", "N", "B", "ERA", "ANN", "S", "A", "COM", "C4",
