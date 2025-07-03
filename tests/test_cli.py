@@ -23,14 +23,16 @@ class TestCLIConfig:
 
     def test_cli_config_defaults(self):
         """Test CLIConfig default values."""
-        config = BaseConfig()
-        assert config.ROUTE_TO_BACKEND is False
-        assert config.BACKEND_URL is None
-        assert config.DATABASE_URL is None
-        assert config.ARCHIVE_PATH == Path("archive")
-        assert config.LOG_LEVEL == "INFO"
-        assert config.API_KEY is None
-        assert config.INSECURE_REQUESTS is False
+        # Use a non-existent env file to prevent loading from .env
+        with patch.dict('os.environ', clear=True):
+            config = BaseConfig(_env_file="/nonexistent/env/file")
+            assert config.ROUTE_TO_BACKEND is False
+            assert config.BACKEND_URL is None
+            assert config.DATABASE_URL is None
+            assert config.ARCHIVE_PATH == Path("archive")
+            assert config.LOG_LEVEL == "INFO"
+            assert config.API_KEY is None
+            assert config.INSECURE_REQUESTS is False
 
     def test_cli_config_with_env_vars(self):
         """Test CLIConfig with environment variables."""
