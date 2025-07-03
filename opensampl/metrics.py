@@ -4,7 +4,7 @@ from typing import Any, Union
 
 from pydantic import BaseModel, field_serializer, field_validator
 
-type_map = {"int": int, "float": float, "str": str, "bool": bool, "list": list, "dict": dict, "jsonb": Any}
+type_map = {"int": int, "float": float, "str": str, "bool": bool, "list": list, "dict": dict, "jsonb": object}
 
 
 class MetricType(BaseModel):
@@ -58,7 +58,7 @@ class METRICS:
         name="UNKNOWN",
         description="Unknown or unspecified metric type, with value_type of jsonb due to flexibility",
         unit="unknown",
-        value_type=Any,
+        value_type=object,
     )
 
     # --- CUSTOM METRICS ---      !! Do not remove line, used as reference when inserting metric

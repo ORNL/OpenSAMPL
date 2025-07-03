@@ -119,7 +119,7 @@ class MockDB:
                 if not name.startswith("_"):
                     attrs[name] = self._clone_column(col)
 
-            funcs = self._copy_custom_methods(cls, None)
+            funcs = self._copy_custom_methods(cls)
             attrs.update(funcs)
             # Create the MockDB class
             sqlite_cls = type(cls.__name__, (self.SqliteBase,), attrs)
@@ -129,7 +129,7 @@ class MockDB:
             self.model_overrides[cls] = sqlite_cls
 
             # Register any geometry columns for this table
-            self._register_table_geometry_columns(cls, attrs)
+            self._register_table_geometry_columns(cls)
 
         self.sqlite_metadata.create_all(self.engine)
 
