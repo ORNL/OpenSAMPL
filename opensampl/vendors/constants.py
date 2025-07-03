@@ -27,39 +27,71 @@ class VendorType(BaseModel):
     metadata_table: str
     metadata_orm: str
 
+    def get_parser(self):
+        """Get the Python Class object associated with the vendor type"""
+        module = __import__(
+            f"opensampl.vendors.{self.parser_module}",
+            fromlist=[self.parser_class],
+            globals=globals(),
+        )
+        return getattr(module, self.parser_class)
 
-ADVA = VendorType(
-    name="ADVA",
-    parser_class="AdvaProbe",
-    parser_module="adva",
-    metadata_table="adva_metadata",
-    metadata_orm="AdvaMetadata",
-)
-
-VENDOR_MAP = {
-    "ADVA": ADVA,
-}
+    def get_orm(self):
+        """Get the Sqlalchemy ORM object associated with the vendor type"""
+        module = __import__("opensampl.db.orm", fromlist=[self.metadata_orm], globals=globals())
+        return getattr(module, self.metadata_orm)
 
 
-def get_vendor_parser(name: str):
-    """Given a vendor name string, get the VendorType definition"""
-    if name not in VENDOR_MAP:
-        raise AttributeError(f"Unknown vendor: {name}")
+class VENDORS:
+    """Vendors available for use"""
 
-    vendor_type = VENDOR_MAP[name]
-    module = __import__(
-        f"opensampl.vendors.{vendor_type.parser_module}",
-        fromlist=[vendor_type.parser_class],
-        globals=globals(),
+    # --- SUPPORTED VENDORS ----
+    ADVA = VendorType(
+        name="ADVA",
+        parser_class="AdvaProbe",
+        parser_module="adva",
+        metadata_table="adva_metadata",
+        metadata_orm="AdvaMetadata",
     )
-    return getattr(module, vendor_type.parser_class)
 
+    MICROCHIP_TWST = VendorType(
+        name="MicrochipTWST",
+        parser_class="MicrochipTWSTProbe",
+        parser_module="microchip.twst",
+        metadata_table="microchip_twst_metadata",
+        metadata_orm="MicrochipTWSTMetadata",
+    )
 
-def get_vendor_orm(name: str):
-    """Given a vendor name string, get the vendor's metadata ORM model"""
-    if name not in VENDOR_MAP:
-        raise AttributeError(f"Unknown vendor: {name}")
+    # --- CUSTOM VENDORS ---      !! Do not remove line, used as reference when inserting vendor
 
-    vendor_type = VENDOR_MAP[name]
-    module = __import__("opensampl.db.orm", fromlist=[vendor_type.metadata_orm], globals=globals())
-    return getattr(module, vendor_type.metadata_orm)
+    # --- VENDOR FUNCTIONS ---
+
+    @classmethod
+    def all(cls) -> list[VendorType]:
+        """Get all vendors"""
+        return [attr for attr in cls.__dict__.values() if isinstance(attr, VendorType)]
+
+    @classmethod
+    def get_by_name(cls, name: str, case_sensitive: bool = False) -> VendorType:
+        """
+        Get a vendor type by name
+
+        Args:
+            name: The name of the vendor to get
+            case_sensitive: Whether to match the name case-sensitively (default: False)
+
+        Returns:
+            VendorType: The vendor type definition
+
+        """
+        for attr_name in dir(cls):
+            if attr_name.startswith("_"):
+                continue
+
+            attr = getattr(cls, attr_name)
+            if isinstance(attr, VendorType):
+                vendor_name = attr.name
+                if vendor_name == name or (not case_sensitive and vendor_name.lower() == name.lower()):
+                    return attr
+
+        raise ValueError(f"Vendor '{name}' not found")

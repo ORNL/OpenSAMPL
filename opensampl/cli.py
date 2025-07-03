@@ -6,20 +6,20 @@ interact with the database and load data into it.
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Literal, Optional, Union
 
 import click
 import yaml
-from dotenv import find_dotenv, load_dotenv
+from dotenv import find_dotenv
 from loguru import logger
 
-from opensampl.constants import ENV_VARS
-from opensampl.db.orm import Base
-from opensampl.helpers.env import set_env
+from opensampl.config.base import BaseConfig as CLIConfig
+from opensampl.db.orm import get_table_names
 from opensampl.load_data import create_new_tables, write_to_table
-from opensampl.vendors.constants import VENDOR_MAP, get_vendor_parser
+from opensampl.vendors.constants import VENDORS
 
 BANNER = r"""
 
@@ -32,16 +32,37 @@ BANNER = r"""
     tools for processing clock data
 """
 
-env_file = find_dotenv()
-load_dotenv()
-level = str(ENV_VARS.LOG_LEVEL.get_value())
-logger.configure(handlers=[{"sink": sys.stderr, "level": level.upper()}])
+
+def load_config(env_file: Optional[str] = None) -> CLIConfig:
+    """
+    Load the configuration settings
+
+    Either from provided env_file, OPENSAMPL_ENV_FILE environment variable, or from the dotenv file found through
+    loaddotenv's find_dotenv
+
+    Args:
+        env_file: str
+
+    Returns:
+        BaseSettings model
+
+    """
+    if not env_file:
+        env_file = os.getenv("OPENSAMPL_ENV_FILE", None)
+
+    if not env_file:
+        dotenv_file = find_dotenv()
+        env_file = dotenv_file
+    else:
+        env_file = str(Path(env_file).resolve())
+
+    return CLIConfig(_env_file=env_file)
 
 
 class CaseInsensitiveGroup(click.Group):
     """Defines Click group options as case-insensitive. By default, click groups are case-sensitive."""
 
-    def get_command(self, ctx, cmd_name: str) -> Optional[click.Command]:  # noqa: ARG002,ANN001
+    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:  # noqa: ARG002
         """Normalize command name to lower case"""
         cmd_name = cmd_name.lower()
         # Match against lowercased command names
@@ -51,14 +72,16 @@ class CaseInsensitiveGroup(click.Group):
         return None
 
 
-def get_table_names():
-    """Get all table names from the ORM in opensampl.db.orm"""
-    return [table.name for table in Base.metadata.sorted_tables]
-
-
 @click.group()
-def cli():
+@click.option("--env-file", type=click.Path(exists=True), help="Path to the file with configuration settings defined")
+@click.pass_context
+def cli(ctx: click.Context, env_file: str):
     """CLI utility for openSAMPL"""
+    ctx.ensure_object(dict)
+    conf = load_config(env_file)
+    ctx.obj["conf"] = conf
+
+    logger.configure(handlers=[{"sink": sys.stderr, "level": conf.LOG_LEVEL.upper()}])
 
 
 @cli.command(name="init")
@@ -74,20 +97,24 @@ def init():
 
 
 @cli.group()
-def config():
+@click.pass_context
+def config(ctx: click.Context):
     """View and manage environment variables used by openSAMPL"""
 
 
 @config.command()
-def file():
+@click.pass_context
+def file(ctx: click.Context):
     """Show the path to the env file used by openSAMPL"""
-    click.echo(env_file)
+    conf = ctx.obj["conf"]
+    click.echo(conf.env_file)
 
 
 @config.command()
 @click.option("--explain", "-e", is_flag=True, help="Include descriptions of the variables")
 @click.option("--var", "-v", help="Specify a single variable to display")
-def show(explain: bool, var: str):
+@click.pass_context
+def show(ctx: click.Context, explain: bool, var: str):
     """
     Display current environment variable configurations.
 
@@ -99,15 +126,16 @@ def show(explain: bool, var: str):
         opensampl config show -e -v BACKEND_URL  # Show specific variable with description
 
     """
-    logger.debug(f"loaded env_file: {env_file}")
+    conf = ctx.obj["conf"]
+    logger.debug(f"loaded env_file: {conf.env_file}")
     if var:
         # Filter to specific variable if requested
-        vars_to_show = [v for v in ENV_VARS.all() if v.name == var]
+        vars_to_show = [var] if conf.get_by_name(var) else None
         if not vars_to_show:
             click.echo(f"Error: Environment variable '{var}' not found", err=True)
             return
     else:
-        vars_to_show = ENV_VARS.all()
+        vars_to_show = list(conf.model_fields.keys())
 
     from tabulate import tabulate
 
@@ -115,11 +143,11 @@ def show(explain: bool, var: str):
     data = []
     for env_var in vars_to_show:
         row = {
-            "Variable": env_var.name,
-            "Value": str(env_var.get_value()),
+            "Variable": env_var,
+            "Value": getattr(conf, env_var),
         }
         if explain:
-            row.update({"Description": env_var.description})
+            row.update({"Description": conf.model_fields.get(env_var).description})
         data.append(row)
     maxcolwidths = [None, None, 40] if explain else [None, None]
     click.echo(tabulate(data, headers="keys", tablefmt="simple", maxcolwidths=maxcolwidths))
@@ -128,7 +156,8 @@ def show(explain: bool, var: str):
 @config.command("set")
 @click.argument("name")
 @click.argument("value")
-def config_set(name: str, value: str):
+@click.pass_context
+def config_set(ctx: click.Context, name: str, value: str):
     """
     Set the value of an environment variable.
 
@@ -140,7 +169,9 @@ def config_set(name: str, value: str):
         opensampl config set BACKEND_URL http://localhost:8000
 
     """
-    set_env(name=name, value=value)
+    conf = ctx.obj["conf"]
+
+    conf.set_by_name(name=name, value=value)
 
 
 @cli.group(cls=CaseInsensitiveGroup)
@@ -148,8 +179,8 @@ def load():
     """Load data into database"""
 
 
-for probe_name in VENDOR_MAP:
-    load.add_command(get_vendor_parser(probe_name).get_cli_command(), name=probe_name)
+for vendor in VENDORS.all():
+    load.add_command(vendor.get_parser().get_cli_command(), name=vendor.name)
 
 
 def path_or_string(value: str) -> Union[dict, list]:
@@ -231,7 +262,7 @@ def table_load(
 )
 def create_probe_command(config_path: Path, update_db: bool):
     """Create a new probe type with scaffolding, based on a config file."""
-    from opensampl.helpers.create_vendor import VendorConfig
+    from opensampl.create.create_vendor import VendorConfig
 
     vendor_config = VendorConfig.from_config_file(config_path)
     vendor_config.create()
@@ -240,4 +271,8 @@ def create_probe_command(config_path: Path, update_db: bool):
 
 
 if __name__ == "__main__":
-    cli()
+    try:
+        cli()
+    except Exception as e:
+        logger.exception(f"Error: {e!s}")
+        raise

@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 13,
+  "id": 3,
   "links": [],
   "panels": [
     {
@@ -26,7 +26,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "castdb-datasource"
       },
-      "description": "Dot size corresponds to the number of selected probes at the location.\nColor corresponds to whether there are any probes at the site. ",
+      "description": "Dot size corresponds to the number of selected probes at the location. \nColor corresponds to whether there are any public probes at the site (there may be additional private probes or probes with different reading types) ",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -116,7 +116,7 @@
                 "value": [
                   {
                     "title": "${__data.fields.Clock} Link",
-                    "url": "/d/geospatial-internal-dashboard/geospatial-and-timing-combined-dashboard-internal?var-clock_name=${__data.fields.Clock}"
+                    "url": "/d/geospatial-dashboard/geospatial-and-timing-combined-dashboard?var-clock_name=${__data.fields.Clock}"
                   }
                 ]
               }
@@ -339,7 +339,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "select\n    pm.name as \"Clock\",\n    l.name as \"Location Name\",\n    l.latitude,\n    l.longitude,\n    l.campus\nfrom castdb.campus_locations l left join castdb.probe_metadata pm on l.uuid = pm.location_uuid\nwhere pm.uuid in ($clock_name);",
+          "rawSql": "select\n    pm.name as \"Clock\",\n    l.name as \"Location Name\",\n    l.latitude,\n    l.longitude,\n    l.campus\nfrom castdb.campus_locations l left join castdb.probe_metadata pm on l.uuid = pm.location_uuid\nwhere pm.uuid in (${clock_name:sqlstring});",
           "refId": "ClockProbes",
           "select": [
             [
@@ -386,37 +386,8 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n    l.latitude,\n    l.longitude,\n    l.campus,\n    count(\n        pm.uuid    ) as visible_clocks,\n    sum(\n        CASE\n            when pm.uuid in ($clock_name) then 1 else 0\n    end \n    ) as selected_clocks\n    from castdb.campus_locations l left join castdb.probe_metadata pm on l.uuid = pm.location_uuid\n    group by\n    l.latitude, l.longitude, l.campus;",
+          "rawSql": "SELECT\n    l.latitude,\n    l.longitude,\n    l.campus,\n    sum(\n        CASE\n            when pm.public = True and pm.vendor in ('ADVA') then 1 else 0\n        end \n    ) as visible_clocks,\n    sum(\n        CASE\n            when pm.uuid in (${clock_name:sqlstring}) then 1 else 0\n    end \n    ) as selected_clocks\n    from castdb.campus_locations l left join castdb.probe_metadata pm on l.uuid = pm.location_uuid\n    where l.public = True\n    group by\n    l.latitude, l.longitude, l.campus;",
           "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        },
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "P55EB97F79F5EB88E"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "hide": false,
-          "rawQuery": true,
-          "rawSql": "",
-          "refId": "B",
           "sql": {
             "columns": [
               {
@@ -444,7 +415,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "castdb-datasource"
       },
-      "description": "Number of probes that we have any data for, in any time range",
+      "description": "Number of public probes that we have any data for. ",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -500,7 +471,7 @@
           "refId": "A"
         }
       ],
-      "title": "Active Probes ",
+      "title": "Public Active Probes ",
       "type": "stat"
     },
     {
@@ -508,7 +479,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "castdb-datasource"
       },
-      "description": "Number of raw time entries in the selected time period ",
+      "description": "Number of raw time entries per clock in the given time period, selected above",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -571,7 +542,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  COALESCE(pm.name, CONCAT(pm.ip_address, ' Interface ', pm.probe_id))  as \"Clock Probe\", \n  COUNT(*) as \"Total Records\" \nFROM castdb.probe_data pd\njoin castdb.probe_metadata pm on pd.probe_uuid = pm.uuid \nwhere pm.uuid in ($clock_name)\nAND pd.\"time\" >= $__timeFrom()\nAND pd.\"time\" <= $__timeTo()\nGROUP BY pd.probe_uuid, pm.name, pm.ip_address, pm.probe_id;",
+          "rawSql": "SELECT \n  pm.name as \"Clock Probe\", \n  COUNT(*) as \"Total Records\" \nFROM castdb.probe_data pd\njoin castdb.probe_metadata pm on pd.probe_uuid = pm.uuid \nwhere pm.uuid in (${clock_name:sqlstring})\nAND pd.\"time\" >= $__timeFrom()\nAND pd.\"time\" <= $__timeTo()\nGROUP BY pd.probe_uuid, pm.name;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -596,12 +567,262 @@
       "type": "bargauge"
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "castdb-datasource"
+      },
+      "description": "Average time error \n(averaged on selected resolution)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 49,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "castdb-datasource"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  pm.name,\n  AVG(pd.value::FLOAT) * 1e9 AS value\nFROM castdb.probe_data pd join castdb.probe_metadata pm on pd.probe_uuid = pm.uuid\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid IN (${clock_name:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid,\n  pm.name\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Time Error - Clock Time vs GNSS",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "value (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "castdb-datasource"
+      },
+      "description": "Time interval based on selected resolution",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 82,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "castdb-datasource"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  pm.name,\n  (MAX(pd.value::FLOAT) - MIN(pd.value::FLOAT)) * 1e9 AS value\nFROM castdb.probe_data pd join castdb.probe_metadata pm on pd.probe_uuid = pm.uuid\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid in (${clock_name:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid,\n  pm.name\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Maximum Time Interval Error VS GNSS",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "value (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 20
       },
       "id": 3,
       "panels": [],
@@ -670,7 +891,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 13
+        "y": 21
       },
       "id": 4,
       "options": {
@@ -695,7 +916,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  AVG(pd.value) * 1e9 AS value\nFROM castdb.probe_data pd\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid = ${clock_name:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  AVG(pd.value::FLOAT) * 1e9 AS value\nFROM castdb.probe_data pd\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid = ${clock_name:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -780,7 +1001,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 13
+        "y": 21
       },
       "id": 5,
       "options": {
@@ -805,7 +1026,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  (MAX(pd.value) - MIN(pd.value)) * 1e9 AS value\nFROM castdb.probe_data pd\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid = ${clock_name:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  (MAX(pd.value::FLOAT) - MIN(pd.value::FLOAT)) * 1e9 AS value\nFROM castdb.probe_data pd\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid = ${clock_name:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -830,7 +1051,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "5m",
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
@@ -849,13 +1070,13 @@
           "type": "grafana-postgresql-datasource",
           "uid": "castdb-datasource"
         },
-        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata",
+        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where public = true and vendor in ('ADVA')",
         "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "clock_name",
         "options": [],
-        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata",
+        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where public = true and vendor in ('ADVA')",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -918,6 +1139,6 @@
   "timezone": "browser",
   "title": "Geospatial and Timing Combined Dashboard",
   "uid": "geospatial-dashboard",
-  "version": 4,
+  "version": 14,
   "weekStart": ""
 }

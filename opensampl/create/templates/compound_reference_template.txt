@@ -1,0 +1,5 @@
+    ${name_upper} = CompoundReferenceType(
+        name= '${name}',
+        description= '${description}',
+        reference_table= '${reference_table}'
+    )

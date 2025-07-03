@@ -3,24 +3,24 @@ parser: AdvaProbe
 metadata_orm: AdvaMetadata
 metadata_table: adva_metadata
 metadata_fields:
-  type:
-  start:
+  - name: 'type'
+  - name: start
     type: TIMESTAMP
-  frequency:
+  - name: frequency
     type: Integer
-  timemultiplier:
+  - name: timemultiplier
     type: Integer
-  multiplier:
+  - name: multiplier
     type: Integer
-  title:
-  adva_probe:
-  adva_reference:
-  adva_reference_expected_ql:
-  adva_source:
-  adva_direction:
-  adva_version:
+  - name: title
+  - name: adva_probe
+  - name: adva_reference
+  - name: adva_reference_expected_ql
+  - name: adva_source
+  - name: adva_direction
+  - name: adva_version
     type: Float
-  adva_status:
-  adva_mtie_mask:
-  adva_mask_margin:
+  - name: adva_status
+  - name: adva_mtie_mask
+  - name: adva_mask_margin
     type: Integer

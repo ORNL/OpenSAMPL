@@ -1,0 +1,35 @@
+"""${name} clock Parser implementation"""
+
+from opensampl.vendors.base_probe import BaseProbe
+import pandas as pd
+from opensampl.vendors.constants import VENDORS, ProbeKey
+
+class ${parser_class}(BaseProbe):
+
+    vendor = VENDORS.${upper_name}
+
+    def __init__(self, input_file, **kwargs):
+        # TODO: define how to find probe_key (probe_id and ip_address) for identifying unique location/instance
+        super().__init__(input_file=input_file, **kwargs)
+
+    def process_time_data(self) -> pd.DataFrame:
+        """
+        Process time series data from the input file.
+
+        Returns:
+            pd.DataFrame: DataFrame with columns:
+                - time (datetime64[ns]): timestamp for each measurement
+                - value (float64): measured value at each timestamp
+        """
+        # TODO: Implement time series data processing logic specific to ${name} probes
+        raise NotImplementedError("Time data processing not implemented for ${parser_class}")
+
+    def process_metadata(self) -> dict:
+        """
+        Process metadata from the input file.
+
+        Returns:
+            dict: Dictionary mapping table names to ORM objects
+        """
+        # TODO: Implement metadata processing logic specific to ${name}
+        raise NotImplementedError("Metadata processing not implemented for ${parser_class}")

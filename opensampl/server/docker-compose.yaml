@@ -50,7 +50,7 @@ services:
       - "8015:8000"
     restart: always
     environment:
-      - DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - BACKEND_LOG_LEVEL=${BACKEND_LOG_LEVEL:-INFO}
       - USE_API_KEY=${USE_API_KEY:-false}
       - API_KEY=${API_KEY:-}

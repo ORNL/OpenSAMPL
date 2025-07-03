@@ -9,7 +9,7 @@ Command: `opensampl load <PROBE TYPE> <INPUT PATH> [OPTIONS]` <br>
 Arguments: 
 
 * `PROBE TYPE`: Specify the probe type, which defines how to process the data files 
-    * currently only `ADVA` is officially supported. We have plans to incorporate Microsemi TSWFT clock readings. 
+    * See API reference for currently supported Probe Types. 
     * You can also try the experimental `create` method, described [below](#create), to define your own probe type.
 * `INPUT PATH`: The path to the input. Can be a single file, or a directory of files. 
 

@@ -1,7 +1,8 @@
 [project]
 name = "opensampl"
-version = "1.0.3"
+version = "1.1.0"
 description = "Python tools for adding clock data to a timescale db."
+license = {file = "LICENSE"}
 authors = [
     { name = "Midgie MacFarland", email = "macfarlandmj@ornl.gov" },
     { name = "Cory Watson", email = "watsoncl1@ornl.gov" },
@@ -11,6 +12,7 @@ readme = "README.md"
 requires-python = ">=3.9,<3.13"
 dependencies = [
     "pydantic>=2.10.3,<3",
+    "pydantic-settings>=2.9.0",
     "sqlalchemy>=2.0.39,<3",
     "geoalchemy2==0.16.0",
     "click>=8.0.0,<9",
@@ -28,7 +30,6 @@ dependencies = [
     "astor",
     "libcst",
     "jinja2>=3.1.6",
-    "black>=25.1.0",
 ]
 
 [project.urls]
@@ -39,6 +40,7 @@ Changelog = "https://github.com/ORNL/OpenSAMPL/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 server = []
+collect = ["telnetlib3==2.0.4"]
 
 [project.scripts]
 opensampl = "opensampl.cli:cli"
@@ -81,7 +83,7 @@ build-backend = "hatchling.build"
 [tool.ruff]
 line-length = 120
 exclude = [".git", "__pycache__", "venv", "env", ".venv", ".env", "build", "dist", "docs"]
-include = ["opensampl/**/*.py", "tests/**/*.py"]
+include = ["opensampl/**/*.py"]
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "C", "I", "D", "N", "B", "ERA", "ANN", "S", "A", "COM", "C4",
@@ -89,7 +91,11 @@ select = ["F", "E", "W", "C", "I", "D", "N", "B", "ERA", "ANN", "S", "A", "COM",
           "PYI", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TC", "ARG", "PTH",
           "FLY", "PERF", "PL", "UP", "FURB", "RUF", "TRY"]
 ignore = ["D203", "D212", "D400", "D415", "ANN401", "S101", "PLR2004", "COM812",
-          "ANN201", "B011", "EM102", "TRY003", "ANN204", "FA100", "PIE790", "EM101"]
+          "ANN201", "B011", "EM102", "TRY003", "ANN204", "FA100", "PIE790", "EM101",
+            "PLC0415"]
+
+[tool.ruff.lint.pylint]
+max-args = 10
 
 [tool.ruff.format]
 quote-style = "double"
