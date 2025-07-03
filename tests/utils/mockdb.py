@@ -74,6 +74,9 @@ class MockDB:
             column_type = Integer()
         elif str(column.type) == "JSONB":
             column_type = JSON()
+        elif hasattr(column.type, "geometry_type"):
+            # Replace geometry columns with TEXT for testing
+            column_type = JSON()
         else:
             column_type = column.type
 
@@ -131,6 +134,7 @@ class MockDB:
             # Register any geometry columns for this table
             self._register_table_geometry_columns(cls)
 
+        # Create all tables without complex event handling
         self.sqlite_metadata.create_all(self.engine)
 
         # Copy SQLAlchemy event listeners after all classes are created
@@ -143,37 +147,94 @@ class MockDB:
         """Load SpatiaLite extension and initialize spatial metadata."""
         try:
             with self.engine.connect() as conn:
-                raw_conn = conn.connection.dbapi_connection
-                raw_conn.enable_load_extension(True)
+                # Check if SQLite supports extensions
+                if hasattr(conn.connection.dbapi_connection, 'enable_load_extension'):
+                    raw_conn = conn.connection.dbapi_connection
+                    raw_conn.enable_load_extension(True)
 
-                # Try to load SpatiaLite extension
-                try:
-                    raw_conn.load_extension("mod_spatialite")
-                except Exception:
-                    raw_conn.load_extension("libspatialite")
+                    # Try to load SpatiaLite extension
+                    try:
+                        raw_conn.load_extension("mod_spatialite")
+                    except Exception:
+                        try:
+                            raw_conn.load_extension("libspatialite")
+                        except Exception:
+                            logger.warning("SpatiaLite extension not available, using minimal spatial support")
+                            # Create minimal geometry_columns table without SpatiaLite
+                            conn.execute(
+                                text("""
+                                CREATE TABLE IF NOT EXISTS geometry_columns (
+                                    f_table_name TEXT NOT NULL,
+                                    f_geometry_column TEXT NOT NULL,
+                                    geometry_type INTEGER NOT NULL,
+                                    coord_dimension INTEGER NOT NULL,
+                                    srid INTEGER NOT NULL,
+                                    spatial_index_enabled INTEGER NOT NULL DEFAULT 0,
+                                    PRIMARY KEY (f_table_name, f_geometry_column)
+                                )
+                                """)
+                            )
+                            conn.commit()
+                            return
 
-                # Initialize spatial metadata (creates geometry_columns table)
-                conn.execute(text("SELECT InitSpatialMetaData(1)"))
+                    # Initialize spatial metadata (creates geometry_columns table)
+                    conn.execute(text("SELECT InitSpatialMetaData(1)"))
 
-                # Create geometry columns table if it doesn't exist
-                # (InitSpatialMetaData should create this, but let's be explicit)
-                conn.execute(
-                    text("""
-                    CREATE TABLE IF NOT EXISTS geometry_columns (
-                        f_table_name TEXT NOT NULL,
-                        f_geometry_column TEXT NOT NULL,
-                        geometry_type INTEGER NOT NULL,
-                        coord_dimension INTEGER NOT NULL,
-                        srid INTEGER NOT NULL,
-                        spatial_index_enabled INTEGER NOT NULL DEFAULT 0,
-                        PRIMARY KEY (f_table_name, f_geometry_column)
+                    # Create geometry columns table if it doesn't exist
+                    # (InitSpatialMetaData should create this, but let's be explicit)
+                    conn.execute(
+                        text("""
+                        CREATE TABLE IF NOT EXISTS geometry_columns (
+                            f_table_name TEXT NOT NULL,
+                            f_geometry_column TEXT NOT NULL,
+                            geometry_type INTEGER NOT NULL,
+                            coord_dimension INTEGER NOT NULL,
+                            srid INTEGER NOT NULL,
+                            spatial_index_enabled INTEGER NOT NULL DEFAULT 0,
+                            PRIMARY KEY (f_table_name, f_geometry_column)
+                        )
+                    """)
                     )
-                """)
-                )
-                conn.commit()
+                    conn.commit()
+                else:
+                    logger.warning("SQLite extensions not supported, using minimal spatial support")
+                    # Create minimal geometry_columns table without extensions
+                    conn.execute(
+                        text("""
+                        CREATE TABLE IF NOT EXISTS geometry_columns (
+                            f_table_name TEXT NOT NULL,
+                            f_geometry_column TEXT NOT NULL,
+                            geometry_type INTEGER NOT NULL,
+                            coord_dimension INTEGER NOT NULL,
+                            srid INTEGER NOT NULL,
+                            spatial_index_enabled INTEGER NOT NULL DEFAULT 0,
+                            PRIMARY KEY (f_table_name, f_geometry_column)
+                        )
+                        """)
+                    )
+                    conn.commit()
 
-        except Exception:
-            logger.info("error when trying to load spatialite features")
+        except Exception as e:
+            logger.warning(f"Error loading SpatiaLite features: {e}, using minimal spatial support")
+            # Create minimal geometry_columns table as fallback
+            try:
+                with self.engine.connect() as conn:
+                    conn.execute(
+                        text("""
+                        CREATE TABLE IF NOT EXISTS geometry_columns (
+                            f_table_name TEXT NOT NULL,
+                            f_geometry_column TEXT NOT NULL,
+                            geometry_type INTEGER NOT NULL,
+                            coord_dimension INTEGER NOT NULL,
+                            srid INTEGER NOT NULL,
+                            spatial_index_enabled INTEGER NOT NULL DEFAULT 0,
+                            PRIMARY KEY (f_table_name, f_geometry_column)
+                        )
+                        """)
+                    )
+                    conn.commit()
+            except Exception as fallback_error:
+                logger.error(f"Failed to create geometry_columns table: {fallback_error}")
 
     def _register_table_geometry_columns(self, original_cls: Any) -> None:
         """Register geometry columns for a specific table as it's being created."""
@@ -255,7 +316,18 @@ class MockDB:
                     z = kwargs.pop("z", None)
                     projection = int(kwargs.pop("projection", 4326))
                     point_str = f"POINT({lon} {lat} {z})" if z is not None else f"POINT({lon} {lat})"
-                    kwargs["geom"] = WKTElement(point_str, srid=projection)
+                    # Store as JSON string instead of WKTElement for test database
+                    kwargs["geom"] = {"type": "Point", "coordinates": [lon, lat] if z is None else [lon, lat, z]}
+
+                # Handle WKTElement conversion for test database
+                if "geom" in kwargs and isinstance(kwargs["geom"], WKTElement):
+                    # Convert WKTElement to JSON-serializable format
+                    wkt_str = kwargs["geom"].data
+                    # Simple parsing to extract coordinates
+                    if wkt_str.startswith("POINT(") and wkt_str.endswith(")"):
+                        coords_str = wkt_str[6:-1]  # Remove "POINT(" and ")"
+                        coords = [float(x.strip()) for x in coords_str.split()]
+                        kwargs["geom"] = {"type": "Point", "coordinates": coords}
 
                 # Call the parent class constructor properly
                 mock_db.SqliteBase.__init__(self, **kwargs)
