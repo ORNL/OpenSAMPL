@@ -54,7 +54,7 @@ class TestBaseConfig:
             'LOG_LEVEL': 'WARNING',
             'ROUTE_TO_BACKEND': 'true'
         }):
-            config = BaseConfig()
+            config = BaseConfig(_env_file="/nonexistent/env/file")
             
             assert config.DATABASE_URL == 'postgresql://env:5432/envdb'
             assert config.LOG_LEVEL == 'WARNING'
@@ -63,21 +63,22 @@ class TestBaseConfig:
     def test_base_config_validation(self):
         """Test BaseConfig validation."""
         # Should work with valid data
-        config = BaseConfig(DATABASE_URL="postgresql://test:5432/testdb")
+        config = BaseConfig(_env_file="/nonexistent/env/file", DATABASE_URL="postgresql://test:5432/testdb")
         assert config.DATABASE_URL == "postgresql://test:5432/testdb"
 
         # Should work with routing enabled
-        config = BaseConfig(ROUTE_TO_BACKEND=True, BACKEND_URL="http://localhost:8000")
+        config = BaseConfig(_env_file="/nonexistent/env/file", ROUTE_TO_BACKEND=True, BACKEND_URL="http://localhost:8000")
         assert config.ROUTE_TO_BACKEND is True
         assert config.BACKEND_URL == "http://localhost:8000"
 
     def test_base_config_backend_routing_dependencies(self):
         """Test backend routing dependency checking."""
-        config = BaseConfig(ROUTE_TO_BACKEND=True)
-        
-        # Should raise error when backend routing is enabled but URL is not set
-        with pytest.raises(ValueError, match="BACKEND_URL must be set if ROUTE_TO_BACKEND is True"):
-            config.check_routing_dependencies()
+        with patch.dict('os.environ', clear=True):
+            config = BaseConfig(_env_file="/nonexistent/env/file", ROUTE_TO_BACKEND=True)
+
+            # Should raise error when backend routing is enabled but URL is not set
+            with pytest.raises(ValueError, match="BACKEND_URL must be set if ROUTE_TO_BACKEND is True"):
+                config.check_routing_dependencies()
 
     def test_base_config_database_routing_dependencies(self):
         """Test database routing dependency checking."""
@@ -228,6 +229,7 @@ ROUTE_TO_BACKEND=true
         }):
             # kwargs should override env vars
             config = BaseConfig(
+                _env_file = "/nonexistent/env/file",
                 DATABASE_URL="postgresql://kwargs:5432/kwargsdb",
                 LOG_LEVEL="ERROR"
             )
