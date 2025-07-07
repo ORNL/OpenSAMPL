@@ -1,0 +1,7 @@
+    ${upper_name} = VendorType(
+        name='${name}',
+        parser_class='${parser_class}',
+        parser_module='${parser_module}',
+        metadata_table='${metadata_table}',
+        metadata_orm='${metadata_orm}'
+    )

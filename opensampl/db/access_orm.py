@@ -24,12 +24,24 @@ class APIAccessKey(Base):
     expires_at = Column(DateTime, nullable=True)
 
     def generate_key(self):
-        """Generate the API access key."""
+        """
+        Generate the API access key.
+
+        Returns:
+            The generated access key string.
+
+        """
         self.key = secrets.token_urlsafe(48)
         return self.key
 
     def is_expired(self):
-        """Check if API access key is expired."""
+        """
+        Check if API access key is expired.
+
+        Returns:
+            True if the key is expired, False otherwise.
+
+        """
         return self.expires_at is not None and datetime.now(tz=timezone.utc) > self.expires_at
 
 
@@ -42,7 +54,17 @@ class Views(Base):
 
     @staticmethod
     def get_view_by_name(session: Session, name: str) -> Optional[type["Views"]]:
-        """Get view by name"""
+        """
+        Get view by name.
+
+        Args:
+            session: Database session.
+            name: Name of the view to find.
+
+        Returns:
+            Views object if found, None otherwise.
+
+        """
         try:
             return session.query(Views).filter_by(name=name).one()
         except NoResultFound:
@@ -60,7 +82,17 @@ class Roles(Base):
 
     @staticmethod
     def get_role_by_name(session: Session, name: str) -> Optional[type["Roles"]]:
-        """Get role by name"""
+        """
+        Get role by name.
+
+        Args:
+            session: Database session.
+            name: Name of the role to find.
+
+        Returns:
+            Roles object if found, None otherwise.
+
+        """
         try:
             return session.query(Roles).filter_by(name=name).one()
         except NoResultFound:
@@ -77,7 +109,17 @@ class Users(Base):
 
     @staticmethod
     def get_user_by_email(session: Session, email: str) -> Optional["Users"]:
-        """Get user by email"""
+        """
+        Get user by email.
+
+        Args:
+            session: Database session.
+            email: Email address of the user to find.
+
+        Returns:
+            Users object if found, None otherwise.
+
+        """
         try:
             return session.query(Users).filter_by(email=email).one()
         except NoResultFound:
@@ -94,7 +136,15 @@ class UserRole(Base):
 
 
 def add_user_role(emails: Union[str, list[str]], role_name: str, session: Session):
-    """Add user role to the database."""
+    """
+    Add user role to the database.
+
+    Args:
+        emails: Email address(es) of user(s) to assign the role to.
+        role_name: Name of the role to assign.
+        session: Database session.
+
+    """
     if isinstance(emails, str):
         emails = [emails]
 

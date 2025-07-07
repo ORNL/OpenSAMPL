@@ -6,18 +6,21 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, ClassVar, Optional, Union
+from typing import Any, Callable, ClassVar, Optional, Union
 
 import click
 import pandas as pd
+import psycopg2.errors
 import requests
 import requests.exceptions
 from loguru import logger
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 from tqdm import tqdm
 
-from opensampl.constants import ENV_VARS
 from opensampl.load_data import load_probe_metadata, load_time_data
+from opensampl.metrics import METRICS, MetricType
+from opensampl.references import ReferenceType
 from opensampl.vendors.constants import ProbeKey, VendorType
 
 
@@ -63,6 +66,8 @@ class BaseProbe(ABC):
     input_file: Path
     probe_key: ProbeKey
     vendor: ClassVar[VendorType]
+    chunk_size: Optional[int] = None
+    metadata_parsed: bool = False
 
     @classmethod
     @property
@@ -77,7 +82,6 @@ class BaseProbe(ABC):
     @classmethod
     def get_cli_options(cls) -> list[Callable]:
         """Return the click options/arguments for the probe class."""
-        default_archive = ENV_VARS.ARCHIVE_PATH.get_value()
         return [
             click.option(
                 "--metadata",
@@ -95,7 +99,6 @@ class BaseProbe(ABC):
                 "--archive-path",
                 "-a",
                 type=click.Path(exists=False, file_okay=False, dir_okay=True, path_type=Path),
-                default=default_archive,
                 help="Override default archive directory path for processed files. Default: ./archive",
             ),
             click.option(
@@ -129,10 +132,11 @@ class BaseProbe(ABC):
                 "filepath",
                 type=click.Path(exists=True, path_type=Path),
             ),
+            click.pass_context,
         ]
 
     @classmethod
-    def process_single_file(  # noqa: PLR0913,PLR0912,C901
+    def process_single_file(  # noqa: PLR0912, C901
         cls,
         filepath: Path,
         metadata: bool,
@@ -146,6 +150,7 @@ class BaseProbe(ABC):
         """Process a single file with the given options."""
         try:
             probe = cls(filepath, **kwargs)
+            probe.chunk_size = chunk_size
             try:
                 if metadata:
                     logger.debug(f"Loading {cls.__name__} metadata from {filepath}")
@@ -167,7 +172,7 @@ class BaseProbe(ABC):
             try:
                 if time_data:
                     logger.debug(f"Loading {cls.__name__} time series data from {filepath}")
-                    probe.send_time_data(chunk_size=chunk_size)
+                    probe.process_time_data()
                     logger.debug(f"Time series data loading complete for {filepath}")
             except requests.exceptions.HTTPError as e:
                 resp = e.response
@@ -181,6 +186,12 @@ class BaseProbe(ABC):
                     )
                 else:
                     raise
+            except IntegrityError as e:
+                if isinstance(e.orig, psycopg2.errors.UniqueViolation):  # ty: ignore[unresolved-attribute]
+                    logger.warning(
+                        f"{filepath} violates unique constraint for time data, implying already loaded. "
+                        f"Will move to archive if archiving is enabled."
+                    )
 
             if not no_archive:
                 probe.archive_file(archive_dir)
@@ -220,10 +231,10 @@ class BaseProbe(ABC):
                 f = option(f)
             return click.command(name=cls.vendor.name.lower(), help=cls.help_str)(f)
 
-        def load_callback(**kwargs: dict) -> None:
+        def load_callback(ctx: click.Context, **kwargs: dict) -> None:
             """Load probe data from file or directory."""
             try:
-                config = cls._extract_load_config(kwargs)
+                config = cls._extract_load_config(ctx, kwargs)
                 cls._prepare_archive(config.archive_dir, config.no_archive)
 
                 if config.filepath.is_file():
@@ -238,12 +249,13 @@ class BaseProbe(ABC):
         return make_command(load_callback)
 
     @classmethod
-    def _extract_load_config(cls, kwargs: dict) -> LoadConfig:
+    def _extract_load_config(cls, ctx: click.Context, kwargs: dict) -> LoadConfig:
         """
         Extract and normalize CLI keyword arguments into a LoadConfig object.
 
         Args:
         ----
+            ctx: Click context object
             kwargs: Dictionary of keyword arguments passed to the CLI command
 
         Returns:
@@ -253,7 +265,7 @@ class BaseProbe(ABC):
         """
         config = LoadConfig(
             filepath=kwargs.pop("filepath"),
-            archive_dir=kwargs.pop("archive_path"),
+            archive_dir=kwargs.pop("archive_path", None) or ctx.obj["conf"].ARCHIVE_PATH,
             metadata=kwargs.pop("metadata", False),
             time_data=kwargs.pop("time_data", False),
             no_archive=kwargs.pop("no_archive", False),
@@ -372,20 +384,45 @@ class BaseProbe(ABC):
 
         """
 
-    def send_time_data(self, chunk_size: Optional[int] = None):
+    def send_data(
+        self,
+        data: pd.DataFrame,
+        metric: MetricType,
+        reference_type: ReferenceType,
+        compound_reference: Optional[dict[str, Any]] = None,
+    ):
+        """Ingests data into the database"""
+        if self.chunk_size:
+            for chunk_start in range(0, len(data), self.chunk_size):
+                chunk = data.iloc[chunk_start : chunk_start + self.chunk_size]
+                load_time_data(
+                    probe_key=self.probe_key,
+                    metric_type=metric,
+                    reference_type=reference_type,
+                    data=chunk,
+                    compound_key=compound_reference,
+                )
+        else:
+            load_time_data(
+                probe_key=self.probe_key,
+                metric_type=metric,
+                reference_type=reference_type,
+                data=data,
+                compound_key=compound_reference,
+            )
+
+    def send_time_data(
+        self, data: pd.DataFrame, reference_type: ReferenceType, compound_reference: Optional[dict[str, Any]] = None
+    ):
         """
         Ingests time data into the database
 
         :param chunk_size: How many records to send at a time. If None, sends all at once. default: None
         :return:
         """
-        df = self.process_time_data()
-        if chunk_size:
-            for chunk_start in range(0, len(df), chunk_size):
-                chunk = df.iloc[chunk_start : chunk_start + chunk_size]
-                load_time_data(self.probe_key, chunk)
-        else:
-            load_time_data(self.probe_key, df)
+        self.send_data(
+            data=data, metric=METRICS.PHASE_OFFSET, reference_type=reference_type, compound_reference=compound_reference
+        )
 
     @abstractmethod
     def process_metadata(self) -> dict:

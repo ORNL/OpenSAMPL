@@ -1,0 +1,6 @@
+    ${name_upper} = MetricType(
+        name= '${name}',
+        description= '${description}',
+        unit= '${unit}',
+        value_type= ${value_type}
+    )

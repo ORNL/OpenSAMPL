@@ -1,0 +1,4 @@
+    ${name_upper} = ReferenceType(
+        name= '${name}',
+        description= '${description}'
+    )

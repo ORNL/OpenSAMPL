@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import TextIO, Union
 
 import pandas as pd
-from loguru import logger
 
+from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
-from opensampl.vendors.constants import ADVA, ProbeKey
+from opensampl.vendors.constants import VENDORS, ProbeKey
 
 
 class AdvaProbe(BaseProbe):
@@ -18,7 +18,7 @@ class AdvaProbe(BaseProbe):
 
     timestamp: datetime
     start_time: datetime
-    vendor = ADVA
+    vendor = VENDORS.ADVA
 
     def __init__(self, input_file: Union[str, Path]):
         """Initialize AdvaProbe object give input_file and determines probe identity from filename"""
@@ -59,7 +59,7 @@ class AdvaProbe(BaseProbe):
             return gzip.open(self.input_file, "rt")
         return self.input_file.open()
 
-    def process_time_data(self) -> pd.DataFrame:
+    def process_time_data(self) -> None:
         """Process time data from ADVA probe files"""
         compression = "gzip" if self.input_file.name.endswith(".gz") else None
 
@@ -73,7 +73,7 @@ class AdvaProbe(BaseProbe):
             engine="python",
             sep=r",\s*",
         )
-        if not self.start_time:
+        if not self.metadata_parsed:
             # need to get the probe's start time from the metadata if we do not already have it
             self.process_metadata()
 
@@ -83,7 +83,7 @@ class AdvaProbe(BaseProbe):
 
         df["value_str"] = df["value"].apply(lambda x: f"{x:.10e}")
 
-        return df
+        self.send_time_data(data=df, reference_type=REF_TYPES.GNSS)
 
     def process_metadata(self) -> dict:
         """Process metadata from ADVA probe files"""
@@ -105,6 +105,7 @@ class AdvaProbe(BaseProbe):
             "Type": "type",
         }
         headers = {}
+        freeform_header = {}
         with self._open_file() as f:
             for line in f:
                 if not line.startswith("#"):
@@ -114,6 +115,8 @@ class AdvaProbe(BaseProbe):
                 if key in header_to_column:
                     headers[header_to_column.get(key)] = value
                 else:
-                    logger.warning(f"Header contained unfamiliar key: {key} it is being skipped")
+                    freeform_header[key] = value
+        headers["additional_metadata"] = freeform_header
         self.start_time = datetime.strptime(headers["start"], "%Y/%m/%d %H:%M:%S").astimezone(tz=timezone.utc)
+        self.metadata_parsed = True
         return headers
