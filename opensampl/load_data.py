@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from opensampl.config.base import BaseConfig
-from opensampl.db.orm import Base, ProbeData, ProbeMetadata
+from opensampl.db.orm import Base, ProbeData
 from opensampl.load.routing import route
 from opensampl.load.table_factory import TableFactory
 from opensampl.metrics import MetricType
@@ -176,22 +176,13 @@ def load_probe_metadata(
         raise TypeError("Session must be a SQLAlchemy session")
 
     try:
-        probe = (
-            session.query(ProbeMetadata)
-            .filter(ProbeMetadata.probe_id == probe_key.probe_id, ProbeMetadata.ip_address == probe_key.ip_address)
-            .first()
-        )
-        logger.debug(f"{probe=}")
-        if not probe:
-            probe_info = {"probe_id": probe_key.probe_id, "ip_address": probe_key.ip_address, "vendor": vendor.name}
-            model = data.pop("model", None)
-            if model:
-                probe_info["model"] = str(model)
+        pm_factory = TableFactory(name="probe_metadata", session=session)
 
-            probe = ProbeMetadata(**probe_info)
+        pm_cols = {col.name for col in pm_factory.inspector.columns}
+        probe_info = {k: data.pop(k) for k in list(data.keys()) if k in pm_cols}
+        probe_info.update({"probe_id": probe_key.probe_id, "ip_address": probe_key.ip_address, "vendor": vendor.name})
+        probe = pm_factory.write(data=probe_info, if_exists="update")
 
-            session.add(probe)
-            session.flush()
         data["probe_uuid"] = probe.uuid
 
         write_to_table(table=vendor.metadata_table, data=data, session=session, if_exists="update")
