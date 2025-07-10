@@ -286,11 +286,10 @@ class TestLoadProbeMetadata:
         count_before = mock_session.query(ProbeMetadata).count()
         assert count_before == 0
 
-        with patch("opensampl.load_data.ProbeMetadata", ProbeMetadata):
-            result = load_probe_metadata(
-                vendor=VENDORS.ADVA, probe_key=sample_probe_key, data=sample_adva_metadata, session=mock_session
-            )
-            assert result is None
+        result = load_probe_metadata(
+            vendor=VENDORS.ADVA, probe_key=sample_probe_key, data=sample_adva_metadata, session=mock_session
+        )
+        assert result is None
 
         metadata = mock_session.query(ProbeMetadata).all()
         assert len(metadata) == 1
