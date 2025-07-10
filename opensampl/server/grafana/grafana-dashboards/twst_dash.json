@@ -627,7 +627,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  pm.name,\n  AVG(pd.value::FLOAT) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nwhere \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.name\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
+          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, pm.probe_id) as name,\n  AVG(pd.value::FLOAT) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nwhere \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
           "refId": "B",
           "sql": {
             "columns": [
@@ -762,7 +762,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  pm.name,\n  (MAX(pd.value::FLOAT) - MIN(pd.value::FLOAT)) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nwhere \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.name\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
+          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, pm.probe_id) as name,\n  (MAX(pd.value::FLOAT) - MIN(pd.value::FLOAT)) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nwhere \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
           "refId": "B",
           "sql": {
             "columns": [
@@ -1524,7 +1524,7 @@
           "type": "grafana-postgresql-datasource",
           "uid": "castdb-datasource"
         },
-        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where vendor = 'MicrosemiTWST' and probe_id = 'modem'",
+        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where vendor = 'MicrochipTWST' and probe_id = 'modem'",
         "description": "The modem from which \"local time\" is derived, also the stream from which we are receiving the data. ",
         "hide": 0,
         "includeAll": false,
@@ -1532,7 +1532,7 @@
         "multi": false,
         "name": "modem",
         "options": [],
-        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where vendor = 'MicrosemiTWST' and probe_id = 'modem'",
+        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where vendor = 'MicrochipTWST' and probe_id = 'modem'",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

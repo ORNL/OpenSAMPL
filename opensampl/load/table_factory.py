@@ -198,6 +198,7 @@ class TableFactory:
             new_entry = self.model(**data)
             self.session.add(new_entry)
             logger.debug(f"New entry created in {self.name}")
+            self.session.flush()
             return new_entry
 
         if if_exists == "error":
