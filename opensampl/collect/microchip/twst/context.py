@@ -25,18 +25,19 @@ class ModemContextReader(ModemReader):
     including local station details and remote station tracking data.
     """
 
-    def __init__(self, host: str, prompt: str = "ATS 6502>"):
+    def __init__(self, host: str, prompt: str = "ATS 6502>", port: int =1700):
         """
         Initialize ModemContextReader.
 
         Args:
             host: IP address or hostname of the ATS6502 modem.
             prompt: Command prompt string expected from the modem.
+            port: what port to connect to for commands (default 1700).
 
         """
         self.result = SimpleNamespace()
         self.prompt = prompt
-        super().__init__(host=host, port=1700)
+        super().__init__(host=host, port=port)
 
     @staticmethod
     def finished_ok(line: str) -> bool:

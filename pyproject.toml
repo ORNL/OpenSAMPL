@@ -1,6 +1,6 @@
 [project]
 name = "opensampl"
-version = "1.1.1"
+version = "1.1.2"
 description = "Python tools for adding clock data to a timescale db."
 license = {file = "LICENSE"}
 authors = [
@@ -74,6 +74,8 @@ collect = ["telnetlib3==2.0.4"]
 [project.scripts]
 opensampl = "opensampl.cli:cli"
 opensampl-server = "opensampl.server.cli:cli"
+opensampl-server2 = "opensampl.server.cli2:cli"
+opensampl-twst-collect = "opensampl.collect.microchip.twst.generate_twst_files:main_click"
 
 [dependency-groups]
 dev = [

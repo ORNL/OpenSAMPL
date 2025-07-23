@@ -132,25 +132,36 @@ def load_time_data(
         df["probe_uuid"] = data_definition.probe.uuid  # ty: ignore[possibly-unbound-attribute]
         df["reference_uuid"] = data_definition.reference.uuid  # ty: ignore[possibly-unbound-attribute]
         df["metric_type_uuid"] = data_definition.metric.uuid  # ty: ignore[possibly-unbound-attribute]
-
+        logger.debug(df.head())
         # Ensure correct dtypes
         df["time"] = pd.to_datetime(df["time"], utc=True, errors="raise")
+        df["value"] = df["value"].apply(json.dumps)
 
-        dtype = {column.name: column.type for column in ProbeData.__table__.columns}
+        records = df.to_dict(orient="records")
+        insert_stmt = text(f"""
+        INSERT INTO {ProbeData.__table__.schema}.{ProbeData.__tablename__}
+        (time, probe_uuid, reference_uuid, metric_type_uuid, value)
+        VALUES (:time, :probe_uuid, :reference_uuid, :metric_type_uuid, :value)
+        ON CONFLICT (time, probe_uuid, reference_uuid, metric_type_uuid)
+        DO NOTHING
+        """) # noqa: S608
 
-        # Write directly to database using pandas
-        df.to_sql(
-            ProbeData.__tablename__,
-            session.connection(),
-            schema=ProbeData.__table__.schema,
-            if_exists="append",
-            index=False,
-            method="multi",
-            dtype=dtype,
-        )
+        try:
+            result = session.execute(insert_stmt, records)
+            session.commit()
+            total_rows = len(records)
+            inserted = result.rowcount # ty: ignore[unresolved-attribute]
+            excluded = total_rows - inserted
+            logger.warning(f"Inserted {inserted}/{total_rows} rows; {excluded}/{total_rows} rejected due to conflicts")
 
-        session.commit()
-    except Exception:
+        except Exception as e:
+            # In case of an error, roll back the session
+            session.rollback()
+            logger.error(f"Error inserting rows: {e}")
+            raise
+
+    except Exception as e:
+        logger.exception(f"Error writing time data: {e}")
         session.rollback()
         raise
 

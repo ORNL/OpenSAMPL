@@ -19,21 +19,22 @@ class ModemStatusReader(ModemReader):
     status readings over a specified duration.
     """
 
-    def __init__(self, host: str, duration: int = 60, keys: Optional[list[str]] = None):
+    def __init__(self, host: str, duration: int = 60, keys: Optional[list[str]] = None, port: int=1900):
         """
         Initialize ModemStatusReader.
 
         Args:
             host: IP address or hostname of the ATS6502 modem.
             duration: Duration in seconds to collect readings.
-            keys: List of key suffixes to filter readings (default: ["meas:offset"]).
+            keys: List of key suffixes to filter readings (default: None for all readings).
+            port: what port to connect to for status readings (default 1900).
 
         """
         self.duration = duration
-        self.keys = keys or ["meas:offset"]
+        self.keys = keys
         self.queue = asyncio.Queue()
         self.readings = []
-        super().__init__(host=host, port=1900)
+        super().__init__(host=host, port=port)
 
     @require_conn
     async def reader_task(self):
@@ -74,9 +75,11 @@ class ModemStatusReader(ModemReader):
             definition: Reading definition string.
 
         Returns:
-            True if the reading matches any of the configured key suffixes.
+            True if the reading matches any of the configured key suffixes
 
         """
+        if self.keys is None:
+            return True  # Collect all readings when no keys specified
         return any(definition.endswith(suffix) for suffix in self.keys)
 
     async def processor_task(self):
@@ -107,5 +110,9 @@ class ModemStatusReader(ModemReader):
             try:
                 await asyncio.sleep(self.duration)
             finally:
+                # Cancel tasks and wait for them to complete
                 read_coroutine.cancel()
                 process_coroutine.cancel()
+
+                # Wait for tasks to handle cancellation
+                await asyncio.gather(read_coroutine, process_coroutine, return_exceptions=True)
