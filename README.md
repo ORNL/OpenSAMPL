@@ -1,5 +1,20 @@
 # OpenSAMPL
 
+<div align="center">
+<!-- PyPI → version -->
+<a href="https://pypi.org/project/opensampl/"><img src="https://img.shields.io/pypi/v/opensampl?logo=pypi" alt="PyPI"></a>
+<!-- MIT licence -->
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey.svg" alt="MIT licence"></a>
+<!-- Supported Python versions (will show “missing” until you add the trove classifiers) -->
+<a href="https://pypi.org/project/opensampl/"><img src="https://img.shields.io/pypi/pyversions/opensampl?logo=python" alt="python versions"></a>
+<!-- Universal wheel? -->
+<a href="https://pypi.org/project/opensampl/"><img src="https://img.shields.io/pypi/wheel/opensampl" alt="wheel"></a>
+<!-- Monthly downloads -->
+<a href="https://pypistats.org/packages/opensampl"><img src="https://img.shields.io/pypi/dm/opensampl?label=downloads%20%28month%29" alt="downloads per month"></a>
+
+</div>
+
+
 OpenSAMPL was created to provide a set of Python tools for managing clock data in a TimescaleDB database, specifically designed for synchronization analytics and monitoring.
 This project came out of [**CAST**](https://cast.ornl.gov), the **C**enter for **A**lternative **S**yncrhonization and **T**iming, a research group at Oak Ridge National Laboratory (ORNL).
 The name OpenSAMPL stands for **O**pen **S**ynchronization **A**nalytics and **M**onitoring **PL**atform, and provides the code and logic for uploading, managing, and visualizing clock data from various sources, including ADVA probes and Microchip TWST data files,

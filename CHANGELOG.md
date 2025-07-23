@@ -37,6 +37,28 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
+## [1.1.1] - YYYY-MM-DD
+### Added
+- 🔥 README badges 
+- 🧪 Added testing CI/CD
+- 🏛️ Added classifiers for easier discovery
+
+### Changed
+- 
+
+### Deprecated
+- 
+
+### Removed
+- 
+
+### Fixed
+- 
+
+### Security
+- 
+
+
 
 ## [1.1.0] - 2025-07-02
 ### Added
