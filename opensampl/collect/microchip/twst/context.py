@@ -25,7 +25,7 @@ class ModemContextReader(ModemReader):
     including local station details and remote station tracking data.
     """
 
-    def __init__(self, host: str, prompt: str = "ATS 6502>", port: int =1700):
+    def __init__(self, host: str, prompt: str = "ATS 6502>", port: int = 1700):
         """
         Initialize ModemContextReader.
 

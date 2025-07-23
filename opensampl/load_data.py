@@ -144,13 +144,13 @@ def load_time_data(
         VALUES (:time, :probe_uuid, :reference_uuid, :metric_type_uuid, :value)
         ON CONFLICT (time, probe_uuid, reference_uuid, metric_type_uuid)
         DO NOTHING
-        """) # noqa: S608
+        """)  # noqa: S608
 
         try:
             result = session.execute(insert_stmt, records)
             session.commit()
             total_rows = len(records)
-            inserted = result.rowcount # ty: ignore[unresolved-attribute]
+            inserted = result.rowcount  # ty: ignore[unresolved-attribute]
             excluded = total_rows - inserted
             logger.warning(f"Inserted {inserted}/{total_rows} rows; {excluded}/{total_rows} rejected due to conflicts")
 

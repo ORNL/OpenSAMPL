@@ -19,7 +19,7 @@ class ModemStatusReader(ModemReader):
     status readings over a specified duration.
     """
 
-    def __init__(self, host: str, duration: int = 60, keys: Optional[list[str]] = None, port: int=1900):
+    def __init__(self, host: str, duration: int = 60, keys: Optional[list[str]] = None, port: int = 1900):
         """
         Initialize ModemStatusReader.
 
