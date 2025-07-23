@@ -31,6 +31,7 @@ classifiers = [
     "Topic :: Communications",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: System :: Networking :: Monitoring",
     "Environment :: Console",
     "Environment :: Web Environment",
     "Framework :: Pydantic",
