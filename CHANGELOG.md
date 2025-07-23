@@ -37,7 +37,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
-## [1.1.1] - YYYY-MM-DD
+
+## [1.1.2] - YYYY-MM-DD
 ### Added
 - 🔥 README badges 
 - 🧪 Added testing CI/CD
@@ -58,6 +59,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 - 
 
+
+
+## [1.1.1] - 2025-07-09
+### Fixed
+- 🩹 Added tabulate dependency to pyproject.toml
+- 🩹 Corrected logic for differentiating between universal probe metadata and vendor specifics.
 
 
 ## [1.1.0] - 2025-07-02
