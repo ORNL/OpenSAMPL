@@ -11,7 +11,12 @@
 <a href="https://pypi.org/project/opensampl/"><img src="https://img.shields.io/pypi/wheel/opensampl" alt="wheel"></a>
 <!-- Monthly downloads -->
 <a href="https://pypistats.org/packages/opensampl"><img src="https://img.shields.io/pypi/dm/opensampl?label=downloads%20%28month%29" alt="downloads per month"></a>
-
+<!-- GitHub Actions CI -->
+<a href="https://github.com/ORNL/OpenSAMPL/actions/workflows/publish.yml"><img src="https://github.com/ORNL/OpenSAMPL/actions/workflows/publsih.yml/badge.svg" alt="PyPi Publishing"></a>
+<a href="https://github.com/ORNL/OpenSAMPL/actions/workflows/lint.yml"><img src="https://github.com/ORNL/OpenSAMPL/actions/workflows/lint.yml/badge.svg" alt="ruff Formating and Linting"></a>
+<a href="https://github.com/ORNL/OpenSAMPL/actions/workflows/tests.yml"><img src="https://github.com/ORNL/OpenSAMPL/actions/workflows/tests.yml/badge.svg" alt="PyTest Testing"></a>
+<!-- Docs on GitHub Pages -->
+<a href="https://ornl.github.io/OpenSAMPL/"><img src="https://img.shields.io/website?url=https%3A%2F%2Fornl.github.io%2FOpenSAMPL%2F&label=docs&logo=github" alt="docs"></a>
 </div>
 
 
