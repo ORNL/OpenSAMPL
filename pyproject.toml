@@ -75,7 +75,7 @@ collect = ["telnetlib3==2.0.4"]
 opensampl = "opensampl.cli:cli"
 opensampl-server = "opensampl.server.cli:cli"
 opensampl-server2 = "opensampl.server.cli2:cli"
-opensampl-twst-collect = "opensampl.collect.microchip.twst.generate_twst_files:main_click"
+opensampl-collect = "opensampl.collect.cli:cli"
 
 [dependency-groups]
 dev = [

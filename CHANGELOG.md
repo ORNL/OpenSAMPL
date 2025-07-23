@@ -38,13 +38,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 -->
 
-## [1.1.2] - 2025-07-23
+## [1.1.2] - 2025-07-24
 ### Added
 - 🔥 README badges 
 - 🧪 Added testing CI/CD
 - 🏛️ Added classifiers for easier discovery
 - 🔥 opensampl-server2 which passes everything directly to docker compose with correct compose and env
-
+- 🔥 opensampl-collect entry point for accessing the collection scripts
 
 ### Changed
 - ⚡ MicrochipTWST collection script takes all data by default rather than specific readings
