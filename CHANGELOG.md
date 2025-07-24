@@ -37,6 +37,24 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
+
+## [1.1.2] - 2025-07-24
+### Added
+- 🔥 README badges 
+- 🧪 Added testing CI/CD
+- 🏛️ Added classifiers for easier discovery
+- 🔥 opensampl-server2 which passes everything directly to docker compose with correct compose and env
+- 🔥 opensampl-collect entry point for accessing the collection scripts
+
+### Changed
+- ⚡ MicrochipTWST collection script takes all data by default rather than specific readings
+- ⚡ MicrochipTWST collection script can take optional server and control ports 
+- ⚡ MicrochipTWST probe object measurement logic updated to reflect collection
+
+### Fixed
+- 🩹 Dataframe insertion of time data more durable against single row collisions
+
+
 ## [1.1.1] - 2025-07-09
 ### Fixed
 - 🩹 Added tabulate dependency to pyproject.toml
