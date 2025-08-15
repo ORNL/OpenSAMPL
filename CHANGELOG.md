@@ -37,6 +37,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
+## [1.1.3] - 2025-08
+### Added
+- 🔥 Microchip TP4100 Load
+- 🔥 Microchip TP4100 Collection
+- 🔥 BaseProbe now has optional filter for directory load for vendor specific implementations
 
 ## [1.1.2] - 2025-07-24
 ### Added

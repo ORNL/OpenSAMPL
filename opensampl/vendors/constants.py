@@ -62,6 +62,14 @@ class VENDORS:
         metadata_orm="MicrochipTWSTMetadata",
     )
 
+    MICROCHIP_TP4100 = VendorType(
+        name="MicrochipTP4100",
+        parser_class="MicrochipTP4100Probe",
+        parser_module="microchip.tp4100",
+        metadata_table="microchip_tp4100_metadata",
+        metadata_orm="MicrochipTP4100Metadata",
+    )
+
     # --- CUSTOM VENDORS ---      !! Do not remove line, used as reference when inserting vendor
 
     # --- VENDOR FUNCTIONS ---
