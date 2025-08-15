@@ -386,7 +386,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n    l.latitude,\n    l.longitude,\n    l.campus,\n    sum(\n        CASE\n            when pm.public = True and pm.vendor in ('ADVA') then 1 else 0\n        end \n    ) as visible_clocks,\n    sum(\n        CASE\n            when pm.uuid in (${clock_name:sqlstring}) then 1 else 0\n    end \n    ) as selected_clocks\n    from castdb.campus_locations l left join castdb.probe_metadata pm on l.uuid = pm.location_uuid\n    where l.public = True\n    group by\n    l.latitude, l.longitude, l.campus;",
+          "rawSql": "SELECT\n    l.latitude,\n    l.longitude,\n    l.campus,\n    sum(\n        CASE\n            when pm.public = True and pm.vendor in ('ADVA', 'MicrochipTP4100') then 1 else 0\n        end \n    ) as visible_clocks,\n    sum(\n        CASE\n            when pm.uuid in (${clock_name:sqlstring}) then 1 else 0\n    end \n    ) as selected_clocks\n    from castdb.campus_locations l left join castdb.probe_metadata pm on l.uuid = pm.location_uuid\n    where l.public = True\n    group by\n    l.latitude, l.longitude, l.campus;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1070,13 +1070,13 @@
           "type": "grafana-postgresql-datasource",
           "uid": "castdb-datasource"
         },
-        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where public = true and vendor in ('ADVA')",
+        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where public = true and vendor in ('ADVA', 'MicrochipTP4100')",
         "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "clock_name",
         "options": [],
-        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where public = true and vendor in ('ADVA')",
+        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where public = true and vendor in ('ADVA', 'MicrochipTP4100')",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

@@ -316,6 +316,11 @@ class BaseProbe(ABC):
         )
 
     @classmethod
+    def filter_files(cls, files: list[Path]) -> list[Path]:
+        """Filter the files found in the input directory when loading this vendor's data files"""
+        return files
+
+    @classmethod
     def _process_directory(cls, config: LoadConfig, extra_kwargs: dict) -> None:
         """
         Process all files in a directory using a thread pool and optional progress bar.
@@ -331,6 +336,7 @@ class BaseProbe(ABC):
 
         """
         files = [x for x in config.filepath.iterdir() if x.is_file()]
+        files = cls.filter_files(files)
         logger.info(f"Found {len(files)} files in directory {config.filepath}")
         progress_context = tqdm if config.show_progress else dummy_tqdm
 

@@ -179,6 +179,8 @@ class ProbeMetadata(Base):
 
     probe_data = relationship("ProbeData")
     adva_metadata = relationship("AdvaMetadata", back_populates="probe", uselist=False)
+    microchip_twst_metadata = relationship("MicrochipTWSTMetadata", back_populates="probe", uselist=False)
+    microchip_tp4100_metadata = relationship("MicrochipTP4100Metadata", back_populates="probe", uselist=False)
 
     # --- CUSTOM PROBE METADATA RELATIONSHIP ---
 
@@ -414,6 +416,21 @@ class MicrochipTWSTMetadata(Base):
     additional_metadata = Column(
         JSONB, comment="Additional metadata found in the file headers that did not match existing columns"
     )
+    probe = relationship("ProbeMetadata", back_populates="microchip_twst_metadata")
+
+
+class MicrochipTP4100Metadata(Base):
+    """
+    Microchip TP4100 Clock Probe specific metadata
+
+    This is metadata that is specifically provided by microchip TP4100 probes in their text file exports.
+    """
+
+    __tablename__ = "microchip_tp4100_metadata"
+
+    probe_uuid = Column(String, ForeignKey("probe_metadata.uuid"), primary_key=True)
+    additional_metadata = Column(JSONB)
+    probe = relationship("ProbeMetadata", back_populates="microchip_tp4100_metadata")
 
 
 # --- CUSTOM TABLES ---      !! Do not remove line, used as reference when inserting metadata table
