@@ -34,6 +34,9 @@ tab separated `time value` measurements.
 
 As ADVA probes have all their metadata and their time data in each file, there is no need to use the `-m` or `-t` options, though if you want to skip loading one or the other it becomes useful!
 
+#### Microchip 
+Microchip TWST and TP4100 modems are also supported, the file names are supported as created via `opensampl-collect`
+
 ### Direct Table Entries
 Load data directly into a database table from a file, whose format can be yaml or json. 
 

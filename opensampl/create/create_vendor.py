@@ -52,7 +52,7 @@ class DEFAULT_METADATA:  # noqa N801
             List of MetadataField instances for default fields.
 
         """
-        return [v for k, v in cls.__dict__.items() if not k.startswith("_")]
+        return [v for k, v in cls.__dict__.items() if isinstance(v, MetadataField)]
 
 
 class VendorConfig(VendorType):
@@ -65,6 +65,7 @@ class VendorConfig(VendorType):
     """
 
     base_path: Path = Path(__file__).parent.parent
+    metadata_fields: list[MetadataField]
 
     @classmethod
     def from_config_file(cls, config_path: Union[str, Path]) -> "VendorConfig":
@@ -117,7 +118,7 @@ class VendorConfig(VendorType):
             data["parser_module"] = f"{name.lower()}"
 
         fields = []
-        metadata_fields = data.get("metadata_fields")
+        metadata_fields = data.get("metadata_fields", None)
         if isinstance(metadata_fields, list) and (len(metadata_fields) > 0 and isinstance(metadata_fields[0], dict)):
             for field in metadata_fields:
                 if field.get("type", None) is not None:
@@ -129,7 +130,7 @@ class VendorConfig(VendorType):
                 "Metadata fields defaulting to probe uuid and freeform json: additional metadata. Either metadata "
                 "fields not provided or were malformed. "
             )
-        fields.extend(DEFAULT_METADATA.get_default_fields())
+        fields.extend(list(DEFAULT_METADATA.get_default_fields()))
         data["metadata_fields"] = fields
         return data
 

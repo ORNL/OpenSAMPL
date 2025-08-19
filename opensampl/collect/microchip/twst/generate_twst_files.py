@@ -91,6 +91,9 @@ def collect_files(
             logger.info("Total duration reached, stopping collection")
             break
 
+        status_reader = None
+        context_reader = None
+
         try:
             status_reader = ModemStatusReader(host=host, duration=dump_interval, port=status_port)
             context_reader = ModemContextReader(host=host, prompt="TWModem-32>", port=control_port)
@@ -134,6 +137,25 @@ def collect_files(
             except KeyboardInterrupt:
                 logger.info("Keyboard interrupt received, stopping collection")
                 break
+
+        finally:
+            # Ensure connections are always closed
+            if (
+                status_reader
+                and hasattr(status_reader, "open")
+                and status_reader.open
+                and hasattr(status_reader, "writer")
+                and status_reader.writer
+            ):
+                status_reader.writer.close()
+            if (
+                context_reader
+                and hasattr(context_reader, "open")
+                and context_reader.open
+                and hasattr(context_reader, "writer")
+                and context_reader.writer
+            ):
+                context_reader.writer.close()
 
 
 def main(
