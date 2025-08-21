@@ -178,10 +178,13 @@ def config_set(ctx: click.Context, name: str, value: str):
 def load():
     """Load data into database"""
 
+@load.group(cls=CaseInsensitiveGroup)
+def random():
+    """Generate and send random test data to the database"""
 
 for vendor in VENDORS.all():
     load.add_command(vendor.get_parser().get_cli_command(), name=vendor.name)
-
+    random.add_command(vendor.get_parser().get_random_data_cli_command(), name=vendor.name)
 
 def path_or_string(value: str) -> Union[dict, list]:
     """Get content from a file or use the string directly"""

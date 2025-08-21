@@ -1,13 +1,18 @@
 """ADVA clock implementation"""
 
 import gzip
+import random
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import TextIO, Union
+from typing import Any, Optional, TextIO, Union
 
+import numpy as np
 import pandas as pd
-
+from loguru import logger
+from pydantic import Field
+from opensampl.load_data import load_probe_metadata, load_time_data
+from opensampl.metrics import METRICS
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import VENDORS, ProbeKey
@@ -19,6 +24,13 @@ class AdvaProbe(BaseProbe):
     timestamp: datetime
     start_time: datetime
     vendor = VENDORS.ADVA
+
+    class RandomDataConfig(BaseProbe.RandomDataConfig):
+        """Model for storing random data generation configurations as provided by CLI or YAML"""
+        # Time series parameters
+        base_value: float = Field(default_factory=lambda: random.uniform(-1e-6, 1e-6), description="random.uniform(-1e-6, 1e-6)")
+        noise_amplitude: float = Field(default_factory=lambda: random.uniform(1e-9, 1e-8), description="random.uniform(1e-9, 1e-8)")
+        drift_rate: float = Field(default_factory=lambda: random.uniform(-1e-12, 1e-12), description="random.uniform(-1e-12, 1e-12)")
 
     def __init__(self, input_file: Union[str, Path]):
         """Initialize AdvaProbe object give input_file and determines probe identity from filename"""
@@ -120,3 +132,58 @@ class AdvaProbe(BaseProbe):
         self.start_time = datetime.strptime(headers["start"], "%Y/%m/%d %H:%M:%S").astimezone(tz=timezone.utc)
         self.metadata_parsed = True
         return headers
+
+    @classmethod
+    def generate_random_data(
+        cls,
+        config: RandomDataConfig,
+        probe_key: Optional[ProbeKey] = None,
+        **kwargs: Any,
+    ) -> ProbeKey:
+        """
+        Generate random ADVA probe test data and send it directly to the database.
+
+        Args:
+            probe_key: Probe key to use (generated if None)
+            config: RandomDataConfig with parameters specifying how to generate data
+            **kwargs: Additional parameters (ignored)
+
+        Returns:
+            ProbeKey: The probe key used for the generated data
+        """
+        cls._setup_random_seed(config.seed)
+
+        if probe_key is None:
+            ip_address = cls._generate_random_ip()
+            probe_id = f"{random.randint(1, 99)}-{random.randint(1, 99)}"
+            probe_key = ProbeKey(probe_id=probe_id, ip_address=ip_address)
+
+
+        logger.info(f"Generating random ADVA data for {probe_key}")
+
+        # Generate and send metadata
+        metadata = {
+            "adva_source": f"RANDOM GENERATION",
+            "title": f"Test ADVA Clock Probe {probe_key.probe_id}",
+            "type": "PHASE",
+            "additional_metadata": {
+                "test_data": True,
+                "random_generation_config": config.model_dump()
+            }
+        }
+
+        cls._send_metadata_to_db(probe_key, metadata)
+
+        # Generate time series using base class helper
+        df = config.generate_time_series()
+
+        # Send data to database
+        cls.send_data(
+            probe_key=probe_key,
+            data=df,
+            metric=METRICS.PHASE_OFFSET,
+            reference_type=REF_TYPES.GNSS,
+        )
+
+        logger.info(f"Successfully generated {config.duration_hours}h of random ADVA data for {probe_key}")
+        return probe_key
