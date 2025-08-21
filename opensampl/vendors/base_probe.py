@@ -1,6 +1,6 @@
 """Abstract probe Base which provides scaffolding for vendor specific implementation"""
-from __future__ import annotations
 
+import random
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, ClassVar, Optional, Union
-import random
 
 import click
 import numpy as np
@@ -18,7 +17,7 @@ import requests
 import requests.exceptions
 import yaml
 from loguru import logger
-from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
+from pydantic import BaseModel, ValidationInfo, field_serializer, field_validator, model_validator
 from sqlalchemy.exc import IntegrityError
 from tqdm import tqdm
 
@@ -93,26 +92,39 @@ class BaseProbe(ABC):
         # Start time (computed at runtime if None)
         start_time: Optional[datetime] = None
 
+        probe_id: Union[str, None] = None
+        probe_ip: Optional[str] = None
+
+        @classmethod
+        def _generate_random_ip(cls) -> str:
+            """Generate a random IP address."""
+            ip_parts = [random.randint(1, 254) for _ in range(4)]
+            return ".".join(map(str, ip_parts))
+
         @model_validator(mode="after")
         def define_start_time(self):
+            """If start_time is None at the end of validation,"""
             if self.start_time is None:
                 self.start_time = datetime.now(tz=timezone.utc) - timedelta(hours=self.duration_hours)
             return self
 
         @field_validator("*", mode="before")
         @classmethod
-        def replace_none_with_default(cls, v, info):
-            if v is None and info.field_name != 'start_time':
+        def replace_none_with_default(cls, v: Any, info: ValidationInfo) -> Any:
+            """If field provided with None replace with default"""
+            if v is None and info.field_name != "start_time":
                 field_info = cls.model_fields.get(info.field_name)
                 # fall back to the field default
                 return field_info.default_factory() if field_info.default_factory else field_info.default
             return v
 
-        @field_serializer('start_time')
+        @field_serializer("start_time")
         def start_time_to_str(self, start_time: datetime) -> str:
+            """Convert start_time to string when dumping the model"""
             return start_time.strftime("%Y/%m/%d %H:%M:%S")
 
         def generate_time_series(self):
+            """Generate a realistic time series with drift, noise, and occasional outliers."""
             total_seconds = self.duration_hours * 3600
             num_samples = int(total_seconds / self.sample_interval)
 
@@ -134,10 +146,7 @@ class BaseProbe(ABC):
 
                 values.append(value)
 
-            return pd.DataFrame({
-                'time': time_points,
-                'value': values
-            })
+            return pd.DataFrame({"time": time_points, "value": values})
 
     @classmethod
     @property
@@ -219,49 +228,84 @@ class BaseProbe(ABC):
                 "--num-probes",
                 type=int,
                 default=1,
-                help=f"Number of probes to generate data for (default={cls.RandomDataConfig.model_fields.get('num_probes').default})",
+                help=(
+                    f"Number of probes to generate data for "
+                    f"(default={cls.RandomDataConfig.model_fields.get('num_probes').default})"
+                ),
             ),
             click.option(
                 "--duration",
                 type=float,
-                help=f"Duration of data in hours (default={cls.RandomDataConfig.model_fields.get('duration_hours').default})",
+                help=(
+                    f"Duration of data in hours "
+                    f"(default={cls.RandomDataConfig.model_fields.get('duration_hours').default})"
+                ),
             ),
             click.option(
                 "--seed",
                 type=int,  # type: ignore[attr-defined]
-                help=f"Random seed for reproducible results (default={cls.RandomDataConfig.model_fields.get('seed').default})",
+                help=(
+                    f"Random seed for reproducible results "
+                    f"(default={cls.RandomDataConfig.model_fields.get('seed').default})"
+                ),
             ),
             click.option(
                 "--sample-interval",
                 type=float,
-                help=f"Sample interval in seconds (default={cls.RandomDataConfig.model_fields.get('sample_interval').default})",
+                help=(
+                    f"Sample interval in seconds "
+                    f"(default={cls.RandomDataConfig.model_fields.get('sample_interval').default})"
+                ),
             ),
             click.option(
                 "--base-value",
                 type=float,
-                help=f"Base value for time offset measurements (default = {str(cls.RandomDataConfig.model_fields.get('base_value').description)})",
+                help=(
+                    f"Base value for time offset measurements "
+                    f"(default = {cls.RandomDataConfig.model_fields.get('base_value').description!s})"
+                ),
             ),
             click.option(
                 "--noise-amplitude",
                 type=float,
-                help=f"Noise amplitude/standard deviation for time offset measurements (default = {str(cls.RandomDataConfig.model_fields.get('noise_amplitude').description)})",
+                help=(
+                    f"Noise amplitude/standard deviation for time offset measurements "
+                    f"(default = {cls.RandomDataConfig.model_fields.get('noise_amplitude').description!s})"
+                ),
             ),
             click.option(
                 "--drift-rate",
                 type=float,
-                help=f"Linear drift rate per second for time offset measurements (default = {str(cls.RandomDataConfig.model_fields.get('drift_rate').description)})",
+                help=(
+                    f"Linear drift rate per second for time offset measurements "
+                    f"(default = {cls.RandomDataConfig.model_fields.get('drift_rate').description!s})"
+                ),
             ),
             click.option(
                 "--outlier-probability",
                 type=float,
                 default=0.01,
-                help=f"Probability of outliers per sample (default = {str(cls.RandomDataConfig.model_fields.get('outlier_probability').default)})",
+                help=(
+                    f"Probability of outliers per sample "
+                    f"(default = {cls.RandomDataConfig.model_fields.get('outlier_probability').default!s})"
+                ),
             ),
             click.option(
                 "--outlier-multiplier",
                 type=float,
                 default=10.0,
-                help=f"Multiplier for outlier noise amplitude (default = {str(cls.RandomDataConfig.model_fields.get('outlier_multiplier').default)})",
+                help=(
+                    f"Multiplier for outlier noise amplitude "
+                    f"(default = {cls.RandomDataConfig.model_fields.get('outlier_multiplier').default!s})"
+                ),
+            ),
+            click.option(
+                "--probe-ip",
+                type=str,
+                help=(
+                    "The ip_address you want the random data to show up under. "
+                    "Randomly generated for each probe if left empty"
+                ),
             ),
             click.pass_context,
         ]
@@ -375,7 +419,7 @@ class BaseProbe(ABC):
 
             except Exception as e:
                 logger.error(f"Error: {e!s}")
-                raise click.Abort()  # noqa: RSE102,B904
+                raise click.Abort(f"Error: {e!s}") from e
 
         return make_command(load_callback)
 
@@ -389,46 +433,32 @@ class BaseProbe(ABC):
             A click CLI command that generates random test data for this probe type.
 
         """
+
         def make_command(f: Callable) -> Callable:
             # Add vendor-specific options first, then base options
             options = cls.get_random_data_cli_options()
 
             for option in reversed(options):
                 f = option(f)
-            return click.command(name=cls.vendor.name.lower(),
-                               help=f"Generate random test data for {cls.__name__}")(f)
+            return click.command(name=cls.vendor.name.lower(), help=f"Generate random test data for {cls.__name__}")(f)
 
-        def random_data_callback(ctx: click.Context, **kwargs: dict) -> None:
+        def random_data_callback(**kwargs: dict) -> None:
             """Generate random test data for this probe type."""
             try:
-                # Access the context configuration (same as loading commands)
-                # This ensures database connection settings are available
-                if ctx.obj is None:
-                    logger.error("No configuration context available. Make sure OpenSAMPL is properly initialized.")
-                    raise click.Abort()
-                
-                # Load configuration from YAML file if provided
-                config_file = kwargs.pop("config", None)
-                if config_file:
-                    config_data = cls._load_yaml_config(config_file)
-                    # Merge config file data with CLI arguments (CLI args take precedence)
-                    for key, value in config_data.items():
-                        if kwargs.get(key) is None:  # Only use config value if CLI arg not provided
-                            kwargs[key] = value
-                    logger.info(f"Loaded configuration from {config_file}")
-
-                gen_config = cls._extract_random_data_config(kwargs=kwargs)
+                gen_config = cls._extract_random_data_config(kwargs)
                 probe_keys = []
                 for i in range(gen_config.num_probes):
                     # Use different seeds for each probe if seed is provided
                     probe_config = gen_config.model_copy(deep=True)
                     if probe_config.seed is not None:
                         probe_config.seed += i
-                    
-                    logger.info(f"Generating data for {cls.__name__} probe {i+1}/{gen_config.num_probes}")
-                    probe_key = cls.generate_random_data(probe_config)
+
+                    probe_key = cls._generate_random_probe_key(probe_config, i)
+
+                    logger.info(f"Generating data for {cls.__name__} probe {i + 1}/{gen_config.num_probes}")
+                    probe_key = cls.generate_random_data(probe_config, probe_key=probe_key)
                     probe_keys.append(probe_key)
-                
+
                 # Print summary
                 click.echo(f"\n=== Generated {len(probe_keys)} {cls.__name__} probes ===")
                 for probe_key in probe_keys:
@@ -438,7 +468,7 @@ class BaseProbe(ABC):
 
             except Exception as e:
                 logger.exception(f"Failed to generate test data: {e}")
-                raise click.Abort()
+                raise click.Abort(f"Failed to generate test data: {e}") from e
 
         return make_command(random_data_callback)
 
@@ -481,7 +511,6 @@ class BaseProbe(ABC):
 
         Args:
         ----
-            ctx: Click context object
             kwargs: Dictionary of keyword arguments passed to the CLI command
 
         Returns:
@@ -489,10 +518,17 @@ class BaseProbe(ABC):
             A RandomDataConfig object with all relevant parameters
 
         """
-        # Create the config object with remaining kwargs
-        config = cls.RandomDataConfig(**kwargs)
+        # Load configuration from YAML file if provided
+        config_file = kwargs.pop("config", None)
+        if config_file:
+            config_data = cls._load_yaml_config(config_file)
+            # Merge config file data with CLI arguments (CLI args take precedence)
+            for key, value in config_data.items():
+                if kwargs.get(key) is None:  # Only use config value if CLI arg not provided
+                    kwargs[key] = value
+            logger.info(f"Loaded configuration from {config_file}")
 
-        return config
+        return cls.RandomDataConfig(**kwargs)
 
     @classmethod
     def _prepare_archive(cls, archive_dir: Path, no_archive: bool) -> None:
@@ -603,6 +639,7 @@ class BaseProbe(ABC):
                 - value (float64): measured value at each timestamp
 
         """
+
     @classmethod
     def send_data(
         cls,
@@ -611,11 +648,11 @@ class BaseProbe(ABC):
         reference_type: ReferenceType,
         compound_reference: Optional[dict[str, Any]] = None,
         probe_key: Optional[ProbeKey] = None,
-    ):
+    ) -> None:
         """Ingests data into the database"""
         if isinstance(cls, type) and probe_key is None:
-            raise ValueError(f'send data must be called with probe_key if used as class method')
-        elif isinstance(cls, BaseProbe):
+            raise ValueError("send data must be called with probe_key if used as class method")
+        if isinstance(cls, BaseProbe):
             probe_key = cls.probe_key
 
         if cls.chunk_size:
@@ -668,16 +705,11 @@ class BaseProbe(ABC):
             random.seed(seed)
             np.random.seed(seed)
 
-    @classmethod  
+    @classmethod
     def _generate_random_ip(cls) -> str:
         """Generate a random IP address."""
         ip_parts = [random.randint(1, 254) for _ in range(4)]
         return ".".join(map(str, ip_parts))
-
-    @classmethod
-    def _get_start_time(cls, start_time: Optional[datetime]) -> datetime:
-        """Get start time, defaulting to current UTC time if None."""
-        return start_time if start_time is not None else datetime.now(timezone.utc)
 
     @classmethod
     def _generate_time_series(
@@ -693,7 +725,7 @@ class BaseProbe(ABC):
     ) -> pd.DataFrame:
         """
         Generate a realistic time series with drift, noise, and occasional outliers.
-        
+
         Args:
             start_time: Start timestamp for the data
             duration_hours: Duration of data in hours
@@ -703,65 +735,63 @@ class BaseProbe(ABC):
             drift_rate: Linear drift rate per second
             outlier_probability: Probability of outliers per sample
             outlier_multiplier: Multiplier for outlier noise amplitude
-            
+
         Returns:
             DataFrame with 'time' and 'value' columns
+
         """
         total_seconds = duration_hours * 3600
         num_samples = int(total_seconds / sample_interval_seconds)
-        
+
         time_points = []
         values = []
-        
+
         for i in range(num_samples):
             sample_time = start_time + timedelta(seconds=i * sample_interval_seconds)
             time_points.append(sample_time)
-            
+
             # Generate value with drift and noise
             time_offset = i * sample_interval_seconds
             drift_component = drift_rate * time_offset
             noise_component = np.random.normal(0, noise_amplitude)
             value = base_value + drift_component + noise_component
-            
+
             # Add occasional outliers for realism
             if random.random() < outlier_probability:
                 value += np.random.normal(0, noise_amplitude * outlier_multiplier)
-            
+
             values.append(value)
 
-        return pd.DataFrame({
-            'time': time_points,
-            'value': values
-        })
+        return pd.DataFrame({"time": time_points, "value": values})
 
     @classmethod
     def _load_yaml_config(cls, config_path: Path) -> dict[str, Any]:
         """
         Load YAML configuration file for random data generation.
-        
+
         Args:
             config_path: Path to the YAML configuration file
-            
+
         Returns:
             Dictionary containing configuration parameters
+
         """
         try:
-            with open(config_path, 'r') as f:
+            with config_path.open() as f:
                 config_data = yaml.safe_load(f)
-                
+        except FileNotFoundError as e:
+            raise ValueError(f"Configuration file not found: {config_path}") from e
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing YAML configuration file {config_path}: {e}") from e
+        except Exception as e:
+            raise ValueError(f"Error loading configuration file {config_path}: {e}") from e
+        else:
             # Validate that it's a dictionary
             if not isinstance(config_data, dict):
-                raise ValueError(f"Configuration file {config_path} must contain a YAML dictionary")
-                
+                raise TypeError(f"Configuration file {config_path} must contain a YAML dictionary")
+
             logger.debug(f"Loaded YAML config from {config_path}: {config_data}")
             return config_data
-            
-        except FileNotFoundError:
-            raise ValueError(f"Configuration file not found: {config_path}")
-        except yaml.YAMLError as e:
-            raise ValueError(f"Error parsing YAML configuration file {config_path}: {e}")
-        except Exception as e:
-            raise ValueError(f"Error loading configuration file {config_path}: {e}")
 
     @classmethod
     def _send_metadata_to_db(cls, probe_key: ProbeKey, metadata: dict) -> None:
@@ -769,40 +799,36 @@ class BaseProbe(ABC):
         load_probe_metadata(vendor=cls.vendor, probe_key=probe_key, data=metadata)
         logger.debug(f"Sent metadata for probe {probe_key}")
 
-    @classmethod  
-    def _send_time_data_to_db(
-        cls,
-        probe_key: ProbeKey,
-        data: pd.DataFrame,
-        metric: MetricType,
-        reference_type: ReferenceType,
-        compound_key: Optional[dict[str, Any]] = None,
-    ) -> None:
-        """Send time series data to the database."""
-        load_time_data(
-            probe_key=probe_key,
-            metric_type=metric,
-            reference_type=reference_type,
-            data=data,
-            compound_key=compound_key,
-        )
-        logger.debug(f"Sent {len(data)} data points for probe {probe_key}")
-
     @classmethod
     @abstractmethod
     def generate_random_data(
         cls,
         config: RandomDataConfig,
-        **kwargs: Any,
+        probe_key: ProbeKey,
     ) -> ProbeKey:
         """
         Generate random test data and send it directly to the database.
 
         Args:
+            probe_key: Probe key to use (generated if None)
+            config: RandomDataConfig with parameters specifying how to generate data
 
         Returns:
             ProbeKey: The probe key used for the generated data
+
         """
+
+    @classmethod
+    def _generate_random_probe_key(cls, gen_config: RandomDataConfig, probe_index: int) -> ProbeKey:
+        ip_address = str(gen_config.probe_ip) if gen_config.probe_ip is not None else cls._generate_random_ip()
+
+        if gen_config.probe_id is None:
+            probe_id = f"{1 + probe_index}"
+        elif isinstance(gen_config.probe_id, str):
+            probe_suffix = f"-{probe_index}" if probe_index > 0 else ""
+            probe_id = f"{gen_config.probe_id}{probe_suffix}"
+
+        return ProbeKey(probe_id=probe_id, ip_address=ip_address)
 
     def send_metadata(self):
         """Send metadata to database"""

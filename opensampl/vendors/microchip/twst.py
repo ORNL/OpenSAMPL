@@ -2,9 +2,9 @@
 
 import random
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from pathlib import Path
-from typing import Any, ClassVar, Optional, Union
+from typing import ClassVar, Optional, Union
 
 import click
 import numpy as np
@@ -13,8 +13,9 @@ import psycopg2.errors
 import requests
 import yaml
 from loguru import logger
-from sqlalchemy.exc import IntegrityError
 from pydantic import Field
+from sqlalchemy.exc import IntegrityError
+
 from opensampl.load_data import load_probe_metadata
 from opensampl.metrics import METRICS
 from opensampl.references import REF_TYPES
@@ -30,24 +31,34 @@ class MicrochipTWSTProbe(BaseProbe):
 
     class RandomDataConfig(BaseProbe.RandomDataConfig):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
-        # Time series parameters
-        base_value: Optional[float] = Field(default_factory=lambda: random.uniform(-1e-8, 1e-8),
-                                            description="random.uniform(-1e-8, 1e-8)")
-        noise_amplitude: Optional[float] = Field(default_factory=lambda: random.uniform(1e-10, 1e-9),
-                                                 description="random.uniform(1e-10, 1e-9)")
-        drift_rate: Optional[float] = Field(default_factory=lambda: random.uniform(-1e-12, 1e-12),
-                                            description="random.uniform(-1e-12, 1e-12)")
 
-        ebno_base_value: Optional[float] = Field(default_factory=lambda: random.uniform(10.0, 20.0),
-                                            description="random.uniform(10.0, 20.0)")
-        ebno_noise_amplitude: Optional[float] = Field(default_factory=lambda: random.uniform(0.5, 2.0),
-                                                 description="random.uniform(0.5, 2.0)")
-        ebno_drift_rate: Optional[float] = Field(default_factory=lambda: random.uniform(-0.01, 0.01),
-                                            description="random.uniform(-0.01, 0.01)")
+        # Time series parameters
+        base_value: Optional[float] = Field(
+            default_factory=lambda: random.uniform(-1e-8, 1e-8), description="random.uniform(-1e-8, 1e-8)"
+        )
+        noise_amplitude: Optional[float] = Field(
+            default_factory=lambda: random.uniform(1e-10, 1e-9), description="random.uniform(1e-10, 1e-9)"
+        )
+        drift_rate: Optional[float] = Field(
+            default_factory=lambda: random.uniform(-1e-12, 1e-12), description="random.uniform(-1e-12, 1e-12)"
+        )
+
+        ebno_base_value: Optional[float] = Field(
+            default_factory=lambda: random.uniform(10.0, 20.0), description="random.uniform(10.0, 20.0)"
+        )
+        ebno_noise_amplitude: Optional[float] = Field(
+            default_factory=lambda: random.uniform(0.5, 2.0), description="random.uniform(0.5, 2.0)"
+        )
+        ebno_drift_rate: Optional[float] = Field(
+            default_factory=lambda: random.uniform(-0.01, 0.01), description="random.uniform(-0.01, 0.01)"
+        )
 
         num_channels: int = Field(4)
 
+        probe_id: str = "modem"
+
         def generate_ebno_time_series(self):
+            """Given the settings of this particular RandomDataConfig, generate random Eb/No Data"""
             total_seconds = self.duration_hours * 3600
             num_samples = int(total_seconds / self.sample_interval)
 
@@ -69,10 +80,7 @@ class MicrochipTWSTProbe(BaseProbe):
 
                 values.append(value)
 
-            return pd.DataFrame({
-                'time': time_points,
-                'value': values
-            })
+            return pd.DataFrame({"time": time_points, "value": values})
 
     @classmethod
     def get_random_data_cli_options(cls) -> list:
@@ -82,22 +90,34 @@ class MicrochipTWSTProbe(BaseProbe):
             click.option(
                 "--num-channels",
                 type=int,
-                help=f"Number of remote channels to generate data for (default: {cls.RandomDataConfig.model_fields.get('num_channels').default})",
+                help=(
+                    f"Number of remote channels to generate data for "
+                    f"(default: {cls.RandomDataConfig.model_fields.get('num_channels').default})"
+                ),
             ),
             click.option(
                 "--ebno-base-value",
                 type=float,
-                help=f"Base value for Eb/No measurements (default = {str(cls.RandomDataConfig.model_fields.get('base_value').description)})",
+                help=(
+                    f"Base value for Eb/No measurements "
+                    f"(default = {cls.RandomDataConfig.model_fields.get('base_value').description!s})"
+                ),
             ),
             click.option(
                 "--ebno-noise-amplitude",
                 type=float,
-                help=f"Noise amplitude/standard deviation for Eb/No measurements (default = {str(cls.RandomDataConfig.model_fields.get('noise_amplitude').description)})",
+                help=(
+                    f"Noise amplitude/standard deviation for Eb/No measurements "
+                    f"(default = {cls.RandomDataConfig.model_fields.get('noise_amplitude').description!s})"
+                ),
             ),
             click.option(
                 "--ebno-drift-rate",
                 type=float,
-                help=f"Linear drift rate per second for Eb/No measurements (default = {str(cls.RandomDataConfig.model_fields.get('drift_rate').description)})",
+                help=(
+                    f"Linear drift rate per second for Eb/No measurements "
+                    f"(default = {cls.RandomDataConfig.model_fields.get('drift_rate').description!s})"
+                ),
             ),
         ]
         return vendor_options + base_options
@@ -187,11 +207,21 @@ class MicrochipTWSTProbe(BaseProbe):
         return {"additional_metadata": modem_data, "model": "ATS 6502"}
 
     @classmethod
+    def _generate_random_probe_key(cls, gen_config: RandomDataConfig, probe_index: int) -> ProbeKey:
+        if gen_config.probe_ip is not None:
+            ip_address = cls._generate_random_ip()
+        elif probe_index > 0:
+            ip_address = f"{gen_config.probe_ip}.{probe_index}"
+        else:
+            ip_address = str(gen_config.probe_ip)
+
+        return ProbeKey(probe_id="modem", ip_address=ip_address)
+
+    @classmethod
     def generate_random_data(
         cls,
         config: RandomDataConfig,
-        probe_key: Optional[ProbeKey] = None,
-        **kwargs: Any,
+        probe_key: ProbeKey,
     ) -> ProbeKey:
         """
         Generate random TWST modem test data and send it directly to the database.
@@ -199,32 +229,27 @@ class MicrochipTWSTProbe(BaseProbe):
         Args:
             probe_key: Probe key to use (generated if None)
             config: RandomDataConfig with parameters specifying how to generate data
-            **kwargs: Additional parameters (ignored)
+
         Returns:
             ProbeKey: The probe key used for the generated data
+
         """
         cls._setup_random_seed(config.seed)
-        
-        if probe_key is None:
-            ip_address = cls._generate_random_ip()
-            probe_key = ProbeKey(probe_id="modem", ip_address=ip_address)
 
         logger.info(f"Generating random TWST data for {probe_key}")
 
         # Generate and send metadata for main modem
         main_metadata = {
             "additional_metadata": {
-                'sid': f'STATION_{random.choice("ABCDEFGH")}',
-                'prn': random.randint(100, 999),
-                'ip': probe_key.ip_address,
-                'lat': round(random.uniform(30.0, 50.0), 7),
-                'lon': round(random.uniform(-120.0, -80.0), 7),
-                'test_data': True,
+                "sid": f"STATION_{random.choice('ABCDEFGH')}",
+                "prn": random.randint(100, 999),
+                "ip": probe_key.ip_address,
+                "test_data": True,
                 "random_generation_config": config.model_dump(),
             },
-            "model": "ATS 6502"
+            "model": "ATS 6502",
         }
-        
+
         cls._send_metadata_to_db(probe_key, main_metadata)
 
         # Generate and send metadata for remote channels
@@ -232,15 +257,13 @@ class MicrochipTWSTProbe(BaseProbe):
             remote_probe_key = ProbeKey(ip_address=probe_key.ip_address, probe_id=f"chan:{channel}")
             remote_metadata = {
                 "additional_metadata": {
-                    'rx_channel': f'ch{channel}',
-                    'sid': f'STATION_{random.choice("ABCDEFGH")}',
-                    'prn': random.randint(100, 999),
-                    'lat': round(random.uniform(30.0, 50.0), 7),
-                    'lon': round(random.uniform(-120.0, -80.0), 7),
-                    'test_data': True,
-                     "random_generation_config": config.model_dump(),
+                    "rx_channel": f"ch{channel}",
+                    "sid": f"STATION_{random.choice('ABCDEFGH')}",
+                    "prn": random.randint(100, 999),
+                    "test_data": True,
+                    "random_generation_config": config.model_dump(),
                 },
-                "model": "ATS 6502"
+                "model": "ATS 6502",
             }
             cls._send_metadata_to_db(remote_probe_key, remote_metadata)
 
@@ -248,16 +271,20 @@ class MicrochipTWSTProbe(BaseProbe):
                 logger.debug(f"Generating data for channel {channel}, measurement {measurement}")
 
                 # Generate time series using base class helper
-                df = config.generate_time_series() if measurement == "meas:offset" else config.generate_ebno_time_series()
+                df = (
+                    config.generate_time_series()
+                    if measurement == "meas:offset"
+                    else config.generate_ebno_time_series()
+                )
 
                 # Send data with compound reference for the channel
                 compound_key = {"ip_address": probe_key.ip_address, "probe_id": f"chan:{channel}"}
-                cls._send_time_data_to_db(
+                cls.send_data(
                     probe_key=probe_key,
                     data=df,
                     metric=metric,
                     reference_type=REF_TYPES.PROBE,
-                    compound_key=compound_key,
+                    compound_reference=compound_key,
                 )
 
         logger.info(f"Successfully generated {config.duration_hours}h of random TWST data for {probe_key}")

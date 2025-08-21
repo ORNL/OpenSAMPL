@@ -1,18 +1,15 @@
 """MicrochipTP4100 clock Parser implementation"""
 
 import random
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, ClassVar, Optional, Union
-from pydantic import Field
+from typing import ClassVar, Optional, Union
 
 import click
-import numpy as np
 import pandas as pd
 import yaml
 from loguru import logger
+from pydantic import Field
 
-from opensampl.load_data import load_probe_metadata, load_time_data
 from opensampl.metrics import METRICS
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
@@ -30,13 +27,36 @@ class MicrochipTP4100Probe(BaseProbe):
 
     class RandomDataConfig(BaseProbe.RandomDataConfig):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
+
         # Time series parameters
-        base_value: Optional[float] = Field(default_factory=lambda: random.uniform(-5e-7, 5e-7), description="random.uniform(-5e-7, 5e-7)")
-        noise_amplitude: Optional[float] = Field(default_factory=lambda: random.uniform(1e-8, 5e-8), description="random.uniform(1e-8, 5e-8)")
-        drift_rate: Optional[float] = Field(default_factory=lambda: random.uniform(-1e-10, 1e-10), description="random.uniform(-1e-10, 1e-10)")
+        base_value: Optional[float] = Field(
+            default_factory=lambda: random.uniform(-5e-7, 5e-7), description="random.uniform(-5e-7, 5e-7)"
+        )
+        noise_amplitude: Optional[float] = Field(
+            default_factory=lambda: random.uniform(1e-8, 5e-8), description="random.uniform(1e-8, 5e-8)"
+        )
+        drift_rate: Optional[float] = Field(
+            default_factory=lambda: random.uniform(-1e-10, 1e-10), description="random.uniform(-1e-10, 1e-10)"
+        )
 
         metric_type: str = "time-error (ns)"
         reference_type: str = "GNSS"
+
+    @classmethod
+    def get_random_data_cli_options(cls) -> list:
+        """Return vendor-specific random data generation options."""
+        base_options = super().get_random_data_cli_options()
+        vendor_options = [
+            click.option(
+                "--probe-id",
+                type=str,
+                help=(
+                    "The probe_id you want the random data to show up under. "
+                    "Randomly generated for each probe if left empty; incremented if multiple probes"
+                ),
+            ),
+        ]
+        return base_options + vendor_options
 
     def __init__(self, input_file: Union[str, Path]):
         """Initialize MicrochipTP4100 object given input_file and determines probe identity from file headers"""
@@ -129,8 +149,7 @@ class MicrochipTP4100Probe(BaseProbe):
     def generate_random_data(
         cls,
         config: RandomDataConfig,
-        probe_key: Optional[ProbeKey] = None,
-        **kwargs: Any,
+        probe_key: ProbeKey,
     ) -> ProbeKey:
         """
         Generate random TP4100 test data and send it directly to the database.
@@ -138,16 +157,12 @@ class MicrochipTP4100Probe(BaseProbe):
         Args:
             probe_key: Probe key to use (generated if None)
             config: RandomDataConfig with parameters specifying how to generate data
-            **kwargs: Additional parameters (ignored)
+
         Returns:
             ProbeKey: The probe key used for the generated data
+
         """
         cls._setup_random_seed(config.seed)
-
-        if probe_key is None:
-            ip_address = cls._generate_random_ip()
-            probe_id = f"tp4100-{random.randint(1000, 9999)}"
-            probe_key = ProbeKey(probe_id=probe_id, ip_address=ip_address)
 
         logger.info(f"Generating random TP4100 data for {probe_key}")
 
@@ -159,10 +174,7 @@ class MicrochipTP4100Probe(BaseProbe):
         }
 
         # Generate and send metadata
-        metadata = {
-            "additional_metadata": metadata_header,
-            "model": "TP 4100"
-        }
+        metadata = {"additional_metadata": metadata_header, "model": "TP 4100"}
 
         cls._send_metadata_to_db(probe_key, metadata)
 

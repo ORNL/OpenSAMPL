@@ -3,15 +3,15 @@
 import gzip
 import random
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional, TextIO, Union
+from typing import TextIO, Union
 
-import numpy as np
+import click
 import pandas as pd
 from loguru import logger
 from pydantic import Field
-from opensampl.load_data import load_probe_metadata, load_time_data
+
 from opensampl.metrics import METRICS
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
@@ -27,10 +27,33 @@ class AdvaProbe(BaseProbe):
 
     class RandomDataConfig(BaseProbe.RandomDataConfig):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
+
         # Time series parameters
-        base_value: float = Field(default_factory=lambda: random.uniform(-1e-6, 1e-6), description="random.uniform(-1e-6, 1e-6)")
-        noise_amplitude: float = Field(default_factory=lambda: random.uniform(1e-9, 1e-8), description="random.uniform(1e-9, 1e-8)")
-        drift_rate: float = Field(default_factory=lambda: random.uniform(-1e-12, 1e-12), description="random.uniform(-1e-12, 1e-12)")
+        base_value: float = Field(
+            default_factory=lambda: random.uniform(-1e-6, 1e-6), description="random.uniform(-1e-6, 1e-6)"
+        )
+        noise_amplitude: float = Field(
+            default_factory=lambda: random.uniform(1e-9, 1e-8), description="random.uniform(1e-9, 1e-8)"
+        )
+        drift_rate: float = Field(
+            default_factory=lambda: random.uniform(-1e-12, 1e-12), description="random.uniform(-1e-12, 1e-12)"
+        )
+
+    @classmethod
+    def get_random_data_cli_options(cls) -> list:
+        """Return vendor-specific random data generation options."""
+        base_options = super().get_random_data_cli_options()
+        vendor_options = [
+            click.option(
+                "--probe-id",
+                type=str,
+                help=(
+                    "The probe_id you want the random data to show up under. "
+                    "Randomly generated for each probe if left empty; incremented if multiple probes"
+                ),
+            ),
+        ]
+        return base_options + vendor_options
 
     def __init__(self, input_file: Union[str, Path]):
         """Initialize AdvaProbe object give input_file and determines probe identity from filename"""
@@ -137,8 +160,7 @@ class AdvaProbe(BaseProbe):
     def generate_random_data(
         cls,
         config: RandomDataConfig,
-        probe_key: Optional[ProbeKey] = None,
-        **kwargs: Any,
+        probe_key: ProbeKey,
     ) -> ProbeKey:
         """
         Generate random ADVA probe test data and send it directly to the database.
@@ -146,30 +168,21 @@ class AdvaProbe(BaseProbe):
         Args:
             probe_key: Probe key to use (generated if None)
             config: RandomDataConfig with parameters specifying how to generate data
-            **kwargs: Additional parameters (ignored)
 
         Returns:
             ProbeKey: The probe key used for the generated data
+
         """
         cls._setup_random_seed(config.seed)
-
-        if probe_key is None:
-            ip_address = cls._generate_random_ip()
-            probe_id = f"{random.randint(1, 99)}-{random.randint(1, 99)}"
-            probe_key = ProbeKey(probe_id=probe_id, ip_address=ip_address)
-
 
         logger.info(f"Generating random ADVA data for {probe_key}")
 
         # Generate and send metadata
         metadata = {
-            "adva_source": f"RANDOM GENERATION",
+            "adva_source": "RANDOM GENERATION",
             "title": f"Test ADVA Clock Probe {probe_key.probe_id}",
             "type": "PHASE",
-            "additional_metadata": {
-                "test_data": True,
-                "random_generation_config": config.model_dump()
-            }
+            "additional_metadata": {"test_data": True, "random_generation_config": config.model_dump()},
         }
 
         cls._send_metadata_to_db(probe_key, metadata)
