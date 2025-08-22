@@ -46,7 +46,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 7,
+  "id": 2,
   "links": [],
   "panels": [
     {
@@ -87,8 +87,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#707070",
-                "value": null
+                "color": "#707070"
               }
             ]
           }
@@ -282,7 +281,7 @@
           "zoom": 3
         }
       },
-      "pluginVersion": "10.4.1",
+      "pluginVersion": "12.0.2",
       "targets": [
         {
           "datasource": {
@@ -414,6 +413,7 @@
             "axisSoftMax": 20,
             "axisSoftMin": 10,
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "opacity",
@@ -444,8 +444,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
-                "value": null
+                "color": "orange"
               },
               {
                 "color": "green",
@@ -473,7 +472,9 @@
           "calcs": [],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
         },
         "tooltip": {
           "hideZeros": false,
@@ -549,6 +550,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "opacity",
@@ -579,8 +581,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
-                "value": null
+                "color": "orange"
               },
               {
                 "color": "green",
@@ -684,6 +685,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 25,
             "gradientMode": "opacity",
@@ -714,8 +716,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
-                "value": null
+                "color": "orange"
               },
               {
                 "color": "green",
@@ -812,7 +813,6 @@
       "id": 3,
       "panels": [],
       "repeat": "compound_ref",
-      "repeatDirection": "h",
       "title": "$modem vs $compound_ref",
       "type": "row"
     },
@@ -841,8 +841,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#707070",
-                "value": null
+                "color": "#707070"
               }
             ]
           }
@@ -1036,7 +1035,7 @@
           "zoom": 3
         }
       },
-      "pluginVersion": "10.4.1",
+      "pluginVersion": "12.0.2",
       "targets": [
         {
           "datasource": {
@@ -1169,6 +1168,7 @@
             "axisSoftMax": 20,
             "axisSoftMin": 10,
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 25,
             "gradientMode": "opacity",
@@ -1199,8 +1199,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
-                "value": null
+                "color": "orange"
               },
               {
                 "color": "green",
@@ -1290,6 +1289,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 25,
             "gradientMode": "opacity",
@@ -1320,8 +1320,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
-                "value": null
+                "color": "orange"
               },
               {
                 "color": "green",
@@ -1411,6 +1410,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 25,
             "gradientMode": "opacity",
@@ -1441,8 +1441,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
-                "value": null
+                "color": "orange"
               },
               {
                 "color": "green",
@@ -1514,7 +1513,9 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 39,
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
@@ -1524,29 +1525,23 @@
           "type": "grafana-postgresql-datasource",
           "uid": "castdb-datasource"
         },
-        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where vendor = 'MicrochipTWST' and probe_id = 'modem'",
+        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where vendor = 'MicrochipTWST' and probe_id = 'modem' and public;",
         "description": "The modem from which \"local time\" is derived, also the stream from which we are receiving the data. ",
-        "hide": 0,
         "includeAll": false,
         "label": "Receiver",
-        "multi": false,
         "name": "modem",
         "options": [],
-        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where vendor = 'MicrochipTWST' and probe_id = 'modem'",
+        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' Interface ', probe_id)) AS __text FROM castdb.probe_metadata where vendor = 'MicrochipTWST' and probe_id = 'modem' and public;",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
         "type": "query"
       },
       {
         "current": {
-          "selected": false,
           "text": "5min",
           "value": "5min"
         },
         "description": "The granularity that measurements are averaged by",
-        "hide": 0,
         "includeAll": false,
         "label": "Time Interval",
         "multi": false,
@@ -1584,16 +1579,11 @@
           }
         ],
         "query": "1min, 5min, 15min, 1hour, 6hour, 1day",
-        "queryValue": "",
-        "skipUrlSync": false,
         "type": "custom"
       },
       {
         "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
+          "text": "All",
           "value": [
             "$__all"
           ]
@@ -1604,7 +1594,6 @@
         },
         "definition": "SELECT pm.uuid AS __value, COALESCE(name, probe_id) AS __text\nFROM castdb.probe_metadata pm\nJOIN castdb.reference r ON pm.uuid = r.compound_reference_uuid\nWHERE r.uuid IN (\n  SELECT DISTINCT reference_uuid\n  FROM castdb.probe_data\n  WHERE probe_uuid = ${modem:sqlstring})",
         "description": "The remote 6502 modem from which we are receiving data",
-        "hide": 0,
         "includeAll": true,
         "label": "Remote Modem",
         "multi": true,
@@ -1613,8 +1602,6 @@
         "query": "SELECT pm.uuid AS __value, COALESCE(name, probe_id) AS __text\nFROM castdb.probe_metadata pm\nJOIN castdb.reference r ON pm.uuid = r.compound_reference_uuid\nWHERE r.uuid IN (\n  SELECT DISTINCT reference_uuid\n  FROM castdb.probe_data\n  WHERE probe_uuid = ${modem:sqlstring})",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
         "type": "query"
       },
       {
@@ -1626,14 +1613,11 @@
         "description": "",
         "hide": 2,
         "includeAll": false,
-        "multi": false,
         "name": "phase_offset_uuid",
         "options": [],
         "query": "select uuid from castdb.metric_type where lower(name) = 'phase offset';",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
         "type": "query"
       },
       {
@@ -1645,14 +1629,11 @@
         "description": "",
         "hide": 2,
         "includeAll": false,
-        "multi": false,
         "name": "ebno_uuid",
         "options": [],
         "query": "select uuid from castdb.metric_type where lower(name) = 'eb/no';",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
         "type": "query"
       }
     ]
@@ -1663,8 +1644,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "TWST Dashboard",
-  "uid": "twst-dashboard",
-  "version": 1,
-  "weekStart": ""
+  "title": "Public TWST Dashboard",
+  "uid": "public-twst-dashboard",
+  "version": 2
 }

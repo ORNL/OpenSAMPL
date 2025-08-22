@@ -37,7 +37,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
-## [1.1.3] - 2025-08
+## [1.1.4] - 2025-08-22
+### Added
+- 🔥 Random data generation for all supported probes
+- 🔥 Public and "all" view in Grafana Dashboards
+
+### Fixed
+- 🩹 Autopopulation of unnamed probe identifiers in Grafana Dashboards
+
+## [1.1.3] - 2025-08-18
 ### Added
 - 🔥 Microchip TP4100 Load
 - 🔥 Microchip TP4100 Collection
