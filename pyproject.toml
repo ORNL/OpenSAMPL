@@ -1,6 +1,6 @@
 [project]
 name = "opensampl"
-version = "1.1.3"
+version = "1.1.4"
 description = "Python tools for adding clock data to a timescale db."
 license = {file = "LICENSE"}
 authors = [
@@ -124,6 +124,9 @@ select = ["F", "E", "W", "C", "I", "D", "N", "B", "ERA", "ANN", "S", "A", "COM",
 ignore = ["D203", "D212", "D400", "D415", "ANN401", "S101", "PLR2004", "COM812",
           "ANN201", "B011", "EM102", "TRY003", "ANN204", "FA100", "PIE790", "EM101",
             "PLC0415"]
+
+[tool.ruff.lint.per-file-ignores]
+"opensampl/vendors/**/*.py" = ['S311'] # we want to ignore the errors about random
 
 [tool.ruff.lint.pylint]
 max-args = 10

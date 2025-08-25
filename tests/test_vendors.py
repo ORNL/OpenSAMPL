@@ -141,6 +141,9 @@ class TestBaseProbe:
                 import pandas as pd
                 return pd.DataFrame()
 
+            def generate_random_data(self, config: BaseProbe.RandomDataConfig, probe_key: ProbeKey):
+                return probe_key
+
         probe = TestProbe("test_file.txt")
         assert probe.input_file == Path("test_file.txt")
 
@@ -160,6 +163,9 @@ class TestBaseProbe:
             def process_time_data(self):
                 import pandas as pd
                 return pd.DataFrame()
+
+            def generate_random_data(self, config: BaseProbe.RandomDataConfig, probe_key: ProbeKey):
+                return probe_key
 
         # Mock the click context
         mock_ctx = Mock()
@@ -196,6 +202,9 @@ class TestBaseProbe:
             def process_time_data(self):
                 import pandas as pd
                 return pd.DataFrame()
+
+            def generate_random_data(self, config: BaseProbe.RandomDataConfig, probe_key: ProbeKey):
+                return probe_key
 
         mock_ctx = Mock()
         mock_ctx.obj = {"conf": Mock()}
@@ -237,6 +246,9 @@ class TestBaseProbe:
             def process_time_data(self):
                 import pandas as pd
                 return pd.DataFrame()
+
+            def generate_random_data(self, config: BaseProbe.RandomDataConfig, probe_key: ProbeKey):
+                return probe_key
 
         mock_ctx = Mock()
         mock_ctx.obj = {"conf": Mock()}
