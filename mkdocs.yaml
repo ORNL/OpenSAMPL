@@ -13,7 +13,7 @@ nav:
     - Expected Table Format: guides/expected_table_format.md
     - Create: guides/create_probe_type.md
   - Server: guides/opensampl-server.md
-  - Collect: guides/collect.md
+  - Collect: guides/collection.md
   - Random Data: guides/random-data-generation.md
 - API:
   - index: api/index.md
