@@ -7,8 +7,11 @@ from ATS6502 modems over time.
 
 import asyncio
 from typing import Optional
-
+from loguru import logger
 from opensampl.collect.modem import ModemReader, require_conn
+
+
+SENTINEL = '--openSAMPL stop reading--'  # type: ignore[assignment]
 
 
 class ModemStatusReader(ModemReader):
@@ -34,6 +37,7 @@ class ModemStatusReader(ModemReader):
         self.keys = keys
         self.queue = asyncio.Queue()
         self.readings = []
+        self.continue_reading = False
         super().__init__(host=host, port=port)
 
     @require_conn
@@ -43,10 +47,16 @@ class ModemStatusReader(ModemReader):
 
         Reads lines from the telnet connection and queues them for processing.
         """
-        while True:
-            line = await self.reader.readline()
-            if line:
+        try:
+            while self.continue_reading:
+                line = await asyncio.wait_for(self.reader.readline(), timeout=5.0)
+                if not line:
+                    break  # EOF
                 await self.queue.put(line)
+        except asyncio.TimeoutError:
+            logger.debug(f'Timeout waiting for data from {self.host}:{self.port}')
+        finally:
+            await self.queue.put(SENTINEL)
 
     def parse_line(self, line: str):
         """
@@ -90,11 +100,16 @@ class ModemStatusReader(ModemReader):
         """
         while True:
             line = await self.queue.get()
-            parsed = self.parse_line(line)
-            if parsed:
-                timestamp, definition, value = parsed
-                if self.should_keep(definition):
-                    self.readings.append(parsed)
+            try:
+                if line is SENTINEL:
+                    break
+                parsed = self.parse_line(line)
+                if parsed:
+                    timestamp, definition, value = parsed
+                    if self.should_keep(definition):
+                        self.readings.append(parsed)
+            finally:
+                self.queue.task_done()
 
     async def collect_readings(self):
         """
@@ -104,15 +119,15 @@ class ModemStatusReader(ModemReader):
         duration, then cancels the tasks.
         """
         async with self.connect():
-            read_coroutine = asyncio.create_task(self.reader_task())
-            process_coroutine = asyncio.create_task(self.processor_task())
+            self.continue_reading = True
+            async with asyncio.TaskGroup() as tg:
+                tg.create_task(self.reader_task())
+                tg.create_task(self.processor_task())
 
-            try:
-                await asyncio.sleep(self.duration)
-            finally:
-                # Cancel tasks and wait for them to complete
-                read_coroutine.cancel()
-                process_coroutine.cancel()
+                try:
+                    await asyncio.sleep(self.duration)
+                    self.continue_reading = False
+                    await self.queue.join()
 
-                # Wait for tasks to handle cancellation
-                await asyncio.gather(read_coroutine, process_coroutine, return_exceptions=True)
+                finally:
+                    self.continue_reading = False

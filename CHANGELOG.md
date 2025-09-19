@@ -37,6 +37,16 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
+## [1.1.5] - 2025-09-19
+### Fixed
+- 🩹 More durable timestamp extrapolation in time data insertion 
+
+### Changed
+- ⚡ Added additional safeguards in TWST Collection to prevent zombie processes   
+
+### Added
+- 🔥 Better probe identification in logs
+
 ## [1.1.4] - 2025-08-22
 ### Added
 - 🔥 Random data generation for all supported probes
