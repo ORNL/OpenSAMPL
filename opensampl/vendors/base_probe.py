@@ -442,7 +442,7 @@ class BaseProbe(ABC):
                 f = option(f)
             return click.command(name=cls.vendor.name.lower(), help=f"Generate random test data for {cls.__name__}")(f)
 
-        def random_data_callback(**kwargs: dict) -> None:
+        def random_data_callback(ctx: click.Context, **kwargs: dict) -> None:  # noqa: ARG001
             """Generate random test data for this probe type."""
             try:
                 gen_config = cls._extract_random_data_config(kwargs)

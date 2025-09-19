@@ -1,6 +1,6 @@
 [project]
 name = "opensampl"
-version = "1.1.4"
+version = "1.1.5"
 description = "Python tools for adding clock data to a timescale db."
 license = {file = "LICENSE"}
 authors = [
@@ -95,6 +95,7 @@ dev = [
 include = [
     "opensampl/server/docker-compose.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/grafana/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
@@ -103,6 +104,7 @@ exclude = [".env"]
 include = [
     "opensampl/server/docker-compose.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/grafana/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
