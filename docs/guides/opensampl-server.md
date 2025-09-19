@@ -16,9 +16,9 @@ The openSAMPL Server CLI provides commands for managing a Docker Compose deploym
 - Docker and Docker Compose installed
 - The openSAMPL Python package installed
 
-Install with the server extra: 
+Install openSAMPL as normal: 
 ```
-pip install "opensampl[server]"
+pip install opensampl
 ```
 
 ## Basic Commands
@@ -131,6 +131,17 @@ opensampl-server up --env-file ./my-custom-env.env
   - `BACKEND_URL=http://localhost:8015`
   - `ROUTE_TO_BACKEND=true`
 
+## Power users 
+
+For those who are more familiar with docker, there is a `opensampl-server2` which corresponds to the following, more directly 
+exposing the docker to users.
+`OPENSAMPL_SERVER__COMPOSE_FILE` is set in your .env file or environment.
+
+```bash
+opensampl-server2 --env-file ENV_FILE args
+docker compose --env-file ${ENV_FILE} -f ${OPENSAMPL_SERVER__COMPOSE_FILE} $@
+```
+
 ## Troubleshooting
 
 If you encounter issues:
@@ -172,3 +183,5 @@ nano ./dev.env
 # Start the server with custom environment
 opensampl-server up --env-file ./dev.env
 ```
+
+
