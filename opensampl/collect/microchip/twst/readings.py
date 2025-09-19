@@ -12,7 +12,7 @@ from loguru import logger
 
 from opensampl.collect.modem import ModemReader, require_conn
 
-SENTINEL = "--openSAMPL stop reading--"  # type: ignore[assignment]
+SENTINEL = b"--openSAMPL stop reading--"  # type: ignore[assignment]
 
 
 class ModemStatusReader(ModemReader):
@@ -102,7 +102,7 @@ class ModemStatusReader(ModemReader):
         while True:
             line = await self.queue.get()
             try:
-                if line is SENTINEL:
+                if line == SENTINEL:
                     break
                 parsed = self.parse_line(line)
                 if parsed:
@@ -121,14 +121,18 @@ class ModemStatusReader(ModemReader):
         """
         async with self.connect():
             self.continue_reading = True
-            async with asyncio.TaskGroup() as tg:  # ty: ignore[unresolved-attribute]
-                tg.create_task(self.reader_task())
-                tg.create_task(self.processor_task())
+            read_coroutine = asyncio.create_task(self.reader_task())
+            process_coroutine = asyncio.create_task(self.processor_task())
 
-                try:
-                    await asyncio.sleep(self.duration)
-                    self.continue_reading = False
-                    await self.queue.join()
+            try:
+                await asyncio.sleep(self.duration)
+                self.continue_reading = False
+                await self.queue.join()
 
-                finally:
-                    self.continue_reading = False
+            finally:
+                # Cancel tasks and wait for them to complete
+                read_coroutine.cancel()
+                process_coroutine.cancel()
+
+                # Wait for tasks to handle cancellation
+                await asyncio.gather(read_coroutine, process_coroutine, return_exceptions=True)
