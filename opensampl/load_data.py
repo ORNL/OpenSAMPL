@@ -126,7 +126,8 @@ def load_time_data(
             session=session,
         )
         probe_readable = (
-            data_definition.probe.name or f"{data_definition.probe.ip_address} ({data_definition.probe.probe_id})" # ty: ignore[possibly-unbound-attribute]
+            data_definition.probe.name  # ty: ignore[possibly-unbound-attribute]
+            or f"{data_definition.probe.ip_address} ({data_definition.probe.probe_id})"  # ty: ignore[possibly-unbound-attribute] # noqa: E501
         )
 
         if any(x is None for x in [data_definition.probe, data_definition.metric, data_definition.reference]):

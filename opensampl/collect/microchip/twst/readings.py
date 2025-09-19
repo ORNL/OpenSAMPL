@@ -121,7 +121,7 @@ class ModemStatusReader(ModemReader):
         """
         async with self.connect():
             self.continue_reading = True
-            async with asyncio.TaskGroup() as tg: # ty: ignore[unresolved-attribute]
+            async with asyncio.TaskGroup() as tg:  # ty: ignore[unresolved-attribute]
                 tg.create_task(self.reader_task())
                 tg.create_task(self.processor_task())
 
