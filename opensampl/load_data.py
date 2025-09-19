@@ -125,7 +125,9 @@ def load_time_data(
             strict=strict,
             session=session,
         )
-        probe_readable = data_definition.probe.name or f'{data_definition.probe.ip_address} ({data_definition.probe.probe_id})'
+        probe_readable = (
+            data_definition.probe.name or f"{data_definition.probe.ip_address} ({data_definition.probe.probe_id})" # ty: ignore[possibly-unbound-attribute]
+        )
 
         if any(x is None for x in [data_definition.probe, data_definition.metric, data_definition.reference]):
             raise RuntimeError(f"Not all required definition fields filled: {data_definition.dump_factory()}")  # noqa: TRY301
@@ -154,8 +156,10 @@ def load_time_data(
             inserted = result.rowcount  # ty: ignore[unresolved-attribute]
             excluded = total_rows - inserted
 
-            logger.warning(f"Inserted {inserted}/{total_rows} rows for {probe_readable}; {excluded}/{total_rows} rejected due to conflicts")
-
+            logger.warning(
+                f"Inserted {inserted}/{total_rows} rows for {probe_readable}; "
+                f"{excluded}/{total_rows} rejected due to conflicts"
+            )
 
         except Exception as e:
             # In case of an error, roll back the session

@@ -7,11 +7,12 @@ from ATS6502 modems over time.
 
 import asyncio
 from typing import Optional
+
 from loguru import logger
+
 from opensampl.collect.modem import ModemReader, require_conn
 
-
-SENTINEL = '--openSAMPL stop reading--'  # type: ignore[assignment]
+SENTINEL = "--openSAMPL stop reading--"  # type: ignore[assignment]
 
 
 class ModemStatusReader(ModemReader):
@@ -54,7 +55,7 @@ class ModemStatusReader(ModemReader):
                     break  # EOF
                 await self.queue.put(line)
         except asyncio.TimeoutError:
-            logger.debug(f'Timeout waiting for data from {self.host}:{self.port}')
+            logger.debug(f"Timeout waiting for data from {self.host}:{self.port}")
         finally:
             await self.queue.put(SENTINEL)
 
@@ -120,7 +121,7 @@ class ModemStatusReader(ModemReader):
         """
         async with self.connect():
             self.continue_reading = True
-            async with asyncio.TaskGroup() as tg:
+            async with asyncio.TaskGroup() as tg: # ty: ignore[unresolved-attribute]
                 tg.create_task(self.reader_task())
                 tg.create_task(self.processor_task())
 
