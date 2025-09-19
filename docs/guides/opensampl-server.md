@@ -18,7 +18,7 @@ The openSAMPL Server CLI provides commands for managing a Docker Compose deploym
 
 Install with the server extra: 
 ```
-pip install "opensampl==0.2.0[server]"
+pip install "opensampl[server]"
 ```
 
 ## Basic Commands
