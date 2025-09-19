@@ -113,6 +113,7 @@ def load_time_data(
     if not isinstance(session, Session):
         raise TypeError("Session must be a SQLAlchemy session")
 
+    probe_readable = str(probe_key)
     try:
         from opensampl.load.data import DataFactory
 
@@ -124,6 +125,9 @@ def load_time_data(
             strict=strict,
             session=session,
         )
+        probe_readable = (
+            data_definition.probe.name or f"{data_definition.probe.ip_address} ({data_definition.probe.probe_id})" # ty: ignore[possibly-unbound-attribute]
+        )
 
         if any(x is None for x in [data_definition.probe, data_definition.metric, data_definition.reference]):
             raise RuntimeError(f"Not all required definition fields filled: {data_definition.dump_factory()}")  # noqa: TRY301
@@ -134,9 +138,8 @@ def load_time_data(
         df["metric_type_uuid"] = data_definition.metric.uuid  # ty: ignore[possibly-unbound-attribute]
         logger.debug(df.head())
         # Ensure correct dtypes
-        df["time"] = pd.to_datetime(df["time"], utc=True, errors="raise")
+        df["time"] = pd.to_datetime(df["time"], format="mixed", utc=True, errors="raise")
         df["value"] = df["value"].apply(json.dumps)
-
         records = df.to_dict(orient="records")
         insert_stmt = text(f"""
         INSERT INTO {ProbeData.__table__.schema}.{ProbeData.__tablename__}
@@ -152,16 +155,20 @@ def load_time_data(
             total_rows = len(records)
             inserted = result.rowcount  # ty: ignore[unresolved-attribute]
             excluded = total_rows - inserted
-            logger.warning(f"Inserted {inserted}/{total_rows} rows; {excluded}/{total_rows} rejected due to conflicts")
+
+            logger.warning(
+                f"Inserted {inserted}/{total_rows} rows for {probe_readable}; "
+                f"{excluded}/{total_rows} rejected due to conflicts"
+            )
 
         except Exception as e:
             # In case of an error, roll back the session
             session.rollback()
-            logger.error(f"Error inserting rows: {e}")
+            logger.error(f"Error inserting rows for {probe_readable}: {e}")
             raise
 
     except Exception as e:
-        logger.exception(f"Error writing time data: {e}")
+        logger.exception(f"Error writing time data for {probe_readable}: {e}")
         session.rollback()
         raise
 

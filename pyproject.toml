@@ -1,6 +1,6 @@
 [project]
 name = "opensampl"
-version = "1.1.4"
+version = "1.1.5"
 description = "Python tools for adding clock data to a timescale db."
 license = {file = "LICENSE"}
 authors = [
