@@ -95,6 +95,7 @@ dev = [
 include = [
     "opensampl/server/docker-compose.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/grafana/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
@@ -103,6 +104,7 @@ exclude = [".env"]
 include = [
     "opensampl/server/docker-compose.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/grafana/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
