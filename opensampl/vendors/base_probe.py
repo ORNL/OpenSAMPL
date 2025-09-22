@@ -1,13 +1,14 @@
 """Abstract probe Base which provides scaffolding for vendor specific implementation"""
 
 import random
+import shutil
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Optional, Union
+from typing import Any, Callable, ClassVar, Optional, TypeVar, Union
 
 import click
 import numpy as np
@@ -25,6 +26,76 @@ from opensampl.load_data import load_probe_metadata, load_time_data
 from opensampl.metrics import METRICS, MetricType
 from opensampl.references import ReferenceType
 from opensampl.vendors.constants import ProbeKey, VendorType
+
+T = TypeVar("T")
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+class dualmethod:  # noqa: N801
+    """
+    Allows a method to be called both as an instance method and as a class method with the same function definition.
+
+    When called on an instance, the first argument will be the instance.
+    When called on the class, the first argument will be the class itself.
+
+    Example:
+        ```python
+        class MyClass:
+            @dualmethod
+            def greet(self_or_cls, name: str = "World"):
+                if isinstance(self_or_cls, MyClass):
+                    print(f"Instance says: Hello {name}")
+                else:
+                    print(f"Class says: Hello {name}")
+
+
+        # Can be called on class
+        MyClass.greet("Alice")  # Class says: Hello Alice
+
+        # Can be called on instance
+        obj = MyClass()
+        obj.greet("Bob")  # Instance says: Hello Bob
+        ```
+
+    """
+
+    def __init__(self, func: F) -> None:
+        """
+        Initialize the dualmethod descriptor.
+
+        Args:
+            func: The function to be wrapped as a dual method
+
+        """
+        self.func: F = func
+        self.__doc__: Optional[str] = func.__doc__
+        fname = getattr(func, "__name__", None)
+        self.__name__: str = fname
+        self.__qualname__: str = getattr(func, "__qualname__", fname)
+
+    def __get__(self, obj: Optional[T], cls: type[T]) -> Callable[..., Any]:
+        """
+        Descriptor protocol method that returns the appropriate bound method.
+
+        Args:
+            obj: The instance from which the method is being accessed (None for class access)
+            cls: The class that owns the method
+
+        Returns:
+            A wrapper function that calls the original function with either the
+            instance or class as the first argument
+
+        """
+
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            return self.func(obj if obj is not None else cls, *args, **kwargs)
+
+        # Preserve function metadata
+        wrapper.__name__ = self.__name__
+        wrapper.__doc__ = self.__doc__
+        wrapper.__qualname__ = self.__qualname__
+
+        return wrapper
 
 
 class DummyTqdm:
@@ -388,7 +459,7 @@ class BaseProbe(ABC):
         now = datetime.now(tz=timezone.utc)
         archive_path = archive_dir / str(now.year) / f"{now.month:02d}" / self.vendor.name / str(self.probe_key)
         archive_path.mkdir(parents=True, exist_ok=True)
-        self.input_file.rename(archive_path / self.input_file.name)
+        shutil.move(str(self.input_file), str(archive_path / self.input_file.name))
 
     @classmethod
     def get_cli_command(cls) -> Callable:
@@ -640,9 +711,9 @@ class BaseProbe(ABC):
 
         """
 
-    @classmethod
+    @dualmethod
     def send_data(
-        cls,
+        self,
         data: pd.DataFrame,
         metric: MetricType,
         reference_type: ReferenceType,
@@ -650,14 +721,15 @@ class BaseProbe(ABC):
         probe_key: Optional[ProbeKey] = None,
     ) -> None:
         """Ingests data into the database"""
-        if isinstance(cls, type) and probe_key is None:
-            raise ValueError("send data must be called with probe_key if used as class method")
-        if isinstance(cls, BaseProbe):
-            probe_key = cls.probe_key
+        if isinstance(self, BaseProbe):
+            probe_key = self.probe_key
 
-        if cls.chunk_size:
-            for chunk_start in range(0, len(data), cls.chunk_size):
-                chunk = data.iloc[chunk_start : chunk_start + cls.chunk_size]
+        if probe_key is None:
+            raise ValueError("send data must be called with probe_key if used as class method")
+
+        if self.chunk_size:
+            for chunk_start in range(0, len(data), self.chunk_size):
+                chunk = data.iloc[chunk_start : chunk_start + self.chunk_size]
                 load_time_data(
                     probe_key=probe_key,
                     metric_type=metric,

@@ -37,15 +37,18 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
-## [1.1.5] - 2025-09-19
+## [1.1.5] - 2025-09-22
 ### Fixed
-- 🩹 More durable timestamp extrapolation in time data insertion 
+- 🩹 More durable timestamp extrapolation in time data insertion
+- 🩹 Using shutil.move instead of pathlib.Path.rename to allow for differing file systems 
 
 ### Changed
 - ⚡ Added additional safeguards in TWST Collection to prevent zombie processes   
+- ⚡ How random data uses the load/send when used as a class method for more durability
 
 ### Added
 - 🔥 Better probe identification in logs
+- 🔥 Filter on files being ingested by ADVA probes to only attempt files which match expected naming convention from input directory
 
 ## [1.1.4] - 2025-08-22
 ### Added

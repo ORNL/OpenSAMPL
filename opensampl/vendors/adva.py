@@ -5,7 +5,7 @@ import random
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TextIO, Union
+from typing import ClassVar, TextIO, Union
 
 import click
 import pandas as pd
@@ -24,6 +24,13 @@ class AdvaProbe(BaseProbe):
     timestamp: datetime
     start_time: datetime
     vendor = VENDORS.ADVA
+
+    file_pattern: ClassVar = re.compile(
+        r"(?P<ip>\d+\.\d+\.\d+\.\d+)(?P<type>CLOCK_PROBE|PTP_CLOCK_PROBE)"
+        r"-(?P<identifier>\d+-\d+)-"
+        r"(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)-"
+        r"(?P<hour>\d+)-(?P<minute>\d+)-(?P<second>\d+)\.txt(?:\.gz)?"
+    )
 
     class RandomDataConfig(BaseProbe.RandomDataConfig):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
@@ -61,19 +68,18 @@ class AdvaProbe(BaseProbe):
         self.probe_key, self.timestamp = self.parse_file_name(self.input_file)
 
     @classmethod
+    def filter_files(cls, files: list[Path]) -> list[Path]:
+        """Filter the files found in the input directory when loading to those which match the regex"""
+        return [f for f in files if cls.file_pattern.fullmatch(f.name)]
+
+    @classmethod
     def parse_file_name(cls, file_name: Path) -> tuple[ProbeKey, datetime]:
         """
         Parse file name into identifying parts
 
         Expected format: <ip_address>CLOCK_PROBE-<probe_id>-YYYY-MM-DD-HH-MM-SS.txt.gz
         """
-        pattern = (
-            r"(?P<ip>\d+\.\d+\.\d+\.\d+)(?P<type>CLOCK_PROBE|PTP_CLOCK_PROBE)"
-            r"-(?P<identifier>\d+-\d+)-"
-            r"(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)-"
-            r"(?P<hour>\d+)-(?P<minute>\d+)-(?P<second>\d+)\.txt(?:\.gz)?"
-        )
-        match = re.match(pattern, file_name.name)
+        match = re.match(cls.file_pattern, file_name.name)
         if match:
             ip_address = match.group("ip")
             probe_id = match.group("identifier")
