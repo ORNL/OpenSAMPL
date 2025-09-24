@@ -41,6 +41,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - 🩹 More durable timestamp extrapolation in time data insertion
 - 🩹 Using shutil.move instead of pathlib.Path.rename to allow for differing file systems 
+- 🩹 Broken path in docs 
 
 ### Changed
 - ⚡ Added additional safeguards in TWST Collection to prevent zombie processes   
@@ -49,6 +50,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - 🔥 Better probe identification in logs
 - 🔥 Filter on files being ingested by ADVA probes to only attempt files which match expected naming convention from input directory
+
+### Removed
+- 🗡️ static version of openSAMPL in docs instructions
 
 ## [1.1.4] - 2025-08-22
 ### Added
