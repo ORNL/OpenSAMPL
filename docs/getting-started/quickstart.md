@@ -13,4 +13,4 @@ This creates:
 In order to ingest data, you simply have to run `opensampl load` with appropriate arguments, and it will go straight into your new TimescaleDB
 instance and become visible on Grafana. 
 
-See the [Configuration](../guides/configuration#opensampl-server) page on configuring your server instance. 
+See the [Configuration](../guides/configuration.md#opensampl-server) page on configuring your server instance. 
