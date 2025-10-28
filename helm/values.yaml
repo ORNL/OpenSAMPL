@@ -1,0 +1,44 @@
+# Global settings
+global:
+  imagePullPolicy: IfNotPresent
+
+# PostgreSQL Database
+db:
+  image: postgres:14
+  storage: 10Gi
+  username: opensampl
+  password: opensampl
+  database: opensampl
+  port: 5432
+
+# Backend service
+backend:
+  image: ghcr.io/ornl/opensampl-backend:latest
+  replicas: 1
+  port: 8000
+  env:
+    - name: DATABASE_URL
+      value: postgresql://opensampl:opensampl@opensampl-db:5432/opensampl
+
+# Grafana
+grafana:
+  image: grafana/grafana:10.0.0
+  port: 3000
+  adminUser: admin
+  adminPassword: admin
+
+# Migrations
+migrations:
+  image: ghcr.io/ornl/opensampl-migrations:latest
+
+# Persistence
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: ""
+
+# Ingress
+ingress:
+  enabled: false
+  className: nginx
+  host: opensampl.local

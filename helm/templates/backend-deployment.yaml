@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opensampl.name" . }}-backend
+  labels:
+    {{- include "opensampl.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "opensampl.name" . }}-backend
+  template:
+    metadata:
+      labels:
+        app: {{ include "opensampl.name" . }}-backend
+    spec:
+      containers:
+        - name: backend
+          image: {{ .Values.backend.image }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.port }}
+          env:
+            {{- toYaml .Values.backend.env | nindent 12 }}

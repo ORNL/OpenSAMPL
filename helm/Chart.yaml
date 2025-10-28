@@ -1,0 +1,7 @@
+apiVersion: v2
+name: opensampl
+description: Helm chart for OpenSAMPL (Postgres + Backend + Grafana + Migrations)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+icon: https://raw.githubusercontent.com/ORNL/OpenSAMPL/main/docs/logo.png
