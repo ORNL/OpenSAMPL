@@ -25,8 +25,6 @@ jobs:
             context: ./opensampl/backend
           - name: grafana
             context: ./opensampl/server/grafana
-          #- name: migrations
-           # context: ./opensampl/migrations
    
     steps:
       - name: Checkout
@@ -42,27 +40,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/ornl/opensampl-${{ matrix.service.name }}
-          tags: |
-            type=ref,event=pr
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Set image tags
+        id: tags
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            PR_NUMBER=$(echo ${{ github.ref }} | awk -F'/' '{print $3}')
+            echo "tag=pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
       
       - name: Build and push ${{ matrix.service.name }} image
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.service.context }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ghcr.io/ornl/opensampl-${{ matrix.service.name }}:${{ steps.tags.outputs.tag }}
           cache-from: type=gha,scope=${{ matrix.service.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
-
+          
   test-helm-chart:
     name: Test Helm Chart Deployment
     runs-on: ubuntu-latest
