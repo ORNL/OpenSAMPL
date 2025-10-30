@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "opensampl.labels" . | nindent 4 }}
 spec:
-  serviceName: {{ include "opensampl.name" . }}-db
+  serviceName: {{ include "opensampl.fullname" . }}-db
   replicas: 1
   selector:
     matchLabels:
@@ -25,6 +25,9 @@ spec:
           ports:
             - containerPort: {{ .Values.db.port }}
               name: postgres
+          env:
+            - name: PGDATA
+              value: /var/lib/postgres/data/pgdata 
           envFrom:
             - secretRef:
                 name: {{ include "opensampl.fullname" . }}-db-secret

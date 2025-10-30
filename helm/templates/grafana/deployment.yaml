@@ -28,7 +28,7 @@ spec:
             - name: GF_DATABASE_TYPE
               value: postgres
             - name: GF_DATABASE_HOST
-              value: {{ include "opensampl.name" . }}-db:{{ .Values.db.port }}
+              value: {{ include "opensampl.fullname" . }}-db:{{ .Values.db.port }}
             - name: GF_DATABASE_NAME
               value: {{ .Values.db.database }}
             - name: GF_DATABASE_USER
