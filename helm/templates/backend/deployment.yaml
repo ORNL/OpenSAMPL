@@ -39,6 +39,6 @@ spec:
           env:
             - name: DATABASE_URL
               value: "postgresql://{{ .Values.db.username }}:{{ .Values.db.password }}@{{ include "opensampl.fullname" . }}-db:{{ .Values.db.port }}/{{ .Values.db.database }}"
-            {{- if .Values.backend.env }}
-            {{- toYaml .Values.backend.env | nindent 12 }}
+            {{- with .Values.backend.env }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}

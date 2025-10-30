@@ -27,9 +27,11 @@ backend:
   replicas: 1
   port: 8000
   env:
-    # Additional backend environment variables (merged automatically)
-    LOG_LEVEL: INFO
-    USE_API_KEY: "false"
+    # Additional backend environment variables
+    - name: LOG_LEVEL
+      value: INFO
+    - name: USE_API_KEY
+      value: "false"
 
 # Grafana service
 grafana:
