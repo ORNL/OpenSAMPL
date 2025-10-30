@@ -5,7 +5,6 @@ global:
 # PostgreSQL Database
 db:
   image:
-    #repository: ghcr.io/mzinternallab/opensampl-dbc
     repository: ghcr.io/ornl/opensampl-db
     tag: latest
   username: opensampl

@@ -13,6 +13,19 @@ jobs:
     permissions:
       contents: read
       packages: write
+   
+    strategy:
+      matrix:
+        service:
+          - name: db
+            context: ./opensampl/db
+          - name: backend
+            context: ./opensampl/backend
+          - name: grafana
+            context: ./opensampl/server/grafana
+          #- name: migrations
+           # context: ./opensampl/migrations
+   
     steps:
       - name: Checkout
         uses: actions/checkout@v4
