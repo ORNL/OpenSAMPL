@@ -9,11 +9,15 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "opensampl.name" . }}-db
+      app.kubernetes.io/name: {{ include "opensampl.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      role: db
   template:
     metadata:
       labels:
-        app: {{ include "opensampl.name" . }}-db
+        app.kubernetes.io/name: {{ include "opensampl.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        role: db
     spec:
       securityContext:
         runAsUser: 999
@@ -27,7 +31,7 @@ spec:
               name: postgres
           env:
             - name: PGDATA
-              value: /var/lib/postgres/data/pgdata 
+              value: /var/lib/postgresql/data/pgdata 
           envFrom:
             - secretRef:
                 name: {{ include "opensampl.fullname" . }}-db-secret
