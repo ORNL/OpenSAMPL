@@ -18,3 +18,4 @@ spec:
           - configMapRef:
               name: {{ include "opensampl.fullname" . }}-db-config
       restartPolicy: OnFailure
+{{- end }}
