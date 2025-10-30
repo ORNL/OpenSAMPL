@@ -35,8 +35,8 @@ backend:
 # Grafana service
 grafana:
   image:
-    repository: grafana/grafana
-    tag: "10.0.0"
+    repository: ghcr.io/ornl/opensampl-grafana
+    tag: latest
   replicas: 1
   port: 3000
   adminUser: admin

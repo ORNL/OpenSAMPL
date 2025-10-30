@@ -40,24 +40,84 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/ornl/opensampl-${{ matrix.service.name }}
+          tags: |
+            type=ref,event=pr
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
       - name: Build and push ${{ matrix.service.name }} image
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.service.context }}
           push: true
-          tags: ghcr.io/ornl/opensampl-${{ matrix.service.name }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.service.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
 
-  helm:
+  test-helm-chart:
+    name: Test Helm Chart Deployment
     runs-on: ubuntu-latest
     needs: build-docker-images
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Start minikube
+        uses: medyagh/setup-minikube@latest
+      
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+      
+      - name: Install Helm Chart
+        working-directory: helm/
+        run: |
+          PR_NUMBER=$(echo ${GITHUB_REF} | awk -F'/' '{print $3}')
+          
+          helm install test-opensampl . \
+            --set db.image.tag=pr-${PR_NUMBER} \
+            --set backend.image.tag=pr-${PR_NUMBER} \
+            --set grafana.image.tag=pr-${PR_NUMBER} \
+            --wait \
+            --timeout 5m
+      
+      - name: Verify Deployment
+        run: |
+          kubectl get pods
+          kubectl get services
+          kubectl get pvc
+      
+      - name: Show Pod Logs on Failure
+        if: failure()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods
+          echo "=== Pod Descriptions ==="
+          kubectl describe pods
+          echo "=== Pod Logs ==="
+          for pod in $(kubectl get pods -o name); do
+            echo "Logs for $pod:"
+            kubectl logs $pod --all-containers=true || true
+          done
+
+  helm-package:
+    name: Package and Push Helm Chart
+    runs-on: ubuntu-latest
+    needs: build-docker-images
+    if: github.event_name != 'pull_request'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
         with:
           version: v3.14.0
 
@@ -73,4 +133,3 @@ jobs:
         run: |
           helm registry login ghcr.io -u $GITHUB_ACTOR -p $CR_PAT
           helm push opensampl-*.tgz oci://ghcr.io/ornl/charts
-
