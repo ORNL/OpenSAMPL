@@ -20,8 +20,8 @@ spec:
         role: db
     spec:
       securityContext:
-        runAsUser: 999
         fsGroup: 999
+        fsGroupChangePolicy: "OnRootMismatch"
       containers:
         - name: db
           image: "{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}"
