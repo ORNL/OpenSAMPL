@@ -83,6 +83,7 @@ jobs:
             --set db.image.tag=pr-${PR_NUMBER} \
             --set backend.image.tag=pr-${PR_NUMBER} \
             --set grafana.image.tag=pr-${PR_NUMBER} \
+            --set migrations.enabled=false \
             --wait \
             --timeout 5m
       

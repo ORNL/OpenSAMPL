@@ -1,22 +1,20 @@
+{{- if .Values.migrations.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "opensampl.fullname" . }}-migrations
-  labels:
-    {{- include "opensampl.labels" . | nindent 4 }}
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   template:
-    metadata:
-      labels:
-        app: {{ include "opensampl.name" . }}
     spec:
-      restartPolicy: OnFailure
       containers:
-        - name: migrations
-          image: {{ .Values.migrations.image }}
-          env:
-            - name: DATABASE_URL
-              value: postgresql://{{ .Values.db.username }}:{{ .Values.db.password }}@{{ include "opensampl.name" . }}-db:{{ .Values.db.port }}/{{ .Values.db.database }}
+      - name: migrations
+        image: "{{ .Values.migrations.image.repository }}:{{ .Values.migrations.image.tag }}"
+        env:
+          - name: DATABASE_URL
+            value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@{{ include "opensampl.fullname" . }}-db:{{ .Values.db.port }}/{{ .Values.db.database }}
+        envFrom:
+          - secretRef:
+              name: {{ include "opensampl.fullname" . }}-db-secret
+          - configMapRef:
+              name: {{ include "opensampl.fullname" . }}-db-config
+      restartPolicy: OnFailure
