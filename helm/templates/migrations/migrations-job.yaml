@@ -6,6 +6,7 @@ metadata:
     {{- include "opensampl.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   template:
     metadata:
@@ -18,4 +19,4 @@ spec:
           image: {{ .Values.migrations.image }}
           env:
             - name: DATABASE_URL
-              values: postgresql://{{ .Values.db.username }}:{{ .Values.db.password }}@{{ include "opensampl.name" . }}-db:{{ .Values.db.port }}/{{ .Values.db.database }}
+              value: postgresql://{{ .Values.db.username }}:{{ .Values.db.password }}@{{ include "opensampl.name" . }}-db:{{ .Values.db.port }}/{{ .Values.db.database }}

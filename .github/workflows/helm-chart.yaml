@@ -1,0 +1,33 @@
+name: Helm Chart CI/CD
+
+on:
+  push:
+    branches: [ helm-deploy ]
+  pull_request:
+    branches: [ helm-deploy ]
+  workflow_dispatch:
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.14.0
+
+      - name: Helm Lint
+        run: helm lint ./helm
+
+      - name: Package Chart
+        run: helm package ./helm
+
+      - name: Push to GHCR
+        env:
+          CR_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          helm registry login ghcr.io -u $GITHUB_ACTOR -p $CR_PAT
+          helm push opensampl-*.tgz oci://ghcr.io/ornl/charts

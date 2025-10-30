@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "opensampl.name" . }}-grafana
+  name: {{ include "opensampl.fullname" . }}-grafana
   labels:
     {{- include "opensampl.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
-  ports:
-    - port: {{ .Values.grafana.port }}
-      targetPort: {{ .Values.grafana.port }}
-      name: http
   selector:
     app: {{ include "opensampl.name" . }}-grafana
+  ports:
+    - name: http
+      port: {{ .Values.grafana.port }}
+      targetPort: {{ .Values.grafana.port }}

@@ -2,19 +2,38 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "opensampl.name" . }}-ingress
+  name: {{ include "opensampl.fullname" . }}-ingress
+  labels:
+    {{- include "opensampl.labels" . | nindent 4 }}
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ include "opensampl.fullname" . }}-tls
   rules:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - path: /
+          # Backend API
+          - path: /api
             pathType: Prefix
             backend:
               service:
-                name: {{ include "opensampl.name" . }}-backend
+                name: {{ include "opensampl.fullname" . }}-backend
                 port:
                   number: {{ .Values.backend.port }}
+
+          # Grafana UI
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "opensampl.fullname" . }}-grafana
+                port:
+                  number: {{ .Values.grafana.port }}
 {{- end }}

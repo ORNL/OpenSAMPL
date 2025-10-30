@@ -4,40 +4,59 @@ global:
 
 # PostgreSQL Database
 db:
-  image: postgres:14
-  storage: 10Gi
+  image:
+    #repository: ghcr.io/mzinternallab/opensampl-dbc
+    repository: ghcr.io/ornl/opensampl-db
+    tag: latest
   username: opensampl
   password: opensampl
+  grafanaPassword: grafana123
   database: opensampl
   port: 5432
+  storage: 10Gi
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
 
 # Backend service
 backend:
-  image: ghcr.io/ornl/opensampl-backend:latest
+  image:
+    repository: ghcr.io/ornl/opensampl-backend
+    tag: latest
   replicas: 1
   port: 8000
   env:
-    - name: DATABASE_URL
-      value: postgresql://opensampl:opensampl@opensampl-db:5432/opensampl
+    # Additional backend environment variables (merged automatically)
+    LOG_LEVEL: INFO
+    USE_API_KEY: "false"
 
-# Grafana
+# Grafana service
 grafana:
-  image: grafana/grafana:10.0.0
+  image:
+    repository: grafana/grafana
+    tag: "10.0.0"
+  replicas: 1
   port: 3000
   adminUser: admin
   adminPassword: admin
+  database:
+    enabled: true
+    type: postgres
+    host: opensampl-db
+    port: 5432
+    name: opensampl
+    user: opensampl
 
-# Migrations
+# Migrations (optional)
 migrations:
-  image: ghcr.io/ornl/opensampl-migrations:latest
-
-# Persistence
-persistence:
   enabled: true
-  size: 10Gi
-  storageClass: ""
+  image:
+    repository: ghcr.io/ornl/opensampl-migrations
+    tag: latest
+  env: {}
 
-# Ingress
+# Ingress (optional)
 ingress:
   enabled: false
   className: nginx

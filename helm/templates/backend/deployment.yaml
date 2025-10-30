@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opensampl.fullname" . }}-backend
+  labels:
+    {{- include "opensampl.labels" . | nindent 4 }}
+    role: backend
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "opensampl.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      role: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "opensampl.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        role: backend
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: busybox
+          command:
+            - sh
+            - -c
+            - >
+              until nc -z {{ include "opensampl.fullname" . }}-db {{ .Values.db.port }};
+              do echo "Waiting for DB...";
+              sleep 3;
+              done;
+      containers:
+        - name: backend
+          image: {{ .Values.backend.image }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.port }}
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.db.username }}:{{ .Values.db.password }}@{{ include "opensampl.fullname" . }}-db:{{ .Values.db.port }}/{{ .Values.db.database }}"
+            {{- if .Values.backend.env }}
+            {{- toYaml .Values.backend.env | nindent 12 }}
+            {{- end }}

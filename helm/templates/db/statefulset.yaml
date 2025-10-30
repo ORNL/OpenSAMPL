@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "opensampl.name" . }}-db
+  labels:
+    {{- include "opensampl.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "opensampl.name" . }}-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "opensampl.name" . }}-db
+  template:
+    metadata:
+      labels:
+        app: {{ include "opensampl.name" . }}-db
+    spec:
+      securityContext:
+        runAsUser: 999
+        fsGroup: 999
+      containers:
+        - name: db
+          image: "{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.db.port }}
+              name: postgres
+          envFrom:
+            - secretRef:
+                name: {{ include "opensampl.fullname" . }}-db-secret
+            - configMapRef:
+                name: {{ include "opensampl.fullname" . }}-db-config
+          volumeMounts:
+            - name: db-storage
+              mountPath: /var/lib/postgresql/data
+            - name: init-script
+              mountPath: /docker-entrypoint-initdb.d/020_create_grafana_user.sh
+              subPath: 020_create_grafana_user.sh
+      volumes:
+        - name: init-script
+          configMap:
+            name: {{ include "opensampl.fullname" . }}-db-init
+  volumeClaimTemplates:
+    - metadata:
+        name: db-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.db.persistence.size }}
+        {{- if .Values.db.persistence.storageClass }}
+        storageClassName: {{ .Values.db.persistence.storageClass }}
+        {{- end }}
