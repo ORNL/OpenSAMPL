@@ -30,7 +30,7 @@ jobs:
       - name: Build and push DB image
         uses: docker/build-push-action@v5
         with:
-          context: ./db
+          context: ./opensampl/db
           push: true
           tags: ghcr.io/ornl/opensampl-db:latest
           cache-from: type=gha
