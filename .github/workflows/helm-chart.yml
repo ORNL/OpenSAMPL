@@ -40,14 +40,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Build and push DB image
+      - name: Build and push ${{ matrix.service.name }} image
         uses: docker/build-push-action@v5
         with:
-          context: ./opensampl/db
+          context: ${{ matrix.service.context }}
           push: true
-          tags: ghcr.io/ornl/opensampl-db:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ghcr.io/ornl/opensampl-${{ matrix.service.name }}:latest
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
 
   helm:
     runs-on: ubuntu-latest
@@ -74,4 +74,3 @@ jobs:
           helm registry login ghcr.io -u $GITHUB_ACTOR -p $CR_PAT
           helm push opensampl-*.tgz oci://ghcr.io/ornl/charts
 
-          
