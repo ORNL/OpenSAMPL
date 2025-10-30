@@ -4,7 +4,9 @@ on:
   push:
     branches: [ helm-deploy ]
   pull_request:
-    branches: [ helm-deploy ]
+    branches:
+      - helm-deploy
+      - main
   workflow_dispatch:
 
 jobs:
