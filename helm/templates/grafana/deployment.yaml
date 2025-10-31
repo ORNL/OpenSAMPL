@@ -40,7 +40,7 @@ spec:
                   key: POSTGRES_PASSWORD
             # For testing in Mariner
             - name: GF_SERVER_ROOT_URL
-              value: "https://opensampl-test.ornl.gov/grafana/"
+              value: "https://opensampl-test.ornl.gov/grafana"
             - name: GF_SERVER_SERVE_FROM_SUB_PATH
               value: "true"
           readinessProbe:

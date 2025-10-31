@@ -56,15 +56,15 @@ ingress:
   hosts:
     - host: opensampl-test.ornl.gov  
       paths:
-       - path: /api
-         pathType: prefix
-         service: backend
-       - path: /docs
-         pathType: Prefix
-         service: backend
-       - path: /grafana(/|$)(.*)
-         pathType: Prefix
-         service: grafana
+      - path: /grafana
+        pathType: Prefix
+        service: grafana
+      - path: /api
+        pathType: prefix
+        service: backend
+      - path: /docs
+        pathType: Prefix
+        service: backend
   tls:
     - secretName: opensampl-tls
       hosts:
