@@ -38,6 +38,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "opensampl.fullname" . }}-db-secret
                   key: POSTGRES_PASSWORD
+            # For testing in Mariner
+            - name: GF_SERVER_ROOT_URL
+              value: {{ .Values.grafana.rootUrl | default "http://localhost:3000" }}
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: {{ .Values.grafana.serveFromSubPath | default "false" | quote }}
           readinessProbe:
             httpGet:
               path: /login
