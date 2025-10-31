@@ -2,40 +2,29 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "opensampl.fullname" . }}-ingress
-  labels:
-    {{- include "opensampl.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+  name: {{ include "opensampl.fullname" . }}
   annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
-  {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
-  {{- end }}
-  {{- if .Values.ingress.tls }}
   tls:
-    {{- range .Values.ingress.tls }}
-    - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName }}
-    {{- end }}
-  {{- end }}
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
   rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ (index .Values.ingress.hosts 0).host }}
       http:
         paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType }}
+          - path: /(.*)
+            pathType: Prefix
             backend:
               service:
-                name: {{ include "opensampl.fullname" $ }}-{{ .service }}
+                name: {{ include "opensampl.fullname" . }}-backend
                 port:
-                  number: {{ if eq .service "backend" }}{{ $.Values.backend.service.port }}{{ else }}{{ $.Values.grafana.port }}{{ end }}
-          {{- end }}
-    {{- end }}
+                  number: 80
+          - path: /grafana(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "opensampl.fullname" . }}-grafana
+                port:
+                  number: {{ .Values.grafana.port }}
 {{- end }}
