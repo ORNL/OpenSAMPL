@@ -33,7 +33,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "opensampl.fullname" . }}-grafana
+                name: {{ include "opensampl.fullname" . }}-backend
                 port:
-                  number: {{ .Values.grafana.port }}
+                  number: {{ .Values.backend.service.port }}
 {{- end }}
