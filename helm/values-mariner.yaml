@@ -53,7 +53,7 @@ ingress:
   hosts:
     - host: opensampl-test.ornl.gov  
       paths:
-        - path: /api
+        - path: /backend
           pathType: Prefix
           service: backend
         - path: /
