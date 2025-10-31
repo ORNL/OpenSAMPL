@@ -21,7 +21,7 @@ backend:
   image:
     repository: ghcr.io/ornl/opensampl-backend
     tag: latest
-  replicas: 2 
+  replicas: 1
   service:
     type: ClusterIP
     port: 8000
@@ -36,7 +36,7 @@ grafana:
   port: 3000
   service:
     type: ClusterIP
-  rootUrl: "https://opensampl-test.ornl.gov/grafana"
+  rootUrl: "https://opensampl-test.ornl.gov/grafana/"
   serveFromSubPath: true
 
 # Migrations (disabled until ready)
@@ -53,7 +53,7 @@ ingress:
   hosts:
     - host: opensampl-test.ornl.gov  
       paths:
-        - path: /(.*)
+        - path: /api(/|$)(.*)
           pathType: Prefix
           service: backend
         - path: /grafana(/|$)(.*)

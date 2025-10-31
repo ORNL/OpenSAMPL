@@ -10,5 +10,5 @@ spec:
     app: {{ include "opensampl.name" . }}-backend
   ports:
     - name: http
-      port: {{ .Values.backend.port }}
-      targetPort: {{ .Values.backend.port }}
+      port: 80
+      targetPort: 8000

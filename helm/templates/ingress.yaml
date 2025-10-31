@@ -13,14 +13,23 @@ spec:
     - host: {{ (index .Values.ingress.hosts 0).host }}
       http:
         paths:
-          - path: /(.*)
+          - path: /api(/|$)(.*)
             pathType: Prefix
             backend:
               service:
                 name: {{ include "opensampl.fullname" . }}-backend
                 port:
-                  number: 80
+                  number: {{ .Values.backend.service.port }}
+
           - path: /grafana(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "opensampl.fullname" . }}-grafana
+                port:
+                  number: {{ .Values.grafana.port }}
+
+          - path: /
             pathType: Prefix
             backend:
               service:
