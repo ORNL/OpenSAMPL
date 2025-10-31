@@ -7,8 +7,10 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: {{ include "opensampl.name" . }}-backend
+    app.kubernetes.io/name: {{ include "opensampl.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    role: backend
   ports:
     - name: http
-      port: 80
+      port: {{ .Values.backend.service.port }}
       targetPort: 8000

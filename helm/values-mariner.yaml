@@ -25,6 +25,9 @@ backend:
   service:
     type: ClusterIP
     port: 8000
+    logLevel: "INFO"
+    useApiKey: false
+    env: []
 
 # Grafana configuration
 grafana:
@@ -36,7 +39,7 @@ grafana:
   port: 3000
   service:
     type: ClusterIP
-  rootUrl: "https://opensampl-test.ornl.gov/grafana/"
+  rootUrl: "https://opensampl-test.ornl.gov/grafana"
   serveFromSubPath: true
 
 # Migrations (disabled until ready)
@@ -53,15 +56,15 @@ ingress:
   hosts:
     - host: opensampl-test.ornl.gov  
       paths:
-        - path: /api(/|$)(.*)
-          pathType: Prefix
-          service: backend
-        - path: /docs(/|$)(.*)
-          pathType: Prefix
-          service: backend
-        - path: /grafana(/|$)(.*)
-          pathType: Prefix
-          service: grafana
+       - path: /api
+         pathType: prefix
+         service: backend
+       - path: /docs
+         pathType: Prefix
+         service: backend
+       - path: /grafana(/|$)(.*)
+         pathType: Prefix
+         service: grafana
   tls:
     - secretName: opensampl-tls
       hosts:

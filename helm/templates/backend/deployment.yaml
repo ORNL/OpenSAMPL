@@ -35,10 +35,21 @@ spec:
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           ports:
-            - containerPort: {{ .Values.backend.port }}
+            - containerPort: 8000
           env:
             - name: DATABASE_URL
-              value: postgresql://{{ .Values.db.username }}:{{ .Values.db.password }}@{{ include "opensampl.fullname" . }}-db:{{ .Values.db.port }}/{{ .Values.db.database }}
+              value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@{{ include "opensampl.fullname" . }}-db:{{ .Values.db.port }}/{{ .Values.db.database }}
+            - name: POSTGRES_USER
+              value: {{ .Values.db.username }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "opensampl.fullname" . }}-db-secret
+                  key: POSTGRES_PASSWORD
+            - name: BACKEND_LOG_LEVEL
+              value: {{ .Values.backend.logLevel | default "INFO" | quote }}
+            - name: USE_API_KEY
+              value: {{ .Values.backend.useApiKey | default "false" | quote }}
             {{- with .Values.backend.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
