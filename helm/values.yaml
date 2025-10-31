@@ -24,13 +24,12 @@ backend:
     repository: ghcr.io/ornl/opensampl-backend
     tag: latest
   replicas: 1
-  port: 8000
-  env:
-    # Additional backend environment variables
-    - name: LOG_LEVEL
-      value: INFO
-    - name: USE_API_KEY
-      value: "false"
+  service:
+    type: ClusterIP
+    port: 8000
+  logLevel: "INFO"
+  useApiKey: false
+  env: []
 
 # Grafana service
 grafana:
