@@ -25,9 +25,9 @@ backend:
   service:
     type: ClusterIP
     port: 8000
-    logLevel: "INFO"
-    useApiKey: false
-    env: []
+  logLevel: "INFO"
+  useApiKey: false
+  env: []
 
 # Grafana configuration
 grafana:
