@@ -1,0 +1,63 @@
+# values-production.yaml
+
+global:
+  imagePullPolicy: Always
+
+# Database configuration
+db:
+  image:
+    repository: ghcr.io/ornl/opensampl-db
+    tag: latest
+  database: opensampl
+  username: opensampl
+  password: "admin"
+  port: 5432
+  persistence:
+    size: 50Gi   
+    storageClass: "longhorn"   
+
+# Backend configuration
+backend:
+  image:
+    repository: ghcr.io/ornl/opensampl-backend
+    tag: latest
+  replicas: 2 
+  service:
+    type: ClusterIP
+    port: 8000
+
+# Grafana configuration
+grafana:
+  image:
+    repository: ghcr.io/ornl/opensampl-grafana
+    tag: latest
+  adminUser: admin
+  adminPassword: "admin"  
+  port: 3000
+  service:
+    type: ClusterIP
+
+# Migrations (disabled until ready)
+migrations:
+  enabled: false
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"  
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # If using cert-manager
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: opensampl-test.ornl.gov  
+      paths:
+        - path: /
+          pathType: Prefix
+          service: backend
+        - path: /grafana
+          pathType: Prefix
+          service: grafana
+  tls:
+    - secretName: opensampl-tls
+      hosts:
+        - opensampl-test.ornl.gov

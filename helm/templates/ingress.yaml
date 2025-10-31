@@ -5,35 +5,37 @@ metadata:
   name: {{ include "opensampl.fullname" . }}-ingress
   labels:
     {{- include "opensampl.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
   annotations:
-    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
-    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-    {{- end }}
+  {{- end }}
 spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
   tls:
+    {{- range .Values.ingress.tls }}
     - hosts:
-        - {{ .Values.ingress.host }}
-      secretName: {{ include "opensampl.fullname" . }}-tls
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
   rules:
-    - host: {{ .Values.ingress.host }}
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
       http:
         paths:
-          # Backend API
-          - path: /api
-            pathType: Prefix
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ include "opensampl.fullname" . }}-backend
+                name: {{ include "opensampl.fullname" $ }}-{{ .service }}
                 port:
-                  number: {{ .Values.backend.port }}
-
-          # Grafana UI
-          - path: /grafana
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "opensampl.fullname" . }}-grafana
-                port:
-                  number: {{ .Values.grafana.port }}
+                  number: {{ if eq .service "backend" }}{{ $.Values.backend.service.port }}{{ else }}{{ $.Values.grafana.port }}{{ end }}
+          {{- end }}
+    {{- end }}
 {{- end }}
