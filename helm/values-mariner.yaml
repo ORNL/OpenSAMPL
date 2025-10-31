@@ -36,8 +36,8 @@ grafana:
   port: 3000
   service:
     type: ClusterIP
-  rootUrl: "https://opensampl-test.ornl.gov/grafana"
-  serveFromSubPath: true
+  rootUrl: "https://opensampl-test.ornl.gov/"
+  serveFromSubPath: false
 
 # Migrations (disabled until ready)
 migrations:
@@ -53,10 +53,10 @@ ingress:
   hosts:
     - host: opensampl-test.ornl.gov  
       paths:
-        - path: /
+        - path: /api
           pathType: Prefix
           service: backend
-        - path: /grafana
+        - path: /
           pathType: Prefix
           service: grafana
   tls:
