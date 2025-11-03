@@ -59,7 +59,7 @@ ingress:
       - path: /grafana
         pathType: Prefix
         service: grafana
-      - path: /docs
+      - path: /
         pathType: Prefix
         service: backend
   tls:
