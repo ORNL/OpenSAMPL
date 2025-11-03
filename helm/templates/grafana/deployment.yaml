@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opensampl.fullname" . }}-grafana
+  labels:
+    {{- include "opensampl.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "opensampl.name" . }}-grafana
+  template:
+    metadata:
+      labels:
+        app: {{ include "opensampl.name" . }}-grafana
+    spec:
+      containers:
+        - name: grafana
+          image: "{{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.grafana.port }}
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: {{ .Values.grafana.adminUser }}
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: {{ .Values.grafana.adminPassword }}
+            - name: GF_DATABASE_TYPE
+              value: postgres
+            - name: GF_DATABASE_HOST
+              value: {{ include "opensampl.fullname" . }}-db:{{ .Values.db.port }}
+            - name: GF_DATABASE_NAME
+              value: {{ .Values.db.database }}
+            - name: GF_DATABASE_USER
+              value: {{ .Values.db.username }}
+            - name: GF_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "opensampl.fullname" . }}-db-secret
+                  key: POSTGRES_PASSWORD
+            # For testing in Mariner
+            - name: GF_SERVER_ROOT_URL
+              value: "https://opensampl-test.ornl.gov/grafana"
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: {{ .Values.grafana.serveFromSubPath | default "false" | quote }}
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: {{ .Values.grafana.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.grafana.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10

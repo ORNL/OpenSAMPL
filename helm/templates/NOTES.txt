@@ -1,0 +1,9 @@
+Thank you for installing OpenSAMPL!
+
+To access your services:
+- Backend: ClusterIP service "{{ include "opensampl.name" . }}-backend" on port {{ .Values.backend.port }}
+- Grafana: ClusterIP service "{{ include "opensampl.name" . }}-grafana" on port {{ .Values.grafana.port }}
+- Database: StatefulSet "{{ include "opensampl.name" . }}-db" with {{ .Values.db.storage }} storage
+
+If ingress is enabled, access OpenSAMPL at:
+http://{{ .Values.ingress.host }}
