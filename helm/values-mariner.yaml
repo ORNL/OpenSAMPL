@@ -59,9 +59,6 @@ ingress:
       - path: /grafana
         pathType: Prefix
         service: grafana
-      - path: /api
-        pathType: prefix
-        service: backend
       - path: /docs
         pathType: Prefix
         service: backend
