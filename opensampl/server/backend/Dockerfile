@@ -8,12 +8,10 @@ FROM base AS prod
 
 RUN pip install --no-cache-dir "opensampl[backend]==${OPENSAMPL_VERSION}"
 
-COPY main.py .
-
-CMD ["uvicorn", "main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "opensampl.server.backend.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]
 
 FROM base AS dev
 
-CMD ["sh", "-c", "pip install -e \"/app/opensampl[backend]\" && uvicorn main:app --proxy-headers --host 0.0.0.0 --port 8000 --log-level debug --reload"]
+# expects opensampl package to be mounted as volume at /tmp/opensampl
 
-# CMD ["tail", "-f", "/dev/null"]
+CMD ["sh", "-c", "pip install -e \"./opensampl[backend]\" && uvicorn opensampl.server.backend.main:app --proxy-headers --host 0.0.0.0 --port 8000 --log-level debug --reload"]

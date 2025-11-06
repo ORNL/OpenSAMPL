@@ -14,6 +14,8 @@ from loguru import logger
 
 from opensampl.config.server import ServerConfig
 
+from opensampl.server import ensure_docker
+ensure_docker()
 
 def load_config(env_file: str | None = None) -> ServerConfig:
     """
