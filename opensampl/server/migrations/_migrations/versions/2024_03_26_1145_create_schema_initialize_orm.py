@@ -25,6 +25,7 @@ def upgrade() -> None:
 
     # Create our schema
     op.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};")
+    op.execute(f"CREATE SCHEMA IF NOT EXISTS access;")
 
     # Create locations table
     op.create_table('locations',
