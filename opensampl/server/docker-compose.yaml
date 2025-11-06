@@ -35,6 +35,8 @@ services:
 
   migrations:
     image: savannah.ornl.gov/opensampl/migrations:latest
+    build:
+      context: ./migrations
     restart: "no"
     environment:
       - DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}

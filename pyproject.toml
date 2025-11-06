@@ -39,6 +39,7 @@ classifiers = [
 ]
 requires-python = ">=3.9,<3.13"
 dependencies = [
+    "alembic",
     "pydantic>=2.10.3,<3",
     "pydantic-settings>=2.9.0",
     "sqlalchemy>=2.0.39,<3",
