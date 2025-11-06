@@ -1,6 +1,6 @@
 FROM python:3.12
 
-ARG OPENSAMPL_VERSION=1.1.5
+ARG OPENSAMPL_VERSION=1.2.0
 
 WORKDIR /
 RUN pip install --no-cache-dir "opensampl[migrations]==${OPENSAMPL_VERSION}" alembic
