@@ -18,7 +18,7 @@ import requests
 import requests.exceptions
 import yaml
 from loguru import logger
-from pydantic import BaseModel, ValidationInfo, field_serializer, field_validator, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_serializer, field_validator, model_validator
 from sqlalchemy.exc import IntegrityError
 from tqdm import tqdm
 
@@ -148,7 +148,7 @@ class BaseProbe(ABC):
 
         # General configuration
         num_probes: int = 1
-        duration_hours: float = 1.0
+        duration_hours: float = Field(1.0, alias="duration")
         seed: Optional[int] = None
 
         # Time series parameters

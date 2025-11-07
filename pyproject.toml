@@ -122,7 +122,7 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 120
-exclude = [".git", "__pycache__", "venv", "env", ".venv", ".env", "build", "dist", "docs"]
+exclude = [".git", "__pycache__", "venv", "env", ".venv", ".env", "build", "dist", "docs", "opensampl/server/migrations/**/*.py",]
 include = ["opensampl/**/*.py"]
 
 [tool.ruff.lint]
@@ -136,7 +136,7 @@ ignore = ["D203", "D212", "D400", "D415", "ANN401", "S101", "PLR2004", "COM812",
 
 [tool.ruff.lint.per-file-ignores]
 "opensampl/vendors/**/*.py" = ['S311'] # we want to ignore the errors about random
-
+"opensampl/server/backend/main.py" = ['B008', 'ARG001'] #ignore complaints about calling functions in args
 [tool.ruff.lint.pylint]
 max-args = 10
 
