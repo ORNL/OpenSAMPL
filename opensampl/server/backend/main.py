@@ -340,7 +340,7 @@ def healthcheck_db():
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
     except SQLAlchemyError as e:
-        raise HTTPException(status_code=503, detail="Database connection error") from e
+        return JSONResponse(content={"message": f"Database connection error: {e!s}"}, status_code=503)
     else:
         return {"status": "OK"}
 
@@ -348,17 +348,22 @@ def healthcheck_db():
 @app.get("/healthcheck_metadata")
 def healthcheck_metadata():
     """Ensure that the database exists AND the expected format is present"""
+    # eventually, we want to make the schema configurable through environment variables
+    # for now, we have it hard coded too many places. So this is a small step towards that goal
+    SCHEMA = "castdb"  # noqa: N806
+
     try:
         with engine.connect() as connection:
             result = connection.execute(
-                text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'castdb';")
+                text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schema;"),
+                {"schema": SCHEMA},
             )
             schema_exists = result.fetchone() is not None
         if schema_exists:
             return {"status": "OK"}
-        raise HTTPException(status_code=500, detail="Schema 'castdb' does not exist")
+        return JSONResponse(status_code=500, content={"message": f"Expected schema '{SCHEMA}' does not exist"})
     except SQLAlchemyError as e:
-        raise HTTPException(status_code=503, detail=f"Database connection error: {e!s}") from e
+        return JSONResponse(content={"message": f"Database connection error: {e!s}"}, status_code=503)
 
 
 @app.get("/metrics", include_in_schema=False)
