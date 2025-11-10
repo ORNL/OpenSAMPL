@@ -12,6 +12,4 @@ CMD ["uvicorn", "opensampl.server.backend.main:app", "--proxy-headers", "--host"
 
 FROM base AS dev
 
-# expects opensampl package to be mounted as volume at /tmp/opensampl
-
 CMD ["sh", "-c", "pip install -e \"./opensampl[backend]\" && uvicorn opensampl.server.backend.main:app --proxy-headers --host 0.0.0.0 --port 8000 --log-level debug --reload"]
