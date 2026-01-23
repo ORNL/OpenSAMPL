@@ -13,7 +13,7 @@ Note:
 from pathlib import Path
 from string import Template
 from typing import Any, Optional, Union
-
+from pprint import pformat
 import yaml
 from loguru import logger
 from pydantic import BaseModel, Field, model_validator
@@ -106,16 +106,16 @@ class VendorConfig(VendorType):
 
         # Generate default values if not provided
         if not data.get("metadata_table"):
-            data["metadata_table"] = f"{name.lower()}_metadata"
+            data["metadata_table"] = f"{name.lower().replace(' ', '_')}_metadata"
 
         if not data.get("metadata_orm"):
-            data["metadata_orm"] = f"{name.capitalize()}Metadata"
+            data["metadata_orm"] = f"{name.title().replace(' ', '')}Metadata"
 
         if not data.get("parser_class"):
-            data["parser_class"] = f"{name.capitalize()}Probe"
+            data["parser_class"] = f"{name.title().replace(' ', '')}Probe"
 
         if not data.get("parser_module"):
-            data["parser_module"] = f"{name.lower()}"
+            data["parser_module"] = f"{name.lower().replace(' ', '_')}"
 
         fields = []
         metadata_fields = data.get("metadata_fields", None)
@@ -147,8 +147,11 @@ class VendorConfig(VendorType):
         # TODO in write time data, optionally add value_str to df ensure maximum precision when sending through backend.
 
         template_file = Path(__file__).parent / "templates" / "parser_template.txt"
+
+        formatted_metadata = pformat([field.name for field in self.metadata_fields])
+
         content = Template(template_file.read_text()).safe_substitute(
-            name=self.name, upper_name=self.parser_class.upper(), parser_class=self.parser_class
+            name=self.name, upper_name=self.parser_class.upper(), parser_class=self.parser_class, metadata_fields=formatted_metadata,
         )
 
         probe_file.write_text(content)

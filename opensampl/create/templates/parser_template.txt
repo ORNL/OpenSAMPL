@@ -8,9 +8,13 @@ class ${parser_class}(BaseProbe):
 
     vendor = VENDORS.${upper_name}
 
-    def __init__(self, input_file, **kwargs):
-        # TODO: define how to find probe_key (probe_id and ip_address) for identifying unique location/instance
-        super().__init__(input_file=input_file, **kwargs)
+    def __init__(self, input_file: Union[str, Path]):
+        super().__init__(input_file=input_file)
+        """Initialize ${parser_class} object given input_file and determine probe identity"""
+        self.probe_key = ProbeKey(
+            probe_id="TODO: define how to determine probe id",
+            ip_address="TODO: define how to determine ip address",
+        )
 
     def process_time_data(self) -> pd.DataFrame:
         """
@@ -31,5 +35,45 @@ class ${parser_class}(BaseProbe):
         Returns:
             dict: Dictionary mapping table names to ORM objects
         """
-        # TODO: Implement metadata processing logic specific to ${name}
+        """
+        TODO: Implement metadata processing logic specific to ${name}
+        provided fields: ${metadata_fields}
+        """
         raise NotImplementedError("Metadata processing not implemented for ${parser_class}")
+
+    def generate_random_data(
+        cls,
+        config: RandomDataConfig,
+        probe_key: ProbeKey,
+    ) -> ProbeKey:
+        """
+        Generate random data for testing purposes.
+
+        Args:
+            config (RandomDataConfig): Configuration for random data generation.
+            probe_key (ProbeKey): Key identifying the probe instance.
+
+        Returns:
+            ProbeKey: Updated probe key with generated data.
+        """
+        cls._setup_random_seed(config.seed)
+
+        logger.info(f"Generating random ${name} data for {probe_key}")
+        """
+        Generate faux metadata for fields:
+        ${metadata_fields}
+        """
+        metadata = {
+
+        }
+        cls._send_metadata_to_db(probe_key, metadata)
+        df = config.generate_time_series()
+        cls.send_data(
+            probe_key=probe_key,
+            data=df,
+            metric=METRICS.PHASE_OFFSET,
+            reference_type=REF_TYPES.GNSS,
+        )
+        logger.info(f"Successfully generated {config.duration_hours}h of random ${name} data for {probe_key}")
+        return probe_key
+
