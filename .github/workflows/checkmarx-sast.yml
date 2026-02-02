@@ -1,0 +1,47 @@
+name: Checkmarx SAST (CxFlow)
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  sast:
+    runs-on: [self-hosted, macOS, ARM64, checkmarx]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Checkmarx CxFlow SAST
+        uses: checkmarx-ts/checkmarx-cxflow-github-action@v2.3
+        with:
+          project: ${{ github.repository }}-${{ github.ref_name }}
+          team: ${{ secrets.CHECKMARX_TEAM }}
+          checkmarx_url: ${{ secrets.CHECKMARX_URL }}
+          checkmarx_username: ${{ secrets.CHECKMARX_USERNAME }}
+          checkmarx_password: ${{ secrets.CHECKMARX_PASSWORD }}
+          checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+          checkmarx_version: ${{ secrets.CHECKMARX_VERSION }}
+          scanners: sast
+          bug_tracker: Sarif
+          incremental: true
+          break_build: false
+          repo-url: ${{ github.event.repository.url }}
+          github_token: ${{ github.token }}
+          params: >-
+            --cx-flow.zip-exclude=\.git/.*,\.github/.*
+            --namespace=${{ github.repository_owner }}
+            --branch=${{ github.ref_name }}
+
+      - name: Upload SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: cx.sarif
