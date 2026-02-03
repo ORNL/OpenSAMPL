@@ -7,20 +7,24 @@ on:
     branches: [ main ]
   workflow_dispatch: {}
 
+# Required so the action can upload SARIF (Security alerts) and (optionally)
+# comment on PRs or create issues if you enable those modes later.
 permissions:
   contents: read
   issues: write
   pull-requests: write
-  security-events: write   # required for SARIF upload [3](https://docs.checkmarx.com/en/34965-188033-creating-an-oauth-client-for-checkmarx-one-integrations.html)
+  security-events: write
 
 jobs:
   scan:
-    runs-on: [self-hosted, macOS, ARM64, checkmarx]  # match your runner labels exactly [4](https://github-wiki-see.page/m/checkmarx-ltd/cx-flow/wiki/Configuration)
+    # Match your self-hosted runner's labels exactly
+    runs-on: [self-hosted, macOS, ARM64, checkmarx]
 
     steps:
       - uses: actions/checkout@v4
 
-      # 1) Install GNU sed so any internal sed usage in the action is consistent on macOS
+      # (Optional, but recommended) Install GNU sed so any sed usage inside the action
+      # behaves consistently (GNU sed) on macOS.
       - name: Install GNU sed (macOS ARM64)
         shell: bash
         run: |
@@ -37,7 +41,8 @@ jobs:
           echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
           sed --version || true
 
-      # 2) Sanitize the branch/ref so project names never contain '/'
+      # Sanitize branch/ref so the project name never contains '/'
+      # This avoids the action's internal {branch} substitution path and BSD sed differences.
       - name: Build sanitized project name
         shell: bash
         env:
@@ -49,7 +54,7 @@ jobs:
           echo "Sanitized project name: $PROJECT_NAME"
 
       # CxFlow++ executes directly on the runner (composite action, no Docker),
-      # so it's compatible with macOS self-hosted runners. [1](https://docs.checkmarx.com/en/34965-8217-github-actions-integration.html)
+      # so it's compatible with macOS self-hosted runners.
       - name: Checkmarx CxFlow++ SAST Scan
         uses: checkmarx-ts/checkmarx-cxflow-plusplus-github-action@v3
         env:
@@ -66,7 +71,11 @@ jobs:
           project-name: ${{ env.PROJECT_NAME }}
 
           # ---- Scan options ----
-          disable-sca-scan: true  # enable later if/when you want SCA
+          disable-sca-scan: true  # keep SAST-only for now
+
+          # ---- Explicitly disable SCA Resolver for PR and push ----
+          pull-request-cxflow-params: "--sca.enable-sca-resolver=false"
+          push-cxflow-params: "--sca.enable-sca-resolver=false"
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
