@@ -1,4 +1,4 @@
-name: Checkmarx (CxFlow++) SAST on macOS self-hosted
+name: Checkmarx (CxFlow CLI) SAST on macOS self-hosted
 
 on:
   pull_request:
@@ -7,24 +7,20 @@ on:
     branches: [ main ]
   workflow_dispatch: {}
 
-# Required so the action can upload SARIF (Security alerts) and (optionally)
-# comment on PRs or create issues if you enable those modes later.
 permissions:
   contents: read
   issues: write
   pull-requests: write
-  security-events: write
+  security-events: write  # needed to upload SARIF alerts to GitHub Security tab
 
 jobs:
   scan:
-    # Match your self-hosted runner's labels exactly
     runs-on: [self-hosted, macOS, ARM64, checkmarx]
 
     steps:
       - uses: actions/checkout@v4
 
-      # (Optional, but recommended) Install GNU sed so any sed usage inside the action
-      # behaves consistently (GNU sed) on macOS.
+      # Optional: install GNU sed to ensure consistent behavior if you ever use sed-like operations
       - name: Install GNU sed (macOS ARM64)
         shell: bash
         run: |
@@ -37,12 +33,10 @@ jobs:
           fi
           brew update
           brew install gnu-sed || brew reinstall gnu-sed
-          # Prepend Homebrew bin so 'sed' resolves to GNU sed for subsequent steps
           echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
           sed --version || true
 
-      # Sanitize branch/ref so the project name never contains '/'
-      # This avoids the action's internal {branch} substitution path and BSD sed differences.
+      # Sanitize branch/ref so project names never contain '/'
       - name: Build sanitized project name
         shell: bash
         env:
@@ -53,31 +47,61 @@ jobs:
           echo "PROJECT_NAME=OpenSAMPL-${SANITIZED}" >> "$GITHUB_ENV"
           echo "Sanitized project name: $PROJECT_NAME"
 
-      # CxFlow++ executes directly on the runner (composite action, no Docker),
-      # so it's compatible with macOS self-hosted runners.
-      - name: Checkmarx CxFlow++ SAST Scan
-        uses: checkmarx-ts/checkmarx-cxflow-plusplus-github-action@v3
-        env:
-          # Force the action to use the sanitized branch value internally if it tries to substitute {branch}
-          PROPER_BRANCH_NAME: ${{ env.SANITIZED_BRANCH }}
+      # Install Java if not present (Corretto JDK 17)
+      - name: Set up Java 17 (Corretto)
+        uses: actions/setup-java@v4
         with:
-          # ---- On-prem Checkmarx SAST connection ----
-          sast-url: ${{ secrets.CHECKMARX_URL }}              # e.g., https://checkmarx.ornl.gov
-          sast-username: ${{ secrets.CHECKMARX_USERNAME }}
-          sast-password: ${{ secrets.CHECKMARX_PASSWORD }}
-          sast-team: ${{ secrets.CHECKMARX_TEAMS }}
+          distribution: 'corretto'
+          java-version: '17'
 
-          # ---- Project naming (sanitized; no {branch} placeholder) ----
-          project-name: ${{ env.PROJECT_NAME }}
+      # Download the CxFlow CLI jar directly
+      - name: Download CxFlow CLI
+        shell: bash
+        run: |
+          set -e
+          CXFLOW_DIR="$RUNNER_TEMP/cxflow"
+          mkdir -p "$CXFLOW_DIR"
+          # Download a specific known-good version (adjust if needed):
+          # Using the version observed in your logs: 1.7.13
+          curl -sSL -o "$CXFLOW_DIR/cx-flow.jar" \
+            https://github.com/checkmarx-ltd/cx-flow/releases/download/1.7.13/cx-flow-1.7.13.jar
+          test -s "$CXFLOW_DIR/cx-flow.jar" || { echo "CxFlow jar download failed"; exit 1; }
+          echo "CXFLOW_DIR=$CXFLOW_DIR" >> "$GITHUB_ENV"
 
-          # ---- Scan options ----
-          disable-sca-scan: true  # keep SAST-only for now
+      # Run CxFlow SAST only, explicitly disabling SCA resolver and producing SARIF
+      - name: Orchestrate SAST scan with CxFlow CLI (resolver disabled)
+        shell: bash
+        env:
+          SARIF_FILE: ${{ env.CXFLOW_DIR }}/cx.sarif
+          CHECKMARX_URL: ${{ secrets.CHECKMARX_URL }}     # e.g., https://checkmarx.ornl.gov
+          CHECKMARX_USERNAME: ${{ secrets.CHECKMARX_USERNAME }}
+          CHECKMARX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
+          CHECKMARX_CLIENT_SECRET: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+          CHECKMARX_TEAMS: ${{ secrets.CHECKMARX_TEAMS }} # e.g., \CxServer\SP\Company\ORNL
+        run: |
+          set -e
+          echo "Starting CxFlow CLI (SAST only, resolver disabled)..."
+          java -Xms512m -Xmx2048m -Djava.security.egd=file:/dev/./urandom \
+            -jar "$CXFLOW_DIR/cx-flow.jar" \
+            --scan --f=. \
+            --bug-tracker='Sarif' \
+            --cx-project='${PROJECT_NAME}' \
+            --cx-team='${CHECKMARX_TEAMS}' \
+            --namespace='${{ github.repository_owner }}' \
+            --repo-name='${{ github.event.repository.name }}' \
+            --branch='${SANITIZED_BRANCH}' \
+            --logging.level.com.checkmarx='INFO' \
+            --cx-flow.enabled-vulnerability-scanners='sast' \
+            --checkmarx.base-url='${CHECKMARX_URL}' \
+            --checkmarx.username='${CHECKMARX_USERNAME}' \
+            --checkmarx.password='${CHECKMARX_PASSWORD}' \
+            --checkmarx.client-secret='${CHECKMARX_CLIENT_SECRET}' \
+            --sarif.file-output='${SARIF_FILE}' \
+            --sca.enable-sca-resolver=false
 
-          # ---- Explicitly disable SCA Resolver for PR and push ----
-          pull-request-cxflow-params: "--sca.enable-sca-resolver=false"
-          push-cxflow-params: "--sca.enable-sca-resolver=false"
+          echo "CxFlow completed; SARIF at: ${SARIF_FILE}"
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: cx.sarif
+          sarif_file: ${{ env.CXFLOW_DIR }}/cx.sarif
