@@ -11,7 +11,7 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
-  security-events: write   # required for SARIF uploads
+  security-events: write   # required for SARIF upload
 
 jobs:
   scan:
@@ -20,27 +20,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # CxFlow++ executes directly on the runner (no Docker),
-      # so it works on macOS self-hosted runners.
+      # CxFlow++ executes directly on the runner (composite action, no Docker),
+      # so it's compatible with macOS self-hosted runners.
       - name: Checkmarx CxFlow++ SAST Scan
         uses: checkmarx-ts/checkmarx-cxflow-plusplus-github-action@v3
         with:
-          # ---- CxSAST connection (on-prem) ----
+          # ---- On-prem Checkmarx SAST connection ----
           sast-url: ${{ secrets.CHECKMARX_URL }}              # e.g., https://checkmarx.ornl.gov
           sast-username: ${{ secrets.CHECKMARX_USERNAME }}
           sast-password: ${{ secrets.CHECKMARX_PASSWORD }}
           sast-team: ${{ secrets.CHECKMARX_TEAMS }}
 
-          # ---- Project naming ----
-          project-name: OpenSAMPL-{branch}
+          # ---- Project naming (explicit branch; no {branch} placeholder) ----
+          project-name: OpenSAMPL-${{ github.ref_name }}
 
-          # ---- Scanning modes ----
-          disable-sca-scan: true   # set to false if you also want SCA and have SCA creds
-
-          # ---- Extra parameters for CxFlow (optional) ----
-          # You can pass additional CLI params if needed:
-          # pull-request-cxflow-params: "--namespace=${{ github.repository_owner }} --branch=${{ github.ref_name }}"
-          # push-cxflow-params: "--namespace=${{ github.repository_owner }} --branch=${{ github.ref_name }}"
+          # ---- Scan options ----
+          disable-sca-scan: true  # enable later if/when SCA credentials are available
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
