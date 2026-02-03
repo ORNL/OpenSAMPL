@@ -11,7 +11,7 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
-  security-events: write  # needed to upload SARIF alerts to GitHub Security tab
+  security-events: write  # needed for SARIF upload to GitHub Security tab
 
 jobs:
   scan:
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Optional: install GNU sed to ensure consistent behavior if you ever use sed-like operations
+      # Optional: install GNU sed (keeps sed behavior consistent on macOS if ever needed)
       - name: Install GNU sed (macOS ARM64)
         shell: bash
         run: |
@@ -61,8 +61,7 @@ jobs:
           set -e
           CXFLOW_DIR="$RUNNER_TEMP/cxflow"
           mkdir -p "$CXFLOW_DIR"
-          # Download a specific known-good version (adjust if needed):
-          # Using the version observed in your logs: 1.7.13
+          # Using version observed in your logs: 1.7.13
           curl -sSL -o "$CXFLOW_DIR/cx-flow.jar" \
             https://github.com/checkmarx-ltd/cx-flow/releases/download/1.7.13/cx-flow-1.7.13.jar
           test -s "$CXFLOW_DIR/cx-flow.jar" || { echo "CxFlow jar download failed"; exit 1; }
@@ -73,30 +72,30 @@ jobs:
         shell: bash
         env:
           SARIF_FILE: ${{ env.CXFLOW_DIR }}/cx.sarif
-          CHECKMARX_URL: ${{ secrets.CHECKMARX_URL }}     # e.g., https://checkmarx.ornl.gov
+          CHECKMARX_BASE_URL: ${{ secrets.CHECKMARX_BASE_URL }}     # e.g., https://checkmarx.ornl.gov (NO /cxrestapi)
           CHECKMARX_USERNAME: ${{ secrets.CHECKMARX_USERNAME }}
           CHECKMARX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
           CHECKMARX_CLIENT_SECRET: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
-          CHECKMARX_TEAMS: ${{ secrets.CHECKMARX_TEAMS }} # e.g., \CxServer\SP\Company\ORNL
+          CHECKMARX_TEAMS: ${{ secrets.CHECKMARX_TEAMS }}           # e.g., \CxServer\SP\Company\ORNL
         run: |
           set -e
           echo "Starting CxFlow CLI (SAST only, resolver disabled)..."
           java -Xms512m -Xmx2048m -Djava.security.egd=file:/dev/./urandom \
             -jar "$CXFLOW_DIR/cx-flow.jar" \
             --scan --f=. \
-            --bug-tracker='Sarif' \
-            --cx-project='${PROJECT_NAME}' \
-            --cx-team='${CHECKMARX_TEAMS}' \
-            --namespace='${{ github.repository_owner }}' \
-            --repo-name='${{ github.event.repository.name }}' \
-            --branch='${SANITIZED_BRANCH}' \
-            --logging.level.com.checkmarx='INFO' \
-            --cx-flow.enabled-vulnerability-scanners='sast' \
-            --checkmarx.base-url='${CHECKMARX_URL}' \
-            --checkmarx.username='${CHECKMARX_USERNAME}' \
-            --checkmarx.password='${CHECKMARX_PASSWORD}' \
-            --checkmarx.client-secret='${CHECKMARX_CLIENT_SECRET}' \
-            --sarif.file-output='${SARIF_FILE}' \
+            --bug-tracker="Sarif" \
+            --cx-project="${PROJECT_NAME}" \
+            --cx-team="${CHECKMARX_TEAMS}" \
+            --namespace="${{ github.repository_owner }}" \
+            --repo-name="${{ github.event.repository.name }}" \
+            --branch="${SANITIZED_BRANCH}" \
+            --logging.level.com.checkmarx="INFO" \
+            --cx-flow.enabled-vulnerability-scanners="sast" \
+            --checkmarx.base-url="${CHECKMARX_BASE_URL}" \
+            --checkmarx.username="${CHECKMARX_USERNAME}" \
+            --checkmarx.password="${CHECKMARX_PASSWORD}" \
+            --checkmarx.client-secret="${CHECKMARX_CLIENT_SECRET}" \
+            --sarif.file-output="${SARIF_FILE}" \
             --sca.enable-sca-resolver=false
 
           echo "CxFlow completed; SARIF at: ${SARIF_FILE}"
