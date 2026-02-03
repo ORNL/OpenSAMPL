@@ -1,0 +1,71 @@
+name: Checkmarx (CxFlow) SAST
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+# Required so the action can comment on PRs and upload SARIF (security alerts)
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  scan:
+    # If checkmarx.ornl.gov isn't reachable from GitHub-hosted runners,
+    # switch to a self-hosted runner inside ORNL's network:
+    # runs-on: self-hosted
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Optional: trust internal CA if your Checkmarx uses a private cert.
+      # Place .crt files under .github/certs/ and uncomment extra_certificates below.
+
+      - name: Checkmarx CxFlow SAST Scan
+        uses: checkmarx-ts/checkmarx-cxflow-github-action@v2.3
+        env:
+          # Exclude Git metadata and workflow files to avoid large diffs/slow uploads
+          CX_FLOW_ZIP_EXCLUDE: "\\.git/.*, \\.github/.*"
+        with:
+          # Project naming per branch; adjust if you prefer a single project name
+          project: OpenSAMPL-${{ github.ref_name }}
+          team: ${{ secrets.CHECKMARX_TEAMS }}
+
+          # Core Checkmarx connectivity
+          checkmarx_url: ${{ secrets.CHECKMARX_URL }}
+          checkmarx_username: ${{ secrets.CHECKMARX_USERNAME }}
+          checkmarx_password: ${{ secrets.CHECKMARX_PASSWORD }}
+
+          # On-prem CxSAST uses a built-in OAuth client; the action only needs the secret.
+          # You saved the standard on-prem secret (014DF517-...); keep using it here.
+          checkmarx_client_secret: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+
+          # Specify your exact CxSAST version (>=9.5 requires this input)
+          checkmarx_version: "9.7"
+
+          # Enable SAST (add ",sca" if you also want SCA scans and have SCA licensed)
+          scanners: "sast"
+
+          # Publish findings via SARIF (Security tab) instead of PR comments/Issues
+          bug_tracker: "Sarif"
+
+          # Uncomment if you committed internal CA certs:
+          # extra_certificates: ".github/certs"
+
+          # Extra CxFlow runtime parameters
+          params: >
+            --namespace=${{ github.repository_owner }}
+            --repo-name=${{ github.event.repository.name }}
+            --branch=${{ github.ref_name }}
+            --checkmarx.settings-override=true
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cx.sarif
