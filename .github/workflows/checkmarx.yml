@@ -1,0 +1,106 @@
+name: Checkmarx (CxFlow CLI) SAST on macOS self-hosted
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  security-events: write  # needed for SARIF upload to GitHub Security tab
+
+jobs:
+  scan:
+    runs-on: [self-hosted, macOS, ARM64, checkmarx]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Optional: install GNU sed (keeps sed behavior consistent on macOS if ever needed)
+      - name: Install GNU sed (macOS ARM64)
+        shell: bash
+        run: |
+          set -e
+          if ! command -v brew >/dev/null 2>&1; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+          if [ -x /opt/homebrew/bin/brew ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+          fi
+          brew update
+          brew install gnu-sed || brew reinstall gnu-sed
+          echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
+          sed --version || true
+
+      # Sanitize branch/ref so project names never contain '/'
+      - name: Build sanitized project name
+        shell: bash
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          SANITIZED="${BRANCH//\//-}"
+          echo "SANITIZED_BRANCH=$SANITIZED" >> "$GITHUB_ENV"
+          echo "PROJECT_NAME=OpenSAMPL-${SANITIZED}" >> "$GITHUB_ENV"
+          echo "Sanitized project name: $PROJECT_NAME"
+
+      # Install Java if not present (Corretto JDK 17)
+      - name: Set up Java 17 (Corretto)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      # Download the CxFlow CLI jar directly
+      - name: Download CxFlow CLI
+        shell: bash
+        run: |
+          set -e
+          CXFLOW_DIR="$RUNNER_TEMP/cxflow"
+          mkdir -p "$CXFLOW_DIR"
+          # Using version observed in your logs: 1.7.13
+          curl -sSL -o "$CXFLOW_DIR/cx-flow.jar" \
+            https://github.com/checkmarx-ltd/cx-flow/releases/download/1.7.13/cx-flow-1.7.13.jar
+          test -s "$CXFLOW_DIR/cx-flow.jar" || { echo "CxFlow jar download failed"; exit 1; }
+          echo "CXFLOW_DIR=$CXFLOW_DIR" >> "$GITHUB_ENV"
+
+      # Run CxFlow SAST only, explicitly disabling SCA resolver and producing SARIF
+      - name: Orchestrate SAST scan with CxFlow CLI (resolver disabled)
+        shell: bash
+        env:
+          SARIF_FILE: ${{ env.CXFLOW_DIR }}/cx.sarif
+          CHECKMARX_BASE_URL: ${{ secrets.CHECKMARX_BASE_URL }}     # e.g., https://checkmarx.ornl.gov (NO /cxrestapi)
+          CHECKMARX_USERNAME: ${{ secrets.CHECKMARX_USERNAME }}
+          CHECKMARX_PASSWORD: ${{ secrets.CHECKMARX_PASSWORD }}
+          CHECKMARX_CLIENT_SECRET: ${{ secrets.CHECKMARX_CLIENT_SECRET }}
+          CHECKMARX_TEAMS: ${{ secrets.CHECKMARX_TEAMS }}           # e.g., \CxServer\SP\Company\ORNL
+        run: |
+          set -e
+          echo "Starting CxFlow CLI (SAST only, resolver disabled)..."
+          java -Xms512m -Xmx2048m -Djava.security.egd=file:/dev/./urandom \
+            -jar "$CXFLOW_DIR/cx-flow.jar" \
+            --scan --f=. \
+            --bug-tracker="Sarif" \
+            --cx-project="${PROJECT_NAME}" \
+            --cx-team="${CHECKMARX_TEAMS}" \
+            --namespace="${{ github.repository_owner }}" \
+            --repo-name="${{ github.event.repository.name }}" \
+            --branch="${SANITIZED_BRANCH}" \
+            --logging.level.com.checkmarx="INFO" \
+            --cx-flow.enabled-vulnerability-scanners="sast" \
+            --checkmarx.base-url="${CHECKMARX_BASE_URL}" \
+            --checkmarx.username="${CHECKMARX_USERNAME}" \
+            --checkmarx.password="${CHECKMARX_PASSWORD}" \
+            --checkmarx.client-secret="${CHECKMARX_CLIENT_SECRET}" \
+            --sarif.file-output="${SARIF_FILE}" \
+            --sca.enable-sca-resolver=false
+
+          echo "CxFlow completed; SARIF at: ${SARIF_FILE}"
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ env.CXFLOW_DIR }}/cx.sarif
