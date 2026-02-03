@@ -7,18 +7,32 @@ on:
     branches: [ main ]
   workflow_dispatch: {}
 
+# Required so the action can upload SARIF (Security alerts) and optionally
+# comment on PRs or create issues if you enable those modes later.
 permissions:
   contents: read
   issues: write
   pull-requests: write
-  security-events: write   # required for SARIF upload
+  security-events: write
 
 jobs:
   scan:
+    # Match your self-hosted runner's labels exactly
     runs-on: [self-hosted, macOS, ARM64, checkmarx]
 
     steps:
       - uses: actions/checkout@v4
+
+      # (Optional) quick connectivity probe to your on-prem Checkmarx
+      # Uncomment if you want to see reachability before scanning.
+      # - name: Connectivity check to Checkmarx
+      #   shell: bash
+      #   run: |
+      #     set -e
+      #     echo "DNS resolution:"
+      #     (command -v dig && dig +short checkmarx.ornl.gov) || (command -v nslookup && nslookup checkmarx.ornl.gov) || true
+      #     echo "TLS probe:"
+      #     curl -sS -I https://checkmarx.ornl.gov/cxrestapi/version || true
 
       # CxFlow++ executes directly on the runner (composite action, no Docker),
       # so it's compatible with macOS self-hosted runners.
@@ -35,7 +49,7 @@ jobs:
           project-name: OpenSAMPL-${{ github.ref_name }}
 
           # ---- Scan options ----
-          disable-sca-scan: true  # enable later if/when SCA credentials are available
+          disable-sca-scan: true  # enable later if you also want SCA
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
