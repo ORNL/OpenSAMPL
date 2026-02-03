@@ -11,31 +11,50 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
-  security-events: write   # required for SARIF upload
+  security-events: write   # required for SARIF upload [3](https://docs.checkmarx.com/en/34965-188033-creating-an-oauth-client-for-checkmarx-one-integrations.html)
 
 jobs:
   scan:
-    runs-on: [self-hosted, macOS, ARM64, checkmarx]
+    runs-on: [self-hosted, macOS, ARM64, checkmarx]  # match your runner labels exactly [4](https://github-wiki-see.page/m/checkmarx-ltd/cx-flow/wiki/Configuration)
 
     steps:
       - uses: actions/checkout@v4
 
-      # Sanitize branch/ref so the project name never contains '/'.
-      # This avoids the action's internal sed replacement path on macOS (BSD sed).
+      # 1) Install GNU sed so any internal sed usage in the action is consistent on macOS
+      - name: Install GNU sed (macOS ARM64)
+        shell: bash
+        run: |
+          set -e
+          if ! command -v brew >/dev/null 2>&1; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+          if [ -x /opt/homebrew/bin/brew ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+          fi
+          brew update
+          brew install gnu-sed || brew reinstall gnu-sed
+          # Prepend Homebrew bin so 'sed' resolves to GNU sed for subsequent steps
+          echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
+          sed --version || true
+
+      # 2) Sanitize the branch/ref so project names never contain '/'
       - name: Build sanitized project name
         shell: bash
         env:
           BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
-          # Replace all slashes with hyphens
           SANITIZED="${BRANCH//\//-}"
+          echo "SANITIZED_BRANCH=$SANITIZED" >> "$GITHUB_ENV"
           echo "PROJECT_NAME=OpenSAMPL-${SANITIZED}" >> "$GITHUB_ENV"
           echo "Sanitized project name: $PROJECT_NAME"
 
       # CxFlow++ executes directly on the runner (composite action, no Docker),
-      # so it's compatible with macOS self-hosted runners.
+      # so it's compatible with macOS self-hosted runners. [1](https://docs.checkmarx.com/en/34965-8217-github-actions-integration.html)
       - name: Checkmarx CxFlow++ SAST Scan
         uses: checkmarx-ts/checkmarx-cxflow-plusplus-github-action@v3
+        env:
+          # Force the action to use the sanitized branch value internally if it tries to substitute {branch}
+          PROPER_BRANCH_NAME: ${{ env.SANITIZED_BRANCH }}
         with:
           # ---- On-prem Checkmarx SAST connection ----
           sast-url: ${{ secrets.CHECKMARX_URL }}              # e.g., https://checkmarx.ornl.gov
@@ -43,11 +62,11 @@ jobs:
           sast-password: ${{ secrets.CHECKMARX_PASSWORD }}
           sast-team: ${{ secrets.CHECKMARX_TEAMS }}
 
-          # ---- Project naming (explicit, sanitized; no {branch} placeholder) ----
+          # ---- Project naming (sanitized; no {branch} placeholder) ----
           project-name: ${{ env.PROJECT_NAME }}
 
           # ---- Scan options ----
-          disable-sca-scan: true  # enable later if you also want SCA
+          disable-sca-scan: true  # enable later if/when you want SCA
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
