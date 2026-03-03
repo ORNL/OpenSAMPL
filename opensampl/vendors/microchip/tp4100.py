@@ -14,9 +14,9 @@ from opensampl.metrics import METRICS
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import VENDORS, ProbeKey
+from opensampl.mixins.random_data import RandomDataMixin
 
-
-class MicrochipTP4100Probe(BaseProbe):
+class MicrochipTP4100Probe(BaseProbe, RandomDataMixin):
     """MicrochipTP4100 Probe Object"""
 
     vendor = VENDORS.MICROCHIP_TP4100
@@ -25,7 +25,7 @@ class MicrochipTP4100Probe(BaseProbe):
     }
     REFERENCES: ClassVar = {"GNSS": REF_TYPES.GNSS}
 
-    class RandomDataConfig(BaseProbe.RandomDataConfig):
+    class RandomDataConfig(RandomDataMixin.RandomDataConfig):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
 
         # Time series parameters
