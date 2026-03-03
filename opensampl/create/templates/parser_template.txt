@@ -1,79 +1,49 @@
-"""${name} clock Parser implementation"""
+"""Probe implementation for $name vendor"""
+
+import pandas as pd
 
 from opensampl.vendors.base_probe import BaseProbe
-import pandas as pd
-from opensampl.vendors.constants import VENDORS, ProbeKey
+from opensampl.vendors.constants import ProbeKey, VENDORS
+from opensampl.references import REF_TYPES
 
-class ${parser_class}(BaseProbe):
+class $parser_class(BaseProbe):
+    """Probe parser for $name vendor data files"""
 
-    vendor = VENDORS.${upper_name}
+    vendor = VENDORS.$upper_name
 
-    def __init__(self, input_file: Union[str, Path]):
-        super().__init__(input_file=input_file)
-        """Initialize ${parser_class} object given input_file and determine probe identity"""
-        self.probe_key = ProbeKey(
-            probe_id="TODO: define how to determine probe id",
-            ip_address="TODO: define how to determine ip address",
-        )
-
-    def process_time_data(self) -> pd.DataFrame:
-        """
-        Process time series data from the input file.
-
-        Returns:
-            pd.DataFrame: DataFrame with columns:
-                - time (datetime64[ns]): timestamp for each measurement
-                - value (float64): measured value at each timestamp
-        """
-        # TODO: Implement time series data processing logic specific to ${name} probes
-        raise NotImplementedError("Time data processing not implemented for ${parser_class}")
+    def __init__(self, input_file: str, **kwargs):
+        """Initialize $parser_class from input file"""
+        super().__init__(input_file)
+        # TODO: parse self.input_file to extract self.probe_key
+        # self.probe_key = ProbeKey(probe_id=..., ip_address=...)
 
     def process_metadata(self) -> dict:
         """
-        Process metadata from the input file.
+        Parse and return probe metadata from input file.
+
+        Expected metadata fields:
+$metadata_fields
 
         Returns:
-            dict: Dictionary mapping table names to ORM objects
+            dict with metadata field names as keys
         """
-        """
-        TODO: Implement metadata processing logic specific to ${name}
-        provided fields: ${metadata_fields}
-        """
-        raise NotImplementedError("Metadata processing not implemented for ${parser_class}")
+        # TODO: implement metadata parsing
+        # return {
+        #     "field_name": value,
+        #     ...
+        # }
+        raise NotImplementedError
 
-    def generate_random_data(
-        cls,
-        config: RandomDataConfig,
-        probe_key: ProbeKey,
-    ) -> ProbeKey:
+    def process_time_data(self) -> pd.DataFrame:
         """
-        Generate random data for testing purposes.
-
-        Args:
-            config (RandomDataConfig): Configuration for random data generation.
-            probe_key (ProbeKey): Key identifying the probe instance.
+        Parse and load time series data from input file.
 
         Returns:
-            ProbeKey: Updated probe key with generated data.
+            pd.DataFrame with columns:
+                - time (datetime64[ns]): timestamp for each measurement
+                - value (float64): measured value at each timestamp
         """
-        cls._setup_random_seed(config.seed)
-
-        logger.info(f"Generating random ${name} data for {probe_key}")
-        """
-        Generate faux metadata for fields:
-        ${metadata_fields}
-        """
-        metadata = {
-
-        }
-        cls._send_metadata_to_db(probe_key, metadata)
-        df = config.generate_time_series()
-        cls.send_data(
-            probe_key=probe_key,
-            data=df,
-            metric=METRICS.PHASE_OFFSET,
-            reference_type=REF_TYPES.GNSS,
-        )
-        logger.info(f"Successfully generated {config.duration_hours}h of random ${name} data for {probe_key}")
-        return probe_key
-
+        # TODO: implement time data parsing and call self.send_time_data(df, reference_type)
+        # df = pd.DataFrame({"time": [...], "value": [...]})
+        # self.send_time_data(df, reference_type=...)
+        raise NotImplementedError

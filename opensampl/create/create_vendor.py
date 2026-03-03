@@ -17,6 +17,7 @@ from pprint import pformat
 import yaml
 from loguru import logger
 from pydantic import BaseModel, Field, model_validator
+import textwrap
 
 from opensampl.create.insert_markers import INSERT_MARKERS, InsertMarker
 from opensampl.vendors.constants import VendorType
@@ -148,10 +149,14 @@ class VendorConfig(VendorType):
 
         template_file = Path(__file__).parent / "templates" / "parser_template.txt"
 
-        formatted_metadata = pformat([field.name for field in self.metadata_fields])
+        raw = pformat([field.name for field in self.metadata_fields])
+        formatted_metadata = textwrap.indent(raw, prefix="\t\t")
 
         content = Template(template_file.read_text()).safe_substitute(
-            name=self.name, upper_name=self.parser_class.upper(), parser_class=self.parser_class, metadata_fields=formatted_metadata,
+            name=self.name,
+            upper_name=self.parser_module.replace('.', '_').upper(),
+            parser_class=self.parser_class,
+            metadata_fields=formatted_metadata,
         )
 
         probe_file.write_text(content)
@@ -226,7 +231,7 @@ class VendorConfig(VendorType):
         """Update the constants.py file with the new vendor type."""
         template_file = INSERT_MARKERS.VENDOR.template_path
         content = Template(template_file.read_text()).safe_substitute(
-            upper_name=self.parser_class.upper(),
+            upper_name=self.parser_module.replace('.', '_').upper(),
             name=self.name,
             parser_class=self.parser_class,
             parser_module=self.parser_module,
