@@ -232,7 +232,7 @@ class VendorConfig(VendorType):
         template_file = INSERT_MARKERS.VENDOR.template_path
         content = Template(template_file.read_text()).safe_substitute(
             upper_name=self.parser_module.replace('.', '_').upper(),
-            name=self.name,
+            name=self.name.replace(' ', '-'),
             parser_class=self.parser_class,
             parser_module=self.parser_module,
             metadata_table=self.metadata_table,

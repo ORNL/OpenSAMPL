@@ -21,6 +21,7 @@ from opensampl.db.orm import get_table_names
 from opensampl.load_data import create_new_tables, write_to_table
 from opensampl.vendors.constants import VENDORS
 from opensampl.mixins.random_data import RandomDataMixin
+from opensampl.mixins.collect import CollectMixin
 
 BANNER = r"""
 
@@ -184,12 +185,17 @@ def load():
 def random():
     """Generate and send random test data to the database"""
 
+@cli.group(cls=CaseInsensitiveGroup)
+def collect():
+    """Collect and send data to the database"""
 
 for vendor in VENDORS.all():
     _vend = vendor.get_parser()
     load.add_command(_vend.get_cli_command(), name=vendor.name)
     if issubclass(_vend, RandomDataMixin):
         random.add_command(_vend.get_random_data_cli_command(), name=vendor.name)
+    if issubclass(_vend, CollectMixin):
+        collect.add_command(_vend.get_collect_cli_command(), name=vendor.name)
 
 
 def path_or_string(value: str) -> Union[dict, list]:

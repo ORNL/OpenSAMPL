@@ -58,7 +58,8 @@ dependencies = [
     "astor",
     "libcst",
     "jinja2>=3.1.6",
-    "tabulate"
+    "tabulate",
+    "pydanclick"
 ]
 
 [project.urls]
