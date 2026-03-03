@@ -20,6 +20,7 @@ from opensampl.config.base import BaseConfig as CLIConfig
 from opensampl.db.orm import get_table_names
 from opensampl.load_data import create_new_tables, write_to_table
 from opensampl.vendors.constants import VENDORS
+from opensampl.mixins.random_data import RandomDataMixin
 
 BANNER = r"""
 
@@ -185,8 +186,10 @@ def random():
 
 
 for vendor in VENDORS.all():
-    load.add_command(vendor.get_parser().get_cli_command(), name=vendor.name)
-    random.add_command(vendor.get_parser().get_random_data_cli_command(), name=vendor.name)
+    _vend = vendor.get_parser()
+    load.add_command(_vend.get_cli_command(), name=vendor.name)
+    if issubclass(_vend, RandomDataMixin):
+        random.add_command(_vend.get_random_data_cli_command(), name=vendor.name)
 
 
 def path_or_string(value: str) -> Union[dict, list]:
