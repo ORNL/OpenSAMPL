@@ -9,7 +9,7 @@ from pathlib import Path
 class CollectMixin(ABC):
     class CollectConfig(BaseModel):
         """
-
+        # TODO make sure one of load or output provided
         Attributes:
             output_dir: When provided, will save collected data as a file to provided directory. Filename will be automatically generated as {ip_address}_{probe_id}_{vendor}_{timestamp}
             load: Whether to load collected data directly to the database
@@ -18,6 +18,9 @@ class CollectMixin(ABC):
         output_dir: Optional[Path] = None
         load: bool = False
         duration: int = 300
+
+        ip_address: str = '127.0.0.1'
+        probe_id: str = '1-1'
 
     @classmethod
     @property
@@ -62,6 +65,19 @@ class CollectMixin(ABC):
                 raise click.Abort(f"Error: {e!s}") from e
 
         return make_command(collect_callback)
+
+    def _collect_and_save(self, collect_config):
+        data = self.collect()
+        if collect_config.load:
+            self.send_data(data)
+        if collect_config.output_dir:
+            self.save_to_file(data)
+
+    @abstractmethod
+    def metadata(self):
+        # flags at start? default based on probe? env var?
+
+        pass
 
     @abstractmethod
     def collect(self):
