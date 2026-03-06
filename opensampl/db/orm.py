@@ -434,17 +434,6 @@ class MicrochipTP4100Metadata(Base):
 
 
 # --- CUSTOM TABLES ---      !! Do not remove line, used as reference when inserting metadata table
-class MyVendorMetadata(Base):
-    __tablename__ = "my_vendor_metadata"
-    
-    probe_uuid = Column(String, ForeignKey("probe_metadata.uuid"), primary_key=True)
-    serial_number = Column(Text)
-    firmware_version = Column(Text)
-    location = Column(Text)
-    sample_rate_hz = Column(Integer)
-    additional_metadata = Column(JSONB)
-    probe = relationship("ProbeMetadata", back_populates="my_vendor_metadata")
-
 
 # --- TABLE FUNCTIONS ---
 

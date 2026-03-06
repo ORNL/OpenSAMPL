@@ -71,13 +71,6 @@ class VENDORS:
     )
 
     # --- CUSTOM VENDORS ---      !! Do not remove line, used as reference when inserting vendor
-    MY_VENDOR = VendorType(
-        name='My-Vendor',
-        parser_class='MyVendorProbe',
-        parser_module='my_vendor',
-        metadata_table='my_vendor_metadata',
-        metadata_orm='MyVendorMetadata'
-    )
 
 
     # --- VENDOR FUNCTIONS ---
