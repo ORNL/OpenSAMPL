@@ -72,7 +72,8 @@ $metadata_fields
         # Ensure the format it is reading in matches that in save_to_file
         raise NotImplementedError
 
-    def collect(self, collect_config: CollectConfig) -> CollectMixin.CollectArtifact:
+    @classmethod
+    def collect(cls, collect_config: CollectConfig) -> CollectMixin.CollectArtifact:
         """
             Create a collect artifact defined as follows
             class CollectArtifact(BaseModel):
@@ -92,7 +93,8 @@ $metadata_fields
 
         raise NotImplementedError
 
-    def create_file_content(cls, CollectArtifact: CollectArtifact) -> str:
+    @classmethod
+    def create_file_content(cls, collected: CollectMixin.CollectArtifact) -> str:
         # TODO: Create the str content for an output file. Ensure readable by parse functions & that required metadata is available
         #  Filename will be automatically generated as {ip_address}_{probe_id}_{vendor}_{timestamp}.txt and saved to directory provided by cli
         raise NotImplementedError
