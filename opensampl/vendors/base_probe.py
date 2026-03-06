@@ -134,12 +134,22 @@ class LoadConfig(BaseModel):
 
 class BaseProbe(ABC):
     """BaseProbe abstract object"""
-
-    input_file: Path
-    probe_key: ProbeKey
     vendor: ClassVar[VendorType]
-    chunk_size: Optional[int] = None
-    metadata_parsed: bool = False
+
+
+    def __init__(self,
+                 input_file: str | Path | None = None,
+                 probe_key: ProbeKey | None = None,
+                 chunk_size: Optional[int] = None,
+                 **kwargs,
+                 ):
+        """Initialize probe given input file"""
+        self.input_file: Optional[Path] = Path(input_file) if input_file else None
+        self.probe_key: ProbeKey = probe_key
+        self.chunk_size: Optional[int] = chunk_size
+        self.metadata: dict = dict() | kwargs
+
+        self.metadata_parsed: bool = False
 
     @classmethod
     @property
@@ -221,8 +231,7 @@ class BaseProbe(ABC):
     ) -> None:
         """Process a single file with the given options."""
         try:
-            probe = cls(filepath, **kwargs)
-            probe.chunk_size = chunk_size
+            probe = cls(input_file=filepath, chunk_size=chunk_size, **kwargs)
             try:
                 if metadata:
                     logger.debug(f"Loading {cls.__name__} metadata from {filepath}")
@@ -444,10 +453,6 @@ class BaseProbe(ABC):
     def ip_address(self):
         """Return ip_address of probe"""
         return self.probe_key.ip_address
-
-    def __init__(self, input_file: str):
-        """Initialize probe given input file"""
-        self.input_file = Path(input_file)
 
     @abstractmethod
     def process_time_data(self) -> pd.DataFrame:

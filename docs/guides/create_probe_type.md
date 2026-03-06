@@ -1,4 +1,13 @@
 # Create your own Probe Type
+
+1. you must have the repo cloned down to use this effectively 
+2. opensampl installed with editable (uv install -e .)
+3. call opensampl create to create shell and populate constants 
+   4. include `--collect-mixin` flag to prefill those functions as well
+   5. 
+4. add mixins, fill out functions as desired
+
+---
 WARNING! This is an experimental tool, and may have breaking changes between release versions until it is marked as fully supported 
 
 Clock types can be added to generate new ORMs for different clock types via skeleton files, which can then be further

@@ -135,7 +135,7 @@ class VendorConfig(VendorType):
         data["metadata_fields"] = fields
         return data
 
-    def create_probe_file(self) -> Path:
+    def create_probe_file(self, collect_mixin:bool= False) -> Path:
         """
         Create a new probe class file.
 
@@ -147,7 +147,8 @@ class VendorConfig(VendorType):
         probe_file = self.base_path / "vendors" / f"{self.parser_module}.py"
         # TODO in write time data, optionally add value_str to df ensure maximum precision when sending through backend.
 
-        template_file = Path(__file__).parent / "templates" / "parser_template.txt"
+        template_file = Path(__file__).parent / "templates" / f"{'collect_mixin' if collect_mixin else 'parser'}_template.txt"
+
 
         raw = pformat([field.name for field in self.metadata_fields])
         formatted_metadata = textwrap.indent(raw, prefix="\t\t")
@@ -240,8 +241,8 @@ class VendorConfig(VendorType):
         )
         self.insert_content_at_marker(INSERT_MARKERS.VENDOR, content)
 
-    def create(self):
+    def create(self, collect_mixin: bool = False) -> None:
         """Create the new vendor by generating probe file, ORM class, and updating constants."""
-        self.create_probe_file()
+        self.create_probe_file(collect_mixin=collect_mixin)
         self.create_orm_class()
         self.update_constants()

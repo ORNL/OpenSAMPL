@@ -23,6 +23,7 @@ from opensampl.vendors.constants import VENDORS
 from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.mixins.collect import CollectMixin
 
+
 BANNER = r"""
 
                         ____    _    __  __ ____  _
@@ -275,12 +276,19 @@ def table_load(
     is_flag=True,
     help="Update the database with the new probe type",
 )
-def create_probe_command(config_path: Path, update_db: bool):
+@click.option(
+    "--collect-mixin",
+    "-c",
+    is_flag=True,
+    help="include shell for collect mixin ",
+)
+def create_probe_command(config_path: Path, update_db: bool, collect_mixin: bool):
     """Create a new probe type with scaffolding, based on a config file."""
     from opensampl.create.create_vendor import VendorConfig
+    # TODO figure out best way to allow Vendor Config be through cli flags (too complicated nesting for pydanclick)
 
     vendor_config = VendorConfig.from_config_file(config_path)
-    vendor_config.create()
+    vendor_config.create(collect_mixin=collect_mixin)
     if update_db:
         create_new_tables()
 

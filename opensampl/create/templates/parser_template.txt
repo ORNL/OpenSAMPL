@@ -36,14 +36,17 @@ $metadata_fields
 
     def process_time_data(self) -> pd.DataFrame:
         """
-        Parse and load time series data from input file.
+        Parse and load time series data from self.input_file.
 
-        Returns:
+        Use either send_time_data (which prefills METRICS.PHASE_OFFSET)
+        or send_data and provide alternative METRICS type.
+        Both require a df as follows:
             pd.DataFrame with columns:
                 - time (datetime64[ns]): timestamp for each measurement
                 - value (float64): measured value at each timestamp
         """
         # TODO: implement time data parsing and call self.send_time_data(df, reference_type)
+        #                                       or self.send_data(df, metric_type, reference_type)
         # df = pd.DataFrame({"time": [...], "value": [...]})
         # self.send_time_data(df, reference_type=...)
         raise NotImplementedError
