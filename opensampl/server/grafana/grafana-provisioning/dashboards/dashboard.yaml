@@ -1,9 +1,9 @@
 apiVersion: 1
 
 providers:
-  - name: 'Clock Dashboards'
+  - name: "Clock Dashboards"
     orgId: 1
-    folder: 'Timing'
+    folder: "Timing"
     type: file
     disableDeletion: false
     updateIntervalSeconds: 10

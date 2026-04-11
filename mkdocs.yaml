@@ -15,6 +15,7 @@ nav:
   - Server: guides/opensampl-server.md
   - Collect: guides/collection.md
   - NTP vendor: guides/ntp_vendor_design.md
+  - NTP extension (walkthrough): guides/ntp_extension.md
   - Random Data: guides/random-data-generation.md
 - API:
   - index: api/index.md

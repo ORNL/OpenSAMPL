@@ -8,7 +8,54 @@ from typing import Any
 from loguru import logger
 
 
-def query_ntp_server(host: str, port: int = 123, timeout: float = 3.0) -> dict[str, Any]:
+def _estimate_jitter_s(delay_s: float | None, root_dispersion_s: float | None) -> float | None:
+    """
+    Single NTP client response does not include RFC5905 peer jitter (that needs multiple samples).
+
+    Emit a conservative positive bound from round-trip delay and root dispersion so downstream
+    ``NTP Jitter`` metrics and dashboards have a value; chrony/ntpq local paths still supply true jitter when available.
+    """
+    if delay_s is None and root_dispersion_s is None:
+        return None
+    d = float(delay_s) if delay_s is not None else 0.0
+    r = float(root_dispersion_s) if root_dispersion_s is not None else 0.0
+    est = 0.05 * d + 0.25 * r
+    return est if est > 0 else None
+
+
+def _apply_probe_overrides(
+    doc: dict[str, Any],
+    probe_id: str | None,
+    probe_ip: str | None,
+    probe_name: str | None,
+    geo_override: dict[str, Any] | None,
+) -> None:
+    """Apply stable probe identity and optional lab geolocation overrides for ingest/config workflows."""
+    meta = doc.setdefault("metadata", {})
+    add = meta.setdefault("additional_metadata", {})
+    if not isinstance(add, dict):
+        add = {}
+        meta["additional_metadata"] = add
+    if probe_id:
+        doc["probe_id"] = probe_id
+    if probe_ip:
+        doc["probe_ip"] = probe_ip
+    if probe_name:
+        meta["probe_name"] = probe_name
+    if geo_override:
+        add["geo_override"] = geo_override
+
+
+def query_ntp_server(
+    host: str,
+    port: int = 123,
+    timeout: float = 3.0,
+    *,
+    probe_id: str | None = None,
+    probe_ip: str | None = None,
+    probe_name: str | None = None,
+    geo_override: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     Perform one NTP client request and return a snapshot document (metadata + one series row).
 
@@ -50,13 +97,15 @@ def query_ntp_server(host: str, port: int = 123, timeout: float = 3.0) -> dict[s
             "time": now.isoformat(),
             "sync_health": 0.0,
         }
-        return {
+        doc = {
             "format_version": 1,
             "probe_id": f"remote-{host}-{port}",
             "probe_ip": host,
             "metadata": meta,
             "series": [row],
         }
+        _apply_probe_overrides(doc, probe_id, probe_ip, probe_name, geo_override)
+        return doc
 
     leap = int(resp.leap)
     leap_map = {0: "no_warning", 1: "add_second", 2: "del_second", 3: "alarm"}
@@ -93,7 +142,7 @@ def query_ntp_server(host: str, port: int = 123, timeout: float = 3.0) -> dict[s
         "reachability": None,
         "offset_last_s": offset_s,
         "delay_s": delay_s,
-        "jitter_s": None,
+        "jitter_s": _estimate_jitter_s(delay_s, root_dispersion_s),
         "dispersion_s": None,
         "root_delay_s": root_delay_s,
         "root_dispersion_s": root_dispersion_s,
@@ -103,6 +152,8 @@ def query_ntp_server(host: str, port: int = 123, timeout: float = 3.0) -> dict[s
         "collection_host": "",
         "additional_metadata": {"version": getattr(resp, "version", None)},
     }
+
+    jitter_est = _estimate_jitter_s(delay_s, root_dispersion_s)
 
     row: dict[str, Any] = {
         "time": now.isoformat(),
@@ -114,14 +165,18 @@ def query_ntp_server(host: str, port: int = 123, timeout: float = 3.0) -> dict[s
         "poll_interval_s": poll_s,
         "sync_health": 1.0 if sync_ok else 0.0,
     }
+    if jitter_est is not None:
+        row["jitter_s"] = jitter_est
     for k in list(row.keys()):
         if row[k] is None:
             del row[k]
 
-    return {
+    doc = {
         "format_version": 1,
         "probe_id": f"remote-{host}-{port}",
         "probe_ip": host,
         "metadata": meta,
         "series": [row],
     }
+    _apply_probe_overrides(doc, probe_id, probe_ip, probe_name, geo_override)
+    return doc

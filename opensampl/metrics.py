@@ -70,7 +70,10 @@ class METRICS:
     )
     NTP_JITTER = MetricType(
         name="NTP Jitter",
-        description="Estimated jitter or RMS offset variation for NTP in seconds",
+        description=(
+            "Jitter or offset variation for NTP in seconds (true value from chrony/ntpq when available; "
+            "remote single-packet collection may use a delay/dispersion bound estimate)"
+        ),
         unit="s",
         value_type=float,
     )

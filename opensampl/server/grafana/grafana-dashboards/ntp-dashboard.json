@@ -24,7 +24,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) * 1e9 AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'Phase Offset'\n  AND pm.uuid IN (${ntp_probe:sqlstring})\nGROUP BY 1, 2\nORDER BY 1\n",
+          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) * 1e9 AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'Phase Offset'\n  AND (trim('${ntp_probe:csv}') = '' OR pm.uuid = ANY(string_to_array(trim('${ntp_probe:csv}'), ',')))\nGROUP BY 1, 2\nORDER BY 1\n",
           "refId": "A"
         }
       ],
@@ -49,11 +49,12 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) * 1e9 AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Jitter'\n  AND pm.uuid IN (${ntp_probe:sqlstring})\nGROUP BY 1, 2\nORDER BY 1\n",
+          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) * 1e9 AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Jitter'\n  AND (trim('${ntp_probe:csv}') = '' OR pm.uuid = ANY(string_to_array(trim('${ntp_probe:csv}'), ',')))\nGROUP BY 1, 2\nORDER BY 1\n",
           "refId": "A"
         }
       ],
-      "title": "NTP jitter",
+      "description": "Remote single-packet paths use a conservative jitter estimate from delay and root dispersion when peer RMS jitter is unavailable; local chrony/ntpq snapshots may supply measured jitter.",
+      "title": "NTP jitter (delay/dispersion estimate or measured)",
       "type": "timeseries"
     },
     {
@@ -74,7 +75,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Stratum'\n  AND pm.uuid IN (${ntp_probe:sqlstring})\nGROUP BY 1, 2\nORDER BY 1\n",
+          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Stratum'\n  AND (trim('${ntp_probe:csv}') = '' OR pm.uuid = ANY(string_to_array(trim('${ntp_probe:csv}'), ',')))\nGROUP BY 1, 2\nORDER BY 1\n",
           "refId": "A"
         }
       ],
@@ -99,30 +100,61 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Sync Health'\n  AND pm.uuid IN (${ntp_probe:sqlstring})\nGROUP BY 1, 2\nORDER BY 1\n",
+          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Sync Health'\n  AND (trim('${ntp_probe:csv}') = '' OR pm.uuid = ANY(string_to_array(trim('${ntp_probe:csv}'), ',')))\nGROUP BY 1, 2\nORDER BY 1\n",
           "refId": "A"
         }
       ],
       "title": "NTP sync health (1=healthy)",
       "type": "timeseries"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 17},
+      "id": 50,
+      "panels": [
+        {
+          "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+          "description": "Phase metrics use OpenSAMPL\u2019s default reference row (UNKNOWN reference type). NTP **observation** context is the configured server in `ntp_metadata` (not GNSS unless a GNSS-backed probe is present).",
+          "fieldConfig": {"defaults": {}, "overrides": []},
+          "gridPos": {"h": 9, "w": 24, "x": 0, "y": 0},
+          "id": 5,
+          "options": {"cellHeight": "sm", "showHeader": true, "sortBy": [{"desc": false, "displayName": "probe"}]},
+          "pluginVersion": "12.0.0",
+          "targets": [
+            {
+              "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+              "editorMode": "code",
+              "format": "table",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS probe,\n  pm.vendor,\n  COALESCE(rt.name, '') AS reference_type,\n  COALESCE(nm.target_host::text, '') AS ntp_server,\n  COALESCE(nm.mode::text, '') AS ntp_mode,\n  COALESCE(nm.reference_id::text, '') AS ntp_ref_id,\n  COALESCE(l.name, '') AS location,\n  COALESCE(pm.public::text, '') AS public\nFROM castdb.probe_metadata pm\nLEFT JOIN castdb.ntp_metadata nm ON nm.probe_uuid = pm.uuid\nLEFT JOIN castdb.locations l ON l.uuid = pm.location_uuid\nLEFT JOIN LATERAL (\n  SELECT pd.reference_uuid FROM castdb.probe_data pd WHERE pd.probe_uuid = pm.uuid LIMIT 1\n) rp ON true\nLEFT JOIN castdb.reference r ON r.uuid = rp.reference_uuid\nLEFT JOIN castdb.reference_type rt ON rt.uuid = r.reference_type_uuid\nWHERE pm.vendor = 'NTP'\n  AND (trim('${ntp_probe:csv}') = '' OR pm.uuid = ANY(string_to_array(trim('${ntp_probe:csv}'), ',')))\nORDER BY 1;",
+              "refId": "A"
+            }
+          ],
+          "title": "Probe reference & source (stored metadata)",
+          "transformations": [],
+          "type": "table"
+        }
+      ],
+      "title": "Reference & source metadata",
+      "type": "row"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["ntp", "opensampl"],
+  "tags": ["ntp", "opensampl", "reference"],
   "templating": {
     "list": [
       {
         "current": {"selected": true, "text": "All", "value": "$__all"},
         "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
-        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' ', probe_id)) AS __text FROM castdb.probe_metadata WHERE vendor = 'NTP' ORDER BY 2",
+        "definition": "SELECT pm.uuid::text AS __value, COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS __text FROM castdb.probe_metadata pm WHERE pm.vendor = 'NTP' ORDER BY 2",
         "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "ntp_probe",
         "options": [],
-        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' ', probe_id)) AS __text FROM castdb.probe_metadata WHERE vendor = 'NTP' ORDER BY 2",
+        "query": "SELECT pm.uuid::text AS __value, COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS __text FROM castdb.probe_metadata pm WHERE pm.vendor = 'NTP' ORDER BY 2",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -134,7 +166,8 @@
   "time": {"from": "now-6h", "to": "now"},
   "timepicker": {},
   "timezone": "",
-  "title": "NTP probes",
+  "description": "NTP reference path: measurements are relative to OpenSAMPL\u2019s configured default reference (UNKNOWN type) unless you add GNSS-backed probes; timing vs GNSS is not implied for these series.",
+  "title": "NTP probes (NTP server reference path)",
   "uid": "ntp-opensampl",
   "version": 1,
   "weekStart": ""

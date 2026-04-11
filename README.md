@@ -26,10 +26,15 @@ The name OpenSAMPL stands for **O**pen **S**ynchronization **A**nalytics and **M
 with the goal of this project being to provide a comprehensive and open-source solution for clock data management and analysis. 
 Visualizations are provided via [grafana](https://grafana.com/), and the data is stored in a [TimescaleDB](https://www.timescale.com/) database, which is a time-series database built on PostgreSQL.
 
+**NTP clock probes** are supported end-to-end: YAML-driven vendor scaffolding (`opensampl create`), JSON snapshots, `opensampl load ntp`, and `opensampl-collect ntp` (local chrony/ntpq-style chain or remote UDP via optional `ntplib`). NTP observations use the same metric/reference tables as other vendors; **“Reference”** in Grafana means the OpenSAMPL reference dimension for SQL joins, **not** GNSS ground truth for NTP-only demos.
+
+**Database bootstrap**: first-time setup should run **`opensampl init`**, which creates schema and seeds lookup tables (`reference_type`, `metric_type`, `reference`, `defaults`) plus PostgreSQL helpers expected by the load path (see `opensampl/db/bootstrap.py`). Skipping init leads to obscure failures on first load.
+
+**Documentation**: [published docs](https://ornl.github.io/OpenSAMPL/) — start with *Guides*. For NTP specifically, see *NTP vendor design* and *NTP extension (walkthrough)* (generator, geolocation at ingest, bootstrap, Grafana query notes).
 
 ### (**O**pen **S**ynchronization **A**nalytics and **M**onitoring **PL**atform)
 
-python tools for adding clock data to a timescale db. 
+Python tools for adding clock data to a TimescaleDB-backed database.
 
 ## CLI TOOL
 
@@ -39,6 +44,7 @@ python tools for adding clock data to a timescale db.
 2. Pip install the latest version of opensampl: 
 ```bash
 pip install opensampl
+# Remote NTP collection also needs extras, e.g. pip install 'opensampl[collect]'
 ```
 
 ### Development Setup
@@ -130,21 +136,23 @@ Display current environment configuration:
 
 ```bash
 # Show all variables
-poetry run opensampl config show
+uv run opensampl config show
 
 # Show with descriptions
-poetry run opensampl config show --explain
+uv run opensampl config show --explain
 
 # Show specific variable
-poetry run opensampl config show --var DATABASE_URL
+uv run opensampl config show --var DATABASE_URL
 ```
+
+Configuration resolution: explicit `--env-file`, then `OPENSAMPL_ENV_FILE`, then `python-dotenv`’s search for `.env`. **Process environment variables override values from the env file** (pydantic-settings precedence).
 
 ### Set Configuration
 
 Update environment variables:
 
 ```bash
-poetry run opensampl config set VARIABLE_NAME value
+uv run opensampl config set VARIABLE_NAME value
 ```
 
 ## File Format Support

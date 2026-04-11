@@ -89,7 +89,8 @@ def init():
     """
     Initialize the database.
 
-    Creates all tables as defined in the opensampl.db.orm file.
+    Creates all tables as defined in the opensampl.db.orm file, then idempotently seeds lookup tables
+    (reference_type, reference, metric_type, defaults) from REF_TYPES and METRICS.
     This is not required if you are using `opensampl-server`, as that is done as part of that initialization of the db.
     """
     logger.debug("Initializing database")

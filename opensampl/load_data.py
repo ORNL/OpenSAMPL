@@ -9,7 +9,9 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from opensampl.config.base import BaseConfig
+from opensampl.db.bootstrap import seed_lookup_tables
 from opensampl.db.orm import Base, ProbeData
+from opensampl.load.ntp_geolocation import attach_ntp_location
 from opensampl.load.routing import route
 from opensampl.load.table_factory import TableFactory
 from opensampl.metrics import MetricType
@@ -125,9 +127,10 @@ def load_time_data(
             strict=strict,
             session=session,
         )
+        probe = data_definition.probe  # ty: ignore[possibly-unbound-attribute]
         probe_readable = (
-            data_definition.probe.name  # ty: ignore[possibly-unbound-attribute]
-            or f"{data_definition.probe.ip_address} ({data_definition.probe.probe_id})"  # ty: ignore[possibly-unbound-attribute]
+            probe.name
+            or f"{probe.ip_address} ({probe.probe_id})"  # ty: ignore[possibly-unbound-attribute]
         )
 
         if any(x is None for x in [data_definition.probe, data_definition.metric, data_definition.reference]):
@@ -197,6 +200,9 @@ def load_probe_metadata(
     try:
         pm_factory = TableFactory(name="probe_metadata", session=session)
 
+        if vendor.name == "NTP":
+            attach_ntp_location(session, probe_key, data)
+
         pm_cols = {col.name for col in pm_factory.inspector.columns}
         probe_info = {k: data.pop(k) for k in list(data.keys()) if k in pm_cols}
         probe_info.update({"probe_id": probe_key.probe_id, "ip_address": probe_key.ip_address, "vendor": vendor.name})
@@ -227,6 +233,8 @@ def create_new_tables(*, _config: BaseConfig, create_schema: bool = True, sessio
             session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {Base.metadata.schema}"))
             session.commit()
         Base.metadata.create_all(session.bind)
+        seed_lookup_tables(session)
+        session.commit()
     except Exception as e:
         session.rollback()
         logger.error(f"Error writing to table: {e}")

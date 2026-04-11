@@ -47,14 +47,33 @@ class TestCLIConfig:
             assert config.ROUTE_TO_BACKEND is True
 
     @patch('opensampl.cli.find_dotenv')
-    def test_cli_config_auto_find_env_file(self, mock_find_dotenv, tmp_path):
-        """Test CLIConfig auto-finding .env file."""
+    def test_cli_config_auto_find_env_file(self, mock_find_dotenv, tmp_path, monkeypatch):
+        """Test CLIConfig auto-finding .env file when env vars do not override.
+
+        pydantic-settings gives precedence to process environment variables over
+        values loaded from the env file. Clear DATABASE_URL so the test asserts
+        .env resolution in isolation from the developer machine.
+        """
+        monkeypatch.delenv("DATABASE_URL", raising=False)
+        monkeypatch.delenv("OPENSAMPL_ENV_FILE", raising=False)
         env_file = tmp_path / ".env"
         env_file.write_text("DATABASE_URL=postgresql://auto:5432/autodb")
         mock_find_dotenv.return_value = str(env_file)
 
         config = load_config()
         assert config.DATABASE_URL == "postgresql://auto:5432/autodb"
+
+    @patch('opensampl.cli.find_dotenv')
+    def test_cli_config_database_url_env_overrides_auto_found_dotenv(self, mock_find_dotenv, tmp_path, monkeypatch):
+        """Process DATABASE_URL overrides the same key in an auto-found .env file."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("DATABASE_URL=postgresql://from-dotenv:5432/db")
+        mock_find_dotenv.return_value = str(env_file)
+        monkeypatch.delenv("OPENSAMPL_ENV_FILE", raising=False)
+        monkeypatch.setenv("DATABASE_URL", "postgresql://from-env:5432/db")
+
+        config = load_config()
+        assert config.DATABASE_URL == "postgresql://from-env:5432/db"
 
     def test_cli_config_validation(self):
         """Test CLIConfig validation."""
