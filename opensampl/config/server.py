@@ -35,6 +35,8 @@ class ServerConfig(BaseConfig):
 
     COMPOSE_FILE: str = Field(default="", description="Fully resolved path to the Docker Compose file.")
 
+    OVERRIDE_FILE: str | None = Field(defualt=None, description="Override for the compose file")
+
     DOCKER_ENV_FILE: str = Field(default="", description="Fully resolved path to the Docker .env file.")
 
     docker_env_values: dict[str, Any] = Field(default_factory=dict, init=False)
@@ -67,6 +69,14 @@ class ServerConfig(BaseConfig):
             return get_resolved_resource_path(opensampl.server, "docker-compose.yaml")
         return str(Path(v).expanduser().resolve())
 
+    @field_validator("OVERRIDE_FILE", mode="before")
+    @classmethod
+    def resolve_override_file(cls, v: Any) -> str:
+        """Resolve the provided compose file for docker to use, or default to the docker-compose.yaml provided"""
+        if v:
+            return str(Path(v).expanduser().resolve())
+        return v
+
     @field_validator("DOCKER_ENV_FILE", mode="before")
     @classmethod
     def resolve_docker_env_file(cls, v: Any) -> str:
@@ -89,6 +99,8 @@ class ServerConfig(BaseConfig):
         compose_command = self.get_compose_command()
         command = shlex.split(compose_command)
         command.extend(["--env-file", self.DOCKER_ENV_FILE, "-f", self.COMPOSE_FILE])
+        if self.OVERRIDE_FILE:
+            command.extend(["-f", self.OVERRIDE_FILE])
         return command
 
     def set_by_name(self, name: str, value: Any):
