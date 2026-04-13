@@ -64,3 +64,60 @@ class METRICS:
     )
 
     # --- CUSTOM METRICS ---      !! Do not remove line, used as reference when inserting metric
+    NTP_DELAY = MetricType(
+        name="NTP Delay",
+        description="Round-trip delay (RTT) to the NTP server or observed path delay in seconds",
+        unit="s",
+        value_type=float,
+    )
+    NTP_JITTER = MetricType(
+        name="NTP Jitter",
+        description=(
+            "Jitter or offset variation for NTP in seconds (true value from chrony/ntpq when available; "
+            "remote single-packet collection may use a delay/dispersion bound estimate)"
+        ),
+        unit="s",
+        value_type=float,
+    )
+    NTP_STRATUM = MetricType(
+        name="NTP Stratum",
+        description="NTP stratum level (distance from reference clock)",
+        unit="level",
+        value_type=float,
+    )
+    NTP_REACHABILITY = MetricType(
+        name="NTP Reachability",
+        description="NTP reachability register (0-255) as a scalar for plotting",
+        unit="count",
+        value_type=float,
+    )
+    NTP_DISPERSION = MetricType(
+        name="NTP Dispersion",
+        description="Combined error budget / dispersion in seconds",
+        unit="s",
+        value_type=float,
+    )
+    NTP_ROOT_DELAY = MetricType(
+        name="NTP Root Delay",
+        description="Root delay from NTP packet or local estimate in seconds",
+        unit="s",
+        value_type=float,
+    )
+    NTP_ROOT_DISPERSION = MetricType(
+        name="NTP Root Dispersion",
+        description="Root dispersion from NTP packet or local estimate in seconds",
+        unit="s",
+        value_type=float,
+    )
+    NTP_POLL_INTERVAL = MetricType(
+        name="NTP Poll Interval",
+        description="Poll interval in seconds",
+        unit="s",
+        value_type=float,
+    )
+    NTP_SYNC_HEALTH = MetricType(
+        name="NTP Sync Health",
+        description="1.0 if synchronized/healthy, 0.0 otherwise (probe-defined)",
+        unit="ratio",
+        value_type=float,
+    )
