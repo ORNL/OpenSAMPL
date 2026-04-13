@@ -37,6 +37,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
+## [Unreleased] - YYYY-MM-DD
+### Added
+- 🔥 Moved alembic migration code into openSAMPL along with Docker image information
+- 🔥 Moved backend api code into openSAMPL along with Docker image information
+- 🔥 Docker-compose for developers which installs openSAMPL as editable on backend image
+
+### Fixed
+- 🩹 Bug which caused random data duration to always be 1 hour
+
 ## [1.1.5] - 2025-09-22
 ### Fixed
 - 🩹 More durable timestamp extrapolation in time data insertion
