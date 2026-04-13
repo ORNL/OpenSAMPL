@@ -102,8 +102,11 @@ dev = [
 [tool.hatch.build.targets.sdist]
 include = [
     "opensampl/server/docker-compose.yaml",
+    "opensampl/server/docker-compose.dev.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
+    "opensampl/server/backend/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
@@ -111,8 +114,11 @@ exclude = [".env"]
 [tool.hatch.build.targets.wheel]
 include = [
     "opensampl/server/docker-compose.yaml",
+    "opensampl/server/docker-compose.dev.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
+    "opensampl/server/backend/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
