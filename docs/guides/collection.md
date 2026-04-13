@@ -8,6 +8,7 @@ The collect API enables automated collection of measurement data from network-co
 
 - **Microchip TWST Modems** (ATS6502 series): Collect offset and EBNO tracking values along with contextual information
 - **Microchip TimeProvider® 4100** (TP4100): Collect timing performance metrics from various input channels via web interface
+- **NTP** (`opensampl-collect ntp`): Write JSON snapshots for the `NTP` vendor—local host client state (chrony/ntpq/timedatectl chain) or remote UDP queries (install with `pip install 'opensampl[collect]'` for `ntplib`). See [NTP vendor design](ntp_vendor_design.md).
 
 ## CLI Usage
 

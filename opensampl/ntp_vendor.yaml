@@ -1,0 +1,42 @@
+name: NTP
+parser_class: NtpProbe
+parser_module: ntp
+metadata_orm: NtpMetadata
+metadata_table: ntp_metadata
+metadata_fields:
+  - name: mode
+    type: Text
+  - name: probe_name
+    type: Text
+  - name: target_host
+    type: Text
+  - name: target_port
+    type: Integer
+  - name: sync_status
+    type: Text
+  - name: leap_status
+    type: Text
+  - name: stratum
+    type: Integer
+  - name: reachability
+    type: Integer
+  - name: offset_last_s
+    type: Float
+  - name: delay_s
+    type: Float
+  - name: jitter_s
+    type: Float
+  - name: dispersion_s
+    type: Float
+  - name: root_delay_s
+    type: Float
+  - name: root_dispersion_s
+    type: Float
+  - name: poll_interval_s
+    type: Float
+  - name: reference_id
+    type: Text
+  - name: observation_source
+    type: Text
+  - name: collection_host
+    type: Text

@@ -1118,6 +1118,15 @@ wheels = [
 ]
 
 [[package]]
+name = "ntplib"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b4/14/6b018fb602602d9f6cc7485cbad7c1be3a85d25cea18c233854f05284aed/ntplib-0.4.0.tar.gz", hash = "sha256:899d8fb5f8c2555213aea95efca02934c7343df6ace9d7628a5176b176906267", size = 7135, upload-time = "2021-05-28T19:08:54.394Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/8c/41da70f6feaca807357206a376b6de2001b439c7f78f53473a914a6dbd1e/ntplib-0.4.0-py2.py3-none-any.whl", hash = "sha256:8d27375329ed7ff38755f7b6d4658b28edc147cadf40338a63a0da8133469d60", size = 6849, upload-time = "2021-05-28T19:08:53.323Z" },
+]
+
+[[package]]
 name = "numpy"
 version = "1.26.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1178,7 +1187,7 @@ wheels = [
 
 [[package]]
 name = "opensampl"
-version = "1.1.0"
+version = "1.1.5"
 source = { editable = "." }
 dependencies = [
     { name = "allantools" },
@@ -1200,11 +1209,13 @@ dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "sqlalchemy" },
+    { name = "tabulate" },
     { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
 collect = [
+    { name = "ntplib" },
     { name = "telnetlib3" },
 ]
 
@@ -1231,6 +1242,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "libcst" },
     { name = "loguru", specifier = ">=0.7.0,<0.8" },
+    { name = "ntplib", marker = "extra == 'collect'", specifier = ">=0.4.0,<0.5" },
     { name = "numpy", specifier = ">=1.26.4,<2" },
     { name = "pandas", specifier = ">=2.2.1,<3" },
     { name = "psycopg2-binary", specifier = ">=2.9.0,<3" },
@@ -1242,6 +1254,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.0,<7" },
     { name = "requests", specifier = ">=2.31.0,<3" },
     { name = "sqlalchemy", specifier = ">=2.0.39,<3" },
+    { name = "tabulate" },
     { name = "telnetlib3", marker = "extra == 'collect'", specifier = "==2.0.4" },
     { name = "tqdm", specifier = ">=4.66.2,<5" },
 ]

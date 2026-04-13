@@ -1,0 +1,141 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+      "fieldConfig": {
+        "defaults": {"color": {"mode": "palette-classic"}, "unit": "ns"},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "single", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) * 1e9 AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'Phase Offset'\n  AND pm.uuid IN (${ntp_probe:sqlstring})\nGROUP BY 1, 2\nORDER BY 1\n",
+          "refId": "A"
+        }
+      ],
+      "title": "NTP phase offset (Phase Offset metric)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+      "fieldConfig": {
+        "defaults": {"color": {"mode": "palette-classic"}, "unit": "ns"},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "single", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) * 1e9 AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Jitter'\n  AND pm.uuid IN (${ntp_probe:sqlstring})\nGROUP BY 1, 2\nORDER BY 1\n",
+          "refId": "A"
+        }
+      ],
+      "title": "NTP jitter",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+      "fieldConfig": {
+        "defaults": {"color": {"mode": "palette-classic"}, "unit": "none"},
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 9},
+      "id": 3,
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "single", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Stratum'\n  AND pm.uuid IN (${ntp_probe:sqlstring})\nGROUP BY 1, 2\nORDER BY 1\n",
+          "refId": "A"
+        }
+      ],
+      "title": "NTP stratum",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+      "fieldConfig": {
+        "defaults": {"color": {"mode": "palette-classic"}, "unit": "percentunit"},
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 9},
+      "id": 4,
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "single", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time_bucket('1 minute'::interval, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' ', pm.probe_id)) AS metric,\n  AVG((pd.value)::float) AS value\nFROM castdb.probe_data pd\nJOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nJOIN castdb.metric_type mt ON pd.metric_type_uuid = mt.uuid\nWHERE $__timeFilter(pd.time)\n  AND pm.vendor = 'NTP'\n  AND mt.name = 'NTP Sync Health'\n  AND pm.uuid IN (${ntp_probe:sqlstring})\nGROUP BY 1, 2\nORDER BY 1\n",
+          "refId": "A"
+        }
+      ],
+      "title": "NTP sync health (1=healthy)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["ntp", "opensampl"],
+  "templating": {
+    "list": [
+      {
+        "current": {"selected": true, "text": "All", "value": "$__all"},
+        "datasource": {"type": "grafana-postgresql-datasource", "uid": "castdb-datasource"},
+        "definition": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' ', probe_id)) AS __text FROM castdb.probe_metadata WHERE vendor = 'NTP' ORDER BY 2",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "ntp_probe",
+        "options": [],
+        "query": "SELECT uuid AS __value, COALESCE(name, CONCAT(ip_address, ' ', probe_id)) AS __text FROM castdb.probe_metadata WHERE vendor = 'NTP' ORDER BY 2",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "NTP probes",
+  "uid": "ntp-opensampl",
+  "version": 1,
+  "weekStart": ""
+}

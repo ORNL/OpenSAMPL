@@ -76,7 +76,7 @@ backend = [
     "uvicorn",
     "prometheus-client",
 ]
-collect = ["telnetlib3==2.0.4"]
+collect = ["telnetlib3==2.0.4", "ntplib>=0.4.0,<0.5"]
 
 [project.scripts]
 opensampl = "opensampl.cli:cli"
@@ -136,7 +136,23 @@ ignore = ["D203", "D212", "D400", "D415", "ANN401", "S101", "PLR2004", "COM812",
 
 [tool.ruff.lint.per-file-ignores]
 "opensampl/vendors/**/*.py" = ['S311'] # we want to ignore the errors about random
+<<<<<<< HEAD
 "opensampl/server/backend/main.py" = ['B008', 'ARG001'] #ignore complaints about calling functions in args
+=======
+"opensampl/vendors/ntp_parsing.py" = [
+    "C901",
+    "PLR0915",
+    "S603",
+    "PLW2901",
+    "D103",
+    "UP007",
+    "SIM105",
+    "FURB167",
+    "PIE810",
+]
+"opensampl/vendors/ntp_remote.py" = ["S603"]
+
+>>>>>>> f133862 (initial commit of ntp probes)
 [tool.ruff.lint.pylint]
 max-args = 10
 

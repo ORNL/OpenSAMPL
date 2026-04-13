@@ -1,6 +1,8 @@
 """Consolidated CLI entry point for opensampl.collect tools."""
 
 import sys
+import time
+from pathlib import Path
 from typing import Literal, Optional
 
 import click
@@ -8,6 +10,9 @@ from loguru import logger
 
 from opensampl.collect.microchip.tp4100.collect_4100 import main as collect_tp4100_files
 from opensampl.collect.microchip.twst.generate_twst_files import collect_files as collect_twst_files
+from opensampl.collect.ntp_snapshot import write_snapshot
+from opensampl.vendors.ntp_parsing import collect_local_snapshot
+from opensampl.vendors.ntp_remote import query_ntp_server
 
 
 @click.group()
@@ -114,6 +119,85 @@ def tp4100(
         method=method,
         save_full_status=save_full_status,
     )
+
+
+@cli.group()
+def ntp():
+    """Collect NTP snapshots (JSON) for ``opensampl load ntp``."""
+    pass
+
+
+@ntp.command("local")
+@click.option("--probe-id", required=True, help="Stable probe_id slug (e.g. local-chrony)")
+@click.option("--probe-ip", default="127.0.0.1", show_default=True, help="ip_address for ProbeKey")
+@click.option("--probe-name", default="local NTP", show_default=True)
+@click.option(
+    "--output-dir",
+    default="./ntp-snapshots",
+    type=click.Path(path_type=Path, file_okay=False),
+    help="Directory for JSON snapshot files",
+)
+@click.option(
+    "--interval",
+    default=0.0,
+    type=float,
+    help="Seconds between samples; 0 = single sample and exit",
+)
+@click.option("--count", default=1, type=int, help="Samples to collect when interval > 0")
+def ntp_local(probe_id: str, probe_ip: str, probe_name: str, output_dir: Path, interval: float, count: int):
+    """Run local chrony/ntpq/timedatectl chain and write NtpProbe JSON snapshots."""
+    import socket
+
+    chost = socket.gethostname()
+    out = output_dir
+
+    def one() -> None:
+        doc = collect_local_snapshot(
+            probe_id=probe_id,
+            probe_ip=probe_ip,
+            probe_name=probe_name,
+            collection_host=chost,
+        )
+        path = write_snapshot(doc, out)
+        click.echo(str(path))
+
+    if interval <= 0:
+        one()
+        return
+
+    for _ in range(max(count, 1)):
+        one()
+        time.sleep(interval)
+
+
+@ntp.command("remote")
+@click.option("--host", "-h", required=True, help="NTP server hostname or IP")
+@click.option("--port", "-p", default=123, type=int, show_default=True, help="UDP port (use high ports for lab mocks)")
+@click.option(
+    "--output-dir",
+    default="./ntp-snapshots",
+    type=click.Path(path_type=Path, file_okay=False),
+    help="Directory for JSON snapshot files",
+)
+@click.option("--timeout", default=3.0, type=float, help="UDP request timeout (seconds)")
+@click.option("--interval", default=0.0, type=float, help="Seconds between samples; 0 = once")
+@click.option("--count", default=1, type=int, help="Samples when interval > 0")
+def ntp_remote(host: str, port: int, output_dir: Path, timeout: float, interval: float, count: int):
+    """Query a remote NTP server with ntplib and write JSON snapshots."""
+    out = output_dir
+
+    def one() -> None:
+        doc = query_ntp_server(host, port=port, timeout=timeout)
+        path = write_snapshot(doc, out)
+        click.echo(str(path))
+
+    if interval <= 0:
+        one()
+        return
+
+    for _ in range(max(count, 1)):
+        one()
+        time.sleep(interval)
 
 
 if __name__ == "__main__":
