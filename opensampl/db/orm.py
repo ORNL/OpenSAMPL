@@ -181,6 +181,7 @@ class ProbeMetadata(Base):
     adva_metadata = relationship("AdvaMetadata", back_populates="probe", uselist=False)
     microchip_twst_metadata = relationship("MicrochipTWSTMetadata", back_populates="probe", uselist=False)
     microchip_tp4100_metadata = relationship("MicrochipTP4100Metadata", back_populates="probe", uselist=False)
+    ntp_metadata = relationship("NtpMetadata", back_populates="probe", uselist=False)
 
     # --- CUSTOM PROBE METADATA RELATIONSHIP ---
 
@@ -436,7 +437,7 @@ class MicrochipTP4100Metadata(Base):
 # --- CUSTOM TABLES ---      !! Do not remove line, used as reference when inserting metadata table
 class NtpMetadata2(Base):
     __tablename__ = "ntp_metadata2"
-    
+
     probe_uuid = Column(String, ForeignKey("probe_metadata.uuid"), primary_key=True)
     mode = Column(Text)
     probe_name = Column(Text)
@@ -454,7 +455,7 @@ class NtpMetadata2(Base):
     root_dispersion_s = Column(Float)
     poll_interval_s = Column(Float)
     reference_id = Column(Text)
-    observation_source = Column(Text)
+    observation_sources = Column(JSONB)
     collection_host = Column(Text)
     additional_metadata = Column(JSONB)
     probe = relationship("ProbeMetadata", back_populates="ntp_metadata2")
