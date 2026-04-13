@@ -4,30 +4,6 @@ All notable changes to this project will be documented in this file in [Keep a C
 This project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
-
-## [1.2.0] - Unreleased
-### Added
-- 🔥 NTP vendor probe family (`NtpProbe`) with JSON snapshot format, filename convention, and `ntp_metadata` ORM table
-- 🔥 `opensampl-collect ntp` entry point: local chrony/ntpq/timedatectl-style collection and remote UDP queries via `ntplib`
-- 🔥 NTP-focused metrics in `METRICS` (phase offset, delay, jitter, stratum, reachability, dispersion, root delay/dispersion, poll interval, sync health)
-- 🔥 Idempotent database bootstrap after schema creation: seed `reference_type`, `metric_type`, default `reference` and `defaults` rows from `REF_TYPES` / `METRICS`; `public.get_default_uuid_for()` for `ProbeData` defaults; `castdb.campus_locations` view for geospatial dashboards backed by `locations.geom`
-- 🔥 Grafana: NTP probes dashboard (`ntp-opensampl`), public geospatial timing dashboard updates, datasource/dashboard provisioning alignment
-- 🔥 Grafana table panels joining stored `probe_metadata`, `ntp_metadata`, `locations`, and `reference` / `reference_type` for probe reference & source context (no runtime geolocation in panels)
-- 🔥 Remote NTP snapshot identity overrides (`probe_id`, `probe_ip`, `probe_name`, optional lab `geolocation` hints) for stable ingest keys
-
-### Changed
-- ⚡ Grafana timing panel titles and dashboard copy to **reference-safe** wording (NTP / configured reference vs implying GNSS truth where not applicable); extensible for future GNSS-backed probes
-- ⚡ `METRICS.NTP_JITTER` description to distinguish measured jitter (local parsers) from conservative remote estimates
-- ⚡ Remote `query_ntp_server`: emit `jitter_s` for time series using a documented delay/root-dispersion bound when RFC peer jitter is unavailable from a single packet
-- ⚡ `load_probe_metadata`: NTP path attaches stored `locations` rows for dashboard geospatial joins (one-time at metadata load; not repeated in Grafana queries)
-
-### Fixed
-- 🩹 `opensampl init` / `create_new_tables` leaving lookup tables empty (load path now seeds baseline rows and defaults)
-- 🩹 Grafana PostgreSQL variables and panel filters: text-safe UUID handling for `varchar` `probe_metadata.uuid` (avoid `varchar = uuid` / empty `IN ()` failures)
-- 🩹 Public geospatial dashboard map layer using the provisioned `castdb-datasource` UID consistently
-
----
-
 <!--
 
 ## [Unreleased] - YYYY-MM-DD
@@ -60,13 +36,29 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
-## [Unreleased] - YYYY-MM-DD
+## [1.2.0] - Unreleased
 ### Added
 - 🔥 Moved alembic migration code into openSAMPL along with Docker image information
 - 🔥 Moved backend api code into openSAMPL along with Docker image information
 - 🔥 Docker-compose for developers which installs openSAMPL as editable on backend image
+- 🔥 NTP vendor probe family (`NtpProbe`) with JSON snapshot format, filename convention, and `ntp_metadata` ORM table
+- 🔥 `opensampl-collect ntp` entry point: local chrony/ntpq/timedatectl-style collection and remote UDP queries via `ntplib`
+- 🔥 NTP-focused metrics in `METRICS` (phase offset, delay, jitter, stratum, reachability, dispersion, root delay/dispersion, poll interval, sync health)
+- 🔥 Idempotent database bootstrap after schema creation: seed `reference_type`, `metric_type`, default `reference` and `defaults` rows from `REF_TYPES` / `METRICS`; `public.get_default_uuid_for()` for `ProbeData` defaults; `castdb.campus_locations` view for geospatial dashboards backed by `locations.geom`
+- 🔥 Grafana: NTP probes dashboard (`ntp-opensampl`), public geospatial timing dashboard updates, datasource/dashboard provisioning alignment
+- 🔥 Grafana table panels joining stored `probe_metadata`, `ntp_metadata`, `locations`, and `reference` / `reference_type` for probe reference & source context (no runtime geolocation in panels)
+- 🔥 Remote NTP snapshot identity overrides (`probe_id`, `probe_ip`, `probe_name`, optional lab `geolocation` hints) for stable ingest keys
+
+### Changed
+- ⚡ Grafana timing panel titles and dashboard copy to **reference-safe** wording (NTP / configured reference vs implying GNSS truth where not applicable); extensible for future GNSS-backed probes
+- ⚡ `METRICS.NTP_JITTER` description to distinguish measured jitter (local parsers) from conservative remote estimates
+- ⚡ Remote `query_ntp_server`: emit `jitter_s` for time series using a documented delay/root-dispersion bound when RFC peer jitter is unavailable from a single packet
+- ⚡ `load_probe_metadata`: NTP path attaches stored `locations` rows for dashboard geospatial joins (one-time at metadata load; not repeated in Grafana queries)
 
 ### Fixed
+- 🩹 `opensampl init` / `create_new_tables` leaving lookup tables empty (load path now seeds baseline rows and defaults)
+- 🩹 Grafana PostgreSQL variables and panel filters: text-safe UUID handling for `varchar` `probe_metadata.uuid` (avoid `varchar = uuid` / empty `IN ()` failures)
+- 🩹 Public geospatial dashboard map layer using the provisioned `castdb-datasource` UID consistently
 - 🩹 Bug which caused random data duration to always be 1 hour
 
 ## [1.1.5] - 2025-09-22
