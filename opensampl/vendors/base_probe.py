@@ -461,16 +461,16 @@ class BaseProbe(ABC):
         return self.probe_key.ip_address
 
     @abstractmethod
-    def process_time_data(self) -> pd.DataFrame:
+    def process_time_data(self) -> None:
         """
-        Process time series data.
+        Parse and load time series data from self.input_file.
 
-        Returns
-        -------
-            pd.DataFrame: DataFrame with columns:
+        Use either send_time_data (which prefills METRICS.PHASE_OFFSET)
+        or send_data and provide alternative METRICS type.
+        Both require a df as follows:
+            pd.DataFrame with columns:
                 - time (datetime64[ns]): timestamp for each measurement
                 - value (float64): measured value at each timestamp
-
         """
 
     @dualmethod
