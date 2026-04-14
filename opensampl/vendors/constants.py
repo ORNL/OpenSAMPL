@@ -71,12 +71,12 @@ class VENDORS:
     )
 
     # --- CUSTOM VENDORS ---      !! Do not remove line, used as reference when inserting vendor
-    NTP2 = VendorType(
-        name='NTP2',
-        parser_class='NtpProbe2',
-        parser_module='ntp2',
-        metadata_table='ntp_metadata2',
-        metadata_orm='NtpMetadata2'
+    NTP = VendorType(
+        name='NTP',
+        parser_class='NtpProbe',
+        parser_module='ntp',
+        metadata_table='ntp_metadata',
+        metadata_orm='NtpMetadata'
     )
 
 

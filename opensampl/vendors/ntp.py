@@ -1,4 +1,4 @@
-"""Probe implementation for NTP2 vendor"""
+"""Probe implementation for NTP vendor"""
 import socket
 
 import pandas as pd
@@ -449,10 +449,10 @@ def collect_id_factory():
     except Exception:
         return 'collection-host'
 
-class NtpProbe2(BaseProbe, CollectMixin, RandomDataMixin):
-    """Probe parser for NTP2 vendor data files"""
+class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
+    """Probe parser for NTP vendor data files"""
 
-    vendor = VENDORS.NTP2
+    vendor = VENDORS.NTP
 
     class CollectConfig(CollectMixin.CollectConfig):
         """
@@ -503,7 +503,7 @@ class NtpProbe2(BaseProbe, CollectMixin, RandomDataMixin):
         )
 
     def __init__(self, input_file: str, **kwargs):
-        """Initialize NtpProbe2 from input file"""
+        """Initialize NtpProbe from input file"""
         super().__init__(input_file)
         self.collection_probe = None
 

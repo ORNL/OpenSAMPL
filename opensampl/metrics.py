@@ -62,8 +62,6 @@ class METRICS:
         unit="unknown",
         value_type=object,
     )
-
-    # --- CUSTOM METRICS ---      !! Do not remove line, used as reference when inserting metric
     NTP_DELAY = MetricType(
         name="NTP Delay",
         description="Round-trip delay (RTT) to the NTP server or observed path delay in seconds",
@@ -121,3 +119,6 @@ class METRICS:
         unit="ratio",
         value_type=float,
     )
+
+    # --- CUSTOM METRICS ---      !! Do not remove line, used as reference when inserting metric
+

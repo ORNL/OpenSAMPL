@@ -538,6 +538,7 @@ class BaseProbe(ABC):
         load_probe_metadata(vendor=cls.vendor, probe_key=probe_key, data=metadata)
         logger.debug(f"Sent metadata for probe {probe_key}")
 
+
     def send_metadata(self):
         """Send metadata to database"""
         metadata = self.process_metadata()
