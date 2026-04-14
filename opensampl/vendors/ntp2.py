@@ -10,20 +10,23 @@ from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import ProbeKey, VENDORS
 from opensampl.references import REF_TYPES, ReferenceType
 from opensampl.mixins.collect import CollectMixin
+from opensampl.mixins.random_data import RandomDataMixin
 from typing import Literal, Optional, Any, TypeVar, ClassVar
 from pydantic import model_validator, BaseModel, Field, field_serializer, ConfigDict, field_validator
 from pydanclick import from_pydantic
 import click
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from loguru import logger
 from opensampl.metrics import METRICS, MetricType
 import json
+import random
 import yaml
 import textwrap
 from io import StringIO
 import psycopg2.errors
+import numpy as np
 
 from sqlalchemy.exc import IntegrityError
 
@@ -441,9 +444,12 @@ def collect_ip_factory():
     return v
 
 def collect_id_factory():
-    return socket.gethostname() or 'collection-host'
+    try:
+        return socket.gethostname() or 'collection-host'
+    except Exception:
+        return 'collection-host'
 
-class NtpProbe2(BaseProbe, CollectMixin):
+class NtpProbe2(BaseProbe, CollectMixin, RandomDataMixin):
     """Probe parser for NTP2 vendor data files"""
 
     vendor = VENDORS.NTP2
@@ -479,6 +485,22 @@ class NtpProbe2(BaseProbe, CollectMixin):
             from_pydantic(cls.CollectConfig, rename={'ip_address': 'host', 'duration': 'count'}),
             click.pass_context,
         ]
+
+    class RandomDataConfig(RandomDataMixin.RandomDataConfig):
+        """Random NTP-like test data."""
+
+        base_value: float = Field(
+            default_factory=lambda: random.uniform(-1e-4, 1e-4),
+            description="random.uniform(-1e-4, 1e-4)",
+        )
+        noise_amplitude: float = Field(
+            default_factory=lambda: random.uniform(1e-9, 1e-7),
+            description="random.uniform(1e-9, 1e-7)",
+        )
+        drift_rate: float = Field(
+            default_factory=lambda: random.uniform(-1e-12, 1e-12),
+            description="random.uniform(-1e-12, 1e-12)",
+        )
 
     def __init__(self, input_file: str, **kwargs):
         """Initialize NtpProbe2 from input file"""
@@ -643,6 +665,73 @@ class NtpProbe2(BaseProbe, CollectMixin):
             value_df.to_csv(buffer, index=False)
 
         return buffer.getvalue()
+
+    @classmethod
+    def generate_random_data(
+            cls,
+            config: RandomDataConfig,
+            probe_key: ProbeKey,
+    ) -> ProbeKey:
+        """Generate synthetic NTP-like metrics for testing."""
+        cls._setup_random_seed(config.seed)
+        logger.info(f"Generating random NTP data for {probe_key}")
+
+        meta = {
+            "mode": "random",
+            "name": f"Random NTP {probe_key}",
+            "target_host": "",
+            "target_port": 0,
+            "sync_status": "tracking",
+            "leap_status": "no_warning",
+            "observation_sources": ["random"],
+            "additional_metadata": {"test_data": True},
+        }
+        cls._send_metadata_to_db(probe_key, meta)
+
+        total_seconds = config.duration_hours * 3600
+        num_samples = int(total_seconds / config.sample_interval)
+        times = []
+        metric_maps = {
+            'offset': {'metric': METRICS.PHASE_OFFSET,
+                    'values': []},
+            'delay_s': {'metric': METRICS.NTP_DELAY,
+                    'values': []},
+            'jitter_s': {'metric': METRICS.NTP_JITTER,
+                         'values': []},
+            'stratum': {'metric': METRICS.NTP_STRATUM,
+                        'values': []},
+            'sync_health': {'metric': METRICS.NTP_SYNC_HEALTH,
+                            'values': []},
+        }
+
+        for i in range(num_samples):
+            sample_time = config.start_time + timedelta(seconds=i * config.sample_interval)
+            times.append(sample_time)
+            time_offset = i * config.sample_interval
+            drift_component = config.drift_rate * time_offset
+            noise = float(np.random.normal(0, config.noise_amplitude))
+            offset = config.base_value + drift_component + noise
+            if random.random() < config.outlier_probability:
+                offset += float(np.random.normal(0, config.noise_amplitude * config.outlier_multiplier))
+
+            delay_s = 0.02 + abs(0.0001 * random.random())
+            jitter_s = abs(float(config.noise_amplitude * 5))
+            stratum = 2.0 + (1.0 if random.random() < 0.05 else 0.0)
+            sync_health = 1.0
+            metric_maps['offset']['values'].append(offset)
+            metric_maps['delay_s']['values'].append(delay_s)
+            metric_maps['jitter_s']['values'].append(jitter_s)
+            metric_maps['stratum']['values'].append(stratum)
+            metric_maps['sync_health']['values'].append(sync_health)
+
+        for metric in metric_maps.values():
+            cls.send_data(probe_key=probe_key,
+                          metric=metric.get('metric'),
+                          reference_type=REF_TYPES.UNKNOWN,
+                          data=pd.DataFrame({"time": times, "value": metric.get('values')}))
+
+        logger.info(f"Finished random NTP generation for {probe_key}")
+        return probe_key
 
 
 
