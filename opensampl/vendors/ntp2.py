@@ -3,13 +3,15 @@ import socket
 
 import pandas as pd
 import re
-
+import time
+import requests
+from opensampl.load_data import load_probe_metadata
 from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import ProbeKey, VENDORS
 from opensampl.references import REF_TYPES, ReferenceType
 from opensampl.mixins.collect import CollectMixin
 from typing import Literal, Optional, Any, TypeVar, ClassVar
-from pydantic import model_validator, BaseModel, Field, field_serializer, ConfigDict
+from pydantic import model_validator, BaseModel, Field, field_serializer, ConfigDict, field_validator
 from pydanclick import from_pydantic
 import click
 import shutil
@@ -21,6 +23,10 @@ import json
 import yaml
 import textwrap
 from io import StringIO
+import psycopg2.errors
+
+from sqlalchemy.exc import IntegrityError
+
 
 T = TypeVar('T')
 def _merge(a: T | None, b: T | None) -> T | None:
@@ -41,6 +47,8 @@ class NTPCollector(BaseModel):
         "sync_health": METRICS.NTP_SYNC_HEALTH,
     }
 
+    target_host: str
+
     sync_status: str = Field("unknown")
     sync_health: float | None = Field(None, json_schema_extra={'metric': True})
 
@@ -51,16 +59,15 @@ class NTPCollector(BaseModel):
     jitter_s: float | None = Field(None, json_schema_extra={'metric': True})
     reference_id: str | None = None
     observation_sources: list[str] = Field(default_factory=list)
-    collection_host: str = Field(default_factory=socket.gethostname)
+    collection_id: str
+    collection_ip: str
+    probe_id: str | None = None
 
     extras: dict = Field(default_factory=dict, serialization_alias='additional_metadata')
     model_config = ConfigDict(serialize_by_alias=True)
 
     def collect(self):
         raise NotImplementedError()
-
-    def determine_reference(self) -> tuple[ReferenceType, Optional[dict[str, Any]]]:
-        return REF_TYPES.UNKNOWN, None
 
     def export_data(self) -> list[CollectMixin.DataArtifact]:
         now = datetime.now(tz=timezone.utc)
@@ -106,6 +113,9 @@ class NTPCollector(BaseModel):
     @classmethod
     def invert_metric_map(cls):
         return {v.name: k for k, v in cls.metric_map.items()}
+
+    def determine_reference(self) -> tuple[ReferenceType, Optional[dict[str, Any]]]:
+        return REF_TYPES.PROBE, {'ip_address': self.collection_ip, 'probe_id': self.collection_id}
 
 class NTPLocalCollector(NTPCollector):
     mode: ClassVar[Literal['remote', 'local']] = 'local'
@@ -331,19 +341,12 @@ class NTPLocalCollector(NTPCollector):
 
         self.sync_health = 1.0 if self.sync_status in ("tracking", "synchronized", "synced") else 0.0
 
-    def determine_reference(self) -> tuple[ReferenceType, Optional[dict[str, Any]]]:
-        if self.reference_id:
-            reference_type = REF_TYPES.PROBE
-            compound_reference = self.reference_id
-        else:
-            reference_type = REF_TYPES.UNKNOWN
-            compound_reference = None
-        return reference_type, compound_reference
+        if self.probe_id is None:
+            self.probe_id = 'ntp-local'
 
 class NTPRemoteCollector(NTPCollector):
     mode: ClassVar[Literal['remote', 'local']] = 'remote'
 
-    target_host: str
     target_port: int
     timeout: float = 3.0
 
@@ -388,7 +391,7 @@ class NTPRemoteCollector(NTPCollector):
             logger.warning(f"NTP request to {self.target_host}:{self.target_port} failed: {e}")
             self.configure_failure(e)
             return
-
+        from pprint import pformat
         leap = int(resp.leap)
         leap_map = {0: "no_warning", 1: "add_second", 2: "del_second", 3: "alarm"}
         self.leap_status = leap_map.get(leap, str(leap))
@@ -421,6 +424,25 @@ class NTPRemoteCollector(NTPCollector):
 
         self.extras['version'] = getattr(resp, 'version', None)
 
+        if self.probe_id is None:
+            self.probe_id = f'remote:{self.target_port}'
+
+def collect_ip_factory():
+    s = None
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # doesn't actually send data
+        v = s.getsockname()[0]
+    except:
+        v = '127.0.0.1'
+    finally:
+        if s:
+            s.close()
+    return v
+
+def collect_id_factory():
+    return socket.gethostname() or 'collection-host'
+
 class NtpProbe2(BaseProbe, CollectMixin):
     """Probe parser for NTP2 vendor data files"""
 
@@ -439,6 +461,8 @@ class NtpProbe2(BaseProbe, CollectMixin):
             interval: Seconds between samples; 0 = single sample and exit
             duration: Samples to collect when interval > 0
             timeout: UDP request timeout for remote mode(seconds) default: 3.0
+            collection_ip: Override for the IP address of device collecting readings. Will attempt to resolve a local network IP using socket and fall back to '127.0.0.1'
+            collection_id: Override for the Probe ID of the device collecting readings. Will attempt to resolve using socket.gethostname and fall back to 'collection-host'
         """
         ip_address: str = '127.0.0.1'
         port: Optional[int] = None
@@ -446,56 +470,50 @@ class NtpProbe2(BaseProbe, CollectMixin):
         interval: float = 0.0
         duration: int = 1
         timeout: float = 3.0
+        collection_ip: str = Field(default_factory=collect_ip_factory)
+        collection_id: str = Field(default_factory=collect_id_factory)
 
     @classmethod
     def get_collect_cli_options(cls):
         return [
-            from_pydantic(cls.CollectConfig, rename={'ip_address': 'host'}),
+            from_pydantic(cls.CollectConfig, rename={'ip_address': 'host', 'duration': 'count'}),
             click.pass_context,
         ]
 
     def __init__(self, input_file: str, **kwargs):
         """Initialize NtpProbe2 from input file"""
         super().__init__(input_file)
-        # TODO: parse self.input_file to extract self.probe_key
-        # self.probe_key = ProbeKey(probe_id=..., ip_address=...)
+        self.collection_probe = None
 
     def process_metadata(self) -> dict:
         """
         Parse and return probe metadata from input file.
 
-        Expected metadata fields:
-		['mode',
-		 'probe_name',
-		 'target_host',
-		 'target_port',
-		 'sync_status',
-		 'leap_status',
-		 'stratum',
-		 'reachability',
-		 'offset_s',
-		 'delay_s',
-		 'jitter_s',
-		 'dispersion_s',
-		 'root_delay_s',
-		 'root_dispersion_s',
-		 'poll_interval_s',
-		 'reference_id',
-		 'observation_source',
-		 'collection_host',
-		 'additional_metadata']
-
         Returns:
             dict with metadata field names as keys
         """
-        # TODO: implement metadata parsing
-        # return {
-        #     "field_name": value,
-        #     ...
-        # }
-        raise NotImplementedError
+        if not self.metadata_parsed:
+            header_lines = []
+            with self.input_file.open() as f:
+                for line in f:
+                    if line.startswith("#"):
+                        header_lines.append(line[2:])
+                    else:
+                        break
 
-    def process_time_data(self) -> pd.DataFrame:
+            header_str = "".join(header_lines)
+            self.metadata = yaml.safe_load(header_str)
+            self.collection_probe = ProbeKey(ip_address=self.metadata.get('collection_ip'),
+                                        probe_id=self.metadata.get('collection_id'))
+            load_probe_metadata(vendor=self.vendor,
+                                probe_key=self.collection_probe,
+                                data={'reference': True, })
+            self.probe_key = ProbeKey(ip_address=self.metadata.get('target_host'), probe_id=self.metadata.get('probe_id'))
+            self.metadata_parsed = True
+
+        return self.metadata
+
+    def process_time_data(self) -> None:
         """
         Parse and load time series data from self.input_file.
 
@@ -506,16 +524,37 @@ class NtpProbe2(BaseProbe, CollectMixin):
                 - time (datetime64[ns]): timestamp for each measurement
                 - value (float64): measured value at each timestamp
 
-
         """
-        # TODO: implement time data parsing and call self.send_time_data(df, reference_type)
-        #                                       or self.send_data(df, metric_type, reference_type)
-        # df = pd.DataFrame({"time": [...], "value": [...]})
-        # self.send_time_data(df, reference_type=...)
+        raw_df = pd.read_csv(
+            self.input_file,
+            comment="#",
+        )
+        self.process_metadata()
 
-        # Ensure the format it is reading in matches that in save_to_file
-        raise NotImplementedError
-
+        reference_type = REF_TYPES.PROBE
+        grouped_dfs: dict[str, pd.DataFrame] = {str(metric): group.reset_index(drop=True) for metric, group in raw_df.groupby('metric')}
+        for metr, df in grouped_dfs.items():
+            metric = NTPCollector.metric_map.get(metr)
+            if not metric:
+                logger.warning(f"Metric {metr} is not supported for NTP. Will not ingest {len(df)} rows")
+                continue
+            try:
+                self.send_data(data=df,
+                               metric=metric,
+                               reference_type=reference_type,
+                               compound_reference=self.collection_probe.model_dump())
+            except requests.HTTPError as e:
+                resp = e.response
+                if resp is None:
+                    raise
+                status_code = resp.status_code
+                if status_code == 409:
+                    logger.info(f"{metr} against {self.collection_probe} already loaded for time frame, continuing..")
+                    continue
+                raise
+            except IntegrityError as e:
+                if isinstance(e.orig, psycopg2.errors.UniqueViolation):  # ty: ignore[unresolved-attribute]
+                    logger.info(f"{metr} against {self.collection_probe} already loaded for time frame already loaded for time frame, continuing..")
 
     @classmethod
     def collect(cls, collect_config: CollectConfig) -> CollectMixin.CollectArtifact:
@@ -533,35 +572,46 @@ class NtpProbe2(BaseProbe, CollectMixin):
 
             define logic for the save_to_file as well.
         """
-        collector = None
-        if collect_config.mode == 'local':
-            collector = NTPLocalCollector()
-        elif collect_config.mode == 'remote':
-            collector = NTPRemoteCollector(target_host=collect_config.ip_address,
-                                           target_port=collect_config.port,
-                                           timeout=collect_config.timeout)
-        if collector is None:
-            raise ValueError('Could not determine mode from collect_config')
-        collector.collect()
+        collector_overrides = collect_config.model_dump(include=['collection_ip', 'collection_id', 'probe_id'], exclude_none=True)
 
-        return collector.export()
+        def collect_once() -> CollectMixin.CollectArtifact:
+            collector = None
+            if collect_config.mode == 'local':
+                collector = NTPLocalCollector(target_host=collect_config.ip_address,
+                                              **collector_overrides)
+            elif collect_config.mode == 'remote':
+                collector = NTPRemoteCollector(target_host=collect_config.ip_address,
+                                               target_port=collect_config.port,
+                                               timeout=collect_config.timeout, **collector_overrides)
+            if collector is None:
+                raise ValueError('Could not determine mode from collect_config')
+            collector.collect()
+
+            return collector.export()
+
+        if collect_config.interval <= 0:
+            return collect_once()
+
+        artifact = None
+        for _ in range(max(collect_config.duration, 1)):
+            newer = collect_once()
+            if artifact is None:
+                artifact = newer
+            else:
+                artifact.data.extend(newer.data)
+                artifact.metadata |= newer.metadata
+
+            time.sleep(collect_config.interval)
+
+        return artifact
 
     @classmethod
     def create_file_content(cls, collected: CollectMixin.CollectArtifact) -> str:
-        single_reference = collected.single_reference
-        first_data = next(iter(collected.data or []), None)
-        if not single_reference:
-            collected.metadata['reference'] = 'varied'
-        elif first_data and first_data.compound_reference:
-            collected.metadata['reference'] = json.dumps(collected.single_reference)
-
         metric_names = NTPCollector.invert_metric_map()
         dfs = []
         for d in collected.data or []:
             df = d.value
             df['metric'] = metric_names.get(d.metric.name, d.metric.name.lower().replace(' ', '_'))
-            if not single_reference:
-                df['reference'] = json.dumps(d.compound_reference)
             dfs.append(df)
         value_df = pd.concat(dfs) if dfs else None
 

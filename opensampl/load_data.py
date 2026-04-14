@@ -125,9 +125,10 @@ def load_time_data(
             strict=strict,
             session=session,
         )
+        probe = data_definition.probe  # ty: ignore[possibly-unbound-attribute]
         probe_readable = (
-            data_definition.probe.name  # ty: ignore[possibly-unbound-attribute]
-            or f"{data_definition.probe.ip_address} ({data_definition.probe.probe_id})"  # ty: ignore[possibly-unbound-attribute]
+            probe.name
+            or f"{probe.ip_address} ({probe.probe_id})"  # ty: ignore[possibly-unbound-attribute]
         )
 
         if any(x is None for x in [data_definition.probe, data_definition.metric, data_definition.reference]):
@@ -227,6 +228,7 @@ def create_new_tables(*, _config: BaseConfig, create_schema: bool = True, sessio
             session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {Base.metadata.schema}"))
             session.commit()
         Base.metadata.create_all(session.bind)
+        session.commit()
     except Exception as e:
         session.rollback()
         logger.error(f"Error writing to table: {e}")
