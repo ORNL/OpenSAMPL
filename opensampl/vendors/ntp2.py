@@ -513,6 +513,23 @@ class NtpProbe2(BaseProbe, CollectMixin):
 
         return self.metadata
 
+    @classmethod
+    def load_metadata(cls, probe_key: ProbeKey, metadata: dict) -> None:
+        """
+        Parse and return probe metadata from input file.
+
+        Returns:
+            dict with metadata field names as keys
+        """
+        collection_probe = ProbeKey(ip_address=metadata.get('collection_ip'),
+                                    probe_id=metadata.get('collection_id'))
+        load_probe_metadata(vendor=cls.vendor,
+                            probe_key=collection_probe,
+                            data={'reference': True, })
+        load_probe_metadata(vendor=cls.vendor,
+                            probe_key=probe_key,
+                            data=metadata)
+
     def process_time_data(self) -> None:
         """
         Parse and load time series data from self.input_file.
