@@ -483,13 +483,13 @@ class BaseProbe(ABC):
         probe_key: ProbeKey | None = None,
     ) -> None:
         """Ingests data into the database"""
-        if isinstance(self, BaseProbe):
+        if isinstance(self, BaseProbe) and probe_key is None:
             probe_key = self.probe_key
 
         if probe_key is None:
             raise ValueError("send data must be called with probe_key if used as class method")
 
-        if self.chunk_size:
+        if hasattr(self, 'chunk_size') and self.chunk_size:
             for chunk_start in range(0, len(data), self.chunk_size):
                 chunk = data.iloc[chunk_start : chunk_start + self.chunk_size]
                 load_time_data(
