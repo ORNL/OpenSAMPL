@@ -43,6 +43,8 @@ class BaseConfig(BaseSettings):
         False, description="Allow insecure requests to be made to the backend", alias="INSECURE_REQUESTS"
     )
 
+    ENABLE_GEOLOCATE: bool = Field(False, description="Enable geolocate features which extract a location from ip addresses", alias="ENABLE_GEOLOCATE")
+
     @field_serializer("ARCHIVE_PATH")
     def convert_to_str(self, v: Path) -> str:
         """Convert archive path to a string for serialization"""
