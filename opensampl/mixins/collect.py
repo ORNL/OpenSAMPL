@@ -1,23 +1,29 @@
-from abc import ABC, abstractmethod
-import click
-from typing import Any, Callable, ClassVar, Optional, TypeVar, Union
+"""Tools for adding data collection functionality to probes"""
 
+import json
+from abc import ABC, abstractmethod
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable, Optional
+
+import click
 import pandas as pd
 from loguru import logger
-from pydantic import BaseModel, Field, ConfigDict
 from pydanclick import from_pydantic
-from pathlib import Path
-import json
+from pydantic import BaseModel, ConfigDict, Field
+
 from opensampl.load_data import load_probe_metadata
-from opensampl.metrics import MetricType, METRICS
-from opensampl.references import ReferenceType, REF_TYPES
+from opensampl.metrics import METRICS, MetricType
+from opensampl.references import REF_TYPES, ReferenceType
 from opensampl.vendors.constants import ProbeKey
-from datetime import datetime, timezone
 
 
 class CollectMixin(ABC):
+    """Mixin to add data collection capabilities to a probe class"""
 
     class DataArtifact(BaseModel):
+        """Model for a single metric type of collected data"""
+
         value: pd.DataFrame
         metric: MetricType = METRICS.UNKNOWN
         reference_type: ReferenceType = REF_TYPES.UNKNOWN
@@ -25,37 +31,45 @@ class CollectMixin(ABC):
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
     class CollectArtifact(BaseModel):
-        data: list['CollectMixin.DataArtifact']
+        """Model for a single probe's collected data"""
+
+        data: list["CollectMixin.DataArtifact"]
         probe_key: Optional[ProbeKey] = None
         metadata: Optional[dict] = Field(default_factory=dict)
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
         @property
         def single_reference(self):
+            """All individual data artifacts use the same reference"""
             if len(self.data) <= 1:
                 return True
             return len({json.dumps(x.compound_reference, sort_keys=True) for x in self.data or []}) == 1
 
         @property
-        def single_reference_type(self):
+        def single_reference_type(self) -> bool:
+            """All individual data artifacts use the same reference type"""
             if len(self.data) <= 1:
                 return True
             return len({x.reference_type.name for x in self.data or []}) == 1
 
     class CollectConfig(BaseModel):
         """
-        # TODO make sure one of load or output provided
+        Configuration for collecting data
+
         Attributes:
-            output_dir: When provided, will save collected data as a file to provided directory. Filename will be automatically generated as {ip_address}_{probe_id}_{vendor}_{timestamp}.txt
+            output_dir: When provided, will save collected data as a file to provided directory.
+                Filename will be automatically generated as {ip_address}_{probe_id}_{vendor}_{timestamp}.txt
             load: Whether to load collected data directly to the database
             duration: Number of seconds to collect data for
+
         """
+
         output_dir: Optional[Path] = None
         load: bool = False
         duration: int = 300
 
-        ip_address: str = '127.0.0.1'
-        probe_id: str = '1-1'
+        ip_address: str = "127.0.0.1"
+        probe_id: str = "1-1"
 
     @classmethod
     @property
@@ -67,7 +81,8 @@ class CollectMixin(ABC):
         )
 
     @classmethod
-    def get_collect_cli_options(cls):
+    def get_collect_cli_options(cls) -> list[Callable]:
+        """Return the click options/arguments for collecting probe data."""
         return [
             from_pydantic(cls.CollectConfig),
             click.pass_context,
@@ -89,7 +104,10 @@ class CollectMixin(ABC):
                 f = option(f)
             return click.command(name=cls.vendor.name.lower(), help=cls.collect_help_str)(f)
 
-        def collect_callback(ctx: click.Context, collect_config: CollectMixin.CollectConfig) -> None:
+        def collect_callback(
+            ctx: click.Context,  # noqa: ARG001
+            collect_config: CollectMixin.CollectConfig,
+        ) -> None:
             """Load probe data from file or directory."""
             try:
                 cls._collect_and_save(collect_config)
@@ -104,8 +122,7 @@ class CollectMixin(ABC):
     def _collect_and_save(cls, collect_config: CollectConfig) -> None:
         data: CollectMixin.CollectArtifact = cls.collect(collect_config)
         if data.probe_key is None:
-            data.probe_key = ProbeKey(ip_address=collect_config.ip_address,
-                                      probe_id=collect_config.probe_id,)
+            data.probe_key = ProbeKey(ip_address=collect_config.ip_address, probe_id=collect_config.probe_id)
         if collect_config.load:
             cls.load_metadata(probe_key=data.probe_key, metadata=data.metadata)
 
@@ -121,22 +138,27 @@ class CollectMixin(ABC):
             file_content = cls.create_file_content(data)
             collect_config.output_dir.mkdir(parents=True, exist_ok=True)
             now_stamp = datetime.now(tz=timezone.utc).timestamp()
-            output = collect_config.output_dir / f'{cls.vendor.parser_class}_{repr(data.probe_key)}_{now_stamp}.txt'
+            output = collect_config.output_dir / f"{cls.vendor.parser_class}_{data.probe_key!r}_{now_stamp}.txt"
             output.write_text(file_content)
 
     @classmethod
     def filter_files(cls, files: list[Path]) -> list[Path]:
         """Filter the files found in the input directory when loading this vendor's data files"""
-        return [f for f in files if f.name.startswith(f'{cls.vendor.parser_class}_') and f.stem == '.txt']
+        return [f for f in files if f.name.startswith(f"{cls.vendor.parser_class}_") and f.stem == ".txt"]
 
     @classmethod
-    def load_metadata(cls, probe_key: ProbeKey, metadata: dict):
+    def load_metadata(cls, probe_key: ProbeKey, metadata: dict) -> None:
+        """
+        Load provided metadata associated with given probe_key
+
+        Distinct from BaseProbe.parse_metadata because it is a class method without access to self.input_file
+        """
         load_probe_metadata(vendor=cls.vendor, probe_key=probe_key, data=metadata)
 
     @classmethod
     @abstractmethod
     def collect(cls, collect_config: CollectConfig) -> CollectArtifact:
-        """Using the provided collect_config, collect data and output CollectArtifact"""
+        """Collect data and output CollectArtifact using collect_config"""
         pass
 
     @classmethod
@@ -144,4 +166,3 @@ class CollectMixin(ABC):
     def create_file_content(cls, collect_artifact: CollectArtifact) -> str:
         """Given a CollectArtifact, create the str content for a file"""
         pass
-

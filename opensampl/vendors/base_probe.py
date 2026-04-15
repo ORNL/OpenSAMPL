@@ -1,29 +1,34 @@
 """Abstract probe Base which provides scaffolding for vendor specific implementation"""
 
+from __future__ import annotations
+
 import shutil
 from abc import ABC, abstractmethod
-from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, TypeVar
 
 import click
-import pandas as pd
 import psycopg2.errors
 import requests
 import requests.exceptions
 from loguru import logger
-
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from tqdm import tqdm
 
 from opensampl.load_data import load_probe_metadata, load_time_data
 from opensampl.metrics import METRICS, MetricType
-from opensampl.references import ReferenceType
-from opensampl.vendors.constants import ProbeKey, VendorType
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    import pandas as pd
+
+    from opensampl.references import ReferenceType
+    from opensampl.vendors.constants import ProbeKey, VendorType
 
 T = TypeVar("T")
 F = TypeVar("F", bound=Callable[..., Any])
@@ -66,12 +71,12 @@ class dualmethod:  # noqa: N801
 
         """
         self.func: F = func
-        self.__doc__: Optional[str] = func.__doc__
+        self.__doc__: str | None = func.__doc__
         fname = getattr(func, "__name__", None)
         self.__name__: str = fname
         self.__qualname__: str = getattr(func, "__qualname__", fname)
 
-    def __get__(self, obj: Optional[T], cls: type[T]) -> Callable[..., Any]:
+    def __get__(self, obj: T | None, cls: type[T]) -> Callable[..., Any]:
         """
         Descriptor protocol method that returns the appropriate bound method.
 
@@ -128,26 +133,27 @@ class LoadConfig(BaseModel):
     metadata: bool = False
     time_data: bool = False
     max_workers: int = 4
-    chunk_size: Optional[int] = None
+    chunk_size: int | None = None
     show_progress: bool = False
 
 
 class BaseProbe(ABC):
     """BaseProbe abstract object"""
+
     vendor: ClassVar[VendorType]
 
-
-    def __init__(self,
-                 input_file: str | Path | None = None,
-                 probe_key: ProbeKey | None = None,
-                 chunk_size: Optional[int] = None,
-                 **kwargs,
-                 ):
+    def __init__(
+        self,
+        input_file: str | Path | None = None,
+        probe_key: ProbeKey | None = None,
+        chunk_size: int | None = None,
+        **kwargs: dict,
+    ):
         """Initialize probe given input file"""
-        self.input_file: Optional[Path] = Path(input_file) if input_file else None
+        self.input_file: Path | None = Path(input_file) if input_file else None
         self.probe_key: ProbeKey = probe_key
-        self.chunk_size: Optional[int] = chunk_size
-        self.metadata: dict = dict() | kwargs
+        self.chunk_size: int | None = chunk_size
+        self.metadata: dict = {} | kwargs
 
         self.metadata_parsed: bool = False
 
@@ -225,8 +231,8 @@ class BaseProbe(ABC):
         time_data: bool,
         archive_dir: Path,
         no_archive: bool,
-        chunk_size: Optional[int] = None,
-        pbar: Optional[Union[tqdm, DummyTqdm]] = None,
+        chunk_size: int | None = None,
+        pbar: tqdm | DummyTqdm | None = None,
         **kwargs: dict,
     ) -> None:
         """Process a single file with the given options."""
@@ -473,8 +479,8 @@ class BaseProbe(ABC):
         data: pd.DataFrame,
         metric: MetricType,
         reference_type: ReferenceType,
-        compound_reference: Optional[dict[str, Any]] = None,
-        probe_key: Optional[ProbeKey] = None,
+        compound_reference: dict[str, Any] | None = None,
+        probe_key: ProbeKey | None = None,
     ) -> None:
         """Ingests data into the database"""
         if isinstance(self, BaseProbe):
@@ -503,7 +509,7 @@ class BaseProbe(ABC):
             )
 
     def send_time_data(
-        self, data: pd.DataFrame, reference_type: ReferenceType, compound_reference: Optional[dict[str, Any]] = None
+        self, data: pd.DataFrame, reference_type: ReferenceType, compound_reference: dict[str, Any] | None = None
     ):
         """
         Ingests time data into the database
@@ -525,6 +531,7 @@ class BaseProbe(ABC):
             Dict[str, Any] which is for some or all of the metadata fields for the specific vendor
 
         """
+
     @classmethod
     def _send_metadata_to_db(cls, probe_key: ProbeKey, metadata: dict) -> None:
         """Send metadata to the database."""

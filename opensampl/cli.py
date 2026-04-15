@@ -19,10 +19,9 @@ from loguru import logger
 from opensampl.config.base import BaseConfig as CLIConfig
 from opensampl.db.orm import get_table_names
 from opensampl.load_data import create_new_tables, write_to_table
-from opensampl.vendors.constants import VENDORS
-from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.mixins.collect import CollectMixin
-
+from opensampl.mixins.random_data import RandomDataMixin
+from opensampl.vendors.constants import VENDORS
 
 BANNER = r"""
 
@@ -186,9 +185,11 @@ def load():
 def random():
     """Generate and send random test data to the database"""
 
+
 @cli.group(cls=CaseInsensitiveGroup)
 def collect():
     """Collect and send data to the database"""
+
 
 for vendor in VENDORS.all():
     _vend = vendor.get_parser()

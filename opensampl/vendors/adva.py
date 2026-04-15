@@ -13,10 +13,11 @@ from loguru import logger
 from pydantic import Field
 
 from opensampl.metrics import METRICS
+from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import VENDORS, ProbeKey
-from opensampl.mixins.random_data import RandomDataMixin
+
 
 class AdvaProbe(BaseProbe, RandomDataMixin):
     """ADVA Probe Object"""

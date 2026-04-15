@@ -1,6 +1,8 @@
 """Functions and objects for managing openSAMPL Metric Types"""
 
-from typing import Any, Union
+from __future__ import annotations
+
+from typing import Any
 
 from pydantic import BaseModel, field_serializer, field_validator
 
@@ -26,7 +28,7 @@ class MetricType(BaseModel):
 
     @field_validator("value_type", mode="before")
     @classmethod
-    def validate_type(cls, value: Union[str, type]) -> Any:
+    def validate_type(cls, value: str | type) -> Any:
         """Ensure the value_type field is converted to a type if provided as a string"""
         if isinstance(value, str):
             value = value.strip()

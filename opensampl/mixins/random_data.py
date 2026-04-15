@@ -1,9 +1,10 @@
+"""Tools for adding random data generation functionality to probes"""
+
 import random
-import shutil
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Optional, TypeVar, Union
+from typing import Any, Callable, Optional, Union
 
 import click
 import numpy as np
@@ -14,7 +15,9 @@ from pydantic import BaseModel, ValidationInfo, field_serializer, field_validato
 
 from opensampl.vendors.constants import ProbeKey
 
+
 class RandomDataMixin:
+    """Mixin for adding random data generation functionality to probes"""
 
     class RandomDataConfig(BaseModel):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
@@ -91,8 +94,6 @@ class RandomDataMixin:
                 values.append(value)
 
             return pd.DataFrame({"time": time_points, "value": values})
-
-
 
     @classmethod
     def get_random_data_cli_options(cls) -> list[Callable]:
@@ -190,7 +191,6 @@ class RandomDataMixin:
             click.pass_context,
         ]
 
-
     @classmethod
     def get_random_data_cli_command(cls) -> Callable:
         """
@@ -240,7 +240,6 @@ class RandomDataMixin:
 
         return make_command(random_data_callback)
 
-
     @classmethod
     def _extract_random_data_config(cls, kwargs: dict) -> RandomDataConfig:
         """
@@ -282,15 +281,15 @@ class RandomDataMixin:
 
     @classmethod
     def _generate_time_series(
-            cls,
-            start_time: datetime,
-            duration_hours: float,
-            sample_interval_seconds: float,
-            base_value: float,
-            noise_amplitude: float,
-            drift_rate: float = 0.0,
-            outlier_probability: float = 0.01,
-            outlier_multiplier: float = 10.0,
+        cls,
+        start_time: datetime,
+        duration_hours: float,
+        sample_interval_seconds: float,
+        base_value: float,
+        noise_amplitude: float,
+        drift_rate: float = 0.0,
+        outlier_probability: float = 0.01,
+        outlier_multiplier: float = 10.0,
     ) -> pd.DataFrame:
         """
         Generate a realistic time series with drift, noise, and occasional outliers.
@@ -361,7 +360,6 @@ class RandomDataMixin:
 
             logger.debug(f"Loaded YAML config from {config_path}: {config_data}")
             return config_data
-
 
     @classmethod
     @abstractmethod

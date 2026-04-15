@@ -17,8 +17,8 @@ from pydantic import Field
 from sqlalchemy.exc import IntegrityError
 
 from opensampl.load_data import load_probe_metadata
-from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.metrics import METRICS
+from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import VENDORS, ProbeKey

@@ -72,7 +72,6 @@ class VENDORS:
 
     # --- CUSTOM VENDORS ---      !! Do not remove line, used as reference when inserting vendor
 
-
     # --- VENDOR FUNCTIONS ---
 
     @classmethod
