@@ -435,7 +435,6 @@ class MicrochipTP4100Metadata(Base):
 
 # --- CUSTOM TABLES ---      !! Do not remove line, used as reference when inserting metadata table
 
-
 # --- TABLE FUNCTIONS ---
 
 

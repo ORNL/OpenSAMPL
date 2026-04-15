@@ -1,6 +1,20 @@
 # Create your own Probe Type
-WARNING! This is an experimental tool, and may have breaking changes between release versions until it is marked as fully supported 
 
+1. you must have the repo cloned down to use this effectively 
+2. opensampl installed with editable (uv install -e .)
+3. call `opensampl create` to create shell and populate constants 
+   4. include `--collect-mixin` flag to prefill those functions as well
+4. add mixins, fill out functions as desired Following instructions in the comments automatically generated. 
+
+If you plan to add the new probe type to the repo via PR, you will also need to create a new migration to add the metadata table to the base db.
+
+IF you just want to use it locally, you can either include the `--update-db` flag when calling the original `opensampl create`, or do it after the fact with 
+`opensampl init`. Either case will simply ensure all models in the orm file are created in the database. 
+
+
+---
+
+<mark>Legacy documentation, may not be fully accurate. Refer to the above and any `--help` throughout for most up to date information. </mark>
 Clock types can be added to generate new ORMs for different clock types via skeleton files, which can then be further
 configured to report the type of clock data that is being added to the database. 
 

@@ -58,7 +58,8 @@ dependencies = [
     "astor",
     "libcst",
     "jinja2>=3.1.6",
-    "tabulate"
+    "tabulate",
+    "pydanclick",
 ]
 
 [project.urls]
@@ -101,8 +102,12 @@ dev = [
 [tool.hatch.build.targets.sdist]
 include = [
     "opensampl/server/docker-compose.yaml",
+    "opensampl/server/docker-compose.dev.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
+    "opensampl/server/backend/*",
+    "opensampl/create/templates/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
@@ -110,8 +115,12 @@ exclude = [".env"]
 [tool.hatch.build.targets.wheel]
 include = [
     "opensampl/server/docker-compose.yaml",
+    "opensampl/server/docker-compose.dev.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
+    "opensampl/server/backend/*",
+    "opensampl/create/templates/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
@@ -137,6 +146,7 @@ ignore = ["D203", "D212", "D400", "D415", "ANN401", "S101", "PLR2004", "COM812",
 [tool.ruff.lint.per-file-ignores]
 "opensampl/vendors/**/*.py" = ['S311'] # we want to ignore the errors about random
 "opensampl/server/backend/main.py" = ['B008', 'ARG001'] #ignore complaints about calling functions in args
+"opensampl/mixins/random_data.py" = ['S311']
 [tool.ruff.lint.pylint]
 max-args = 10
 
