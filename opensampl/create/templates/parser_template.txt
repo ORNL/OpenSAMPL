@@ -1,4 +1,4 @@
-"""Probe implementation for $name vendor"""
+"""${name} clock Parser implementation"""
 
 import pandas as pd
 
@@ -14,10 +14,10 @@ class $parser_class(BaseProbe):
     def __init__(self, input_file: str, **kwargs):
         """Initialize $parser_class from input file"""
         super().__init__(input_file)
-        # TODO: parse self.input_file to extract self.probe_key
+        # TODO: parse self.input_file contents or file name to extract ip_address and id to self.probe_key
         # self.probe_key = ProbeKey(probe_id=..., ip_address=...)
 
-    def process_metadata(self) -> dict:
+    def process_metadata(self) -> dict[str, Any]:
         """
         Parse and return probe metadata from input file.
 
@@ -25,16 +25,16 @@ class $parser_class(BaseProbe):
 $metadata_fields
 
         Returns:
-            dict with metadata field names as keys
+            dict with metadata field names as keys.
         """
-        # TODO: implement metadata parsing
+        # TODO: implement metadata parsing (see metadata fields above)
         # return {
         #     "field_name": value,
         #     ...
         # }
         raise NotImplementedError
 
-    def process_time_data(self) -> pd.DataFrame:
+    def process_time_data(self) -> None:
         """
         Parse and load time series data from self.input_file.
 
@@ -45,8 +45,21 @@ $metadata_fields
                 - time (datetime64[ns]): timestamp for each measurement
                 - value (float64): measured value at each timestamp
         """
-        # TODO: implement time data parsing and call self.send_time_data(df, reference_type)
-        #                                       or self.send_data(df, metric_type, reference_type)
+        # TODO: Parse data from self.input_file into a pandas df and call self.send_time_data(df, reference_type)
+        #                                       or self.send_data(df, metric_type, reference_type) to load it into db
+        # If self.input_file is a simple two column csv with commented out header:
+        # df = pd.read_csv(
+        #     self.input_file,
+        #     comment="#",
+        #     names=["time", "value"],
+        #     dtype={"time": "float64", "value": "float64"},
+        #     engine="python",
+        #     sep=r",\s*",
+        # )
+        # Or extract time, value pairs from the file other ways (like loading from json or other custom format).
+        #
+        # Can call send_data multiple times for different metrics.
         # df = pd.DataFrame({"time": [...], "value": [...]})
         # self.send_time_data(df, reference_type=...)
+
         raise NotImplementedError

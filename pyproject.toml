@@ -59,7 +59,7 @@ dependencies = [
     "libcst",
     "jinja2>=3.1.6",
     "tabulate",
-    "pydanclick"
+    "pydanclick",
 ]
 
 [project.urls]
@@ -107,6 +107,7 @@ include = [
     "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
     "opensampl/server/backend/*",
+    "opensampl/create/templates/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
@@ -119,6 +120,7 @@ include = [
     "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
     "opensampl/server/backend/*",
+    "opensampl/create/templates/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]

@@ -7,7 +7,7 @@ from loguru import logger
 from pydantic import BaseModel, Field, ConfigDict
 from pydanclick import from_pydantic
 from pathlib import Path
-
+import json
 from opensampl.load_data import load_probe_metadata
 from opensampl.metrics import MetricType, METRICS
 from opensampl.references import ReferenceType, REF_TYPES
@@ -16,14 +16,31 @@ from datetime import datetime, timezone
 
 
 class CollectMixin(ABC):
-    class CollectArtifact(BaseModel):
-        data: pd.DataFrame
+
+    class DataArtifact(BaseModel):
+        value: pd.DataFrame
         metric: MetricType = METRICS.UNKNOWN
         reference_type: ReferenceType = REF_TYPES.UNKNOWN
         compound_reference: Optional[dict[str, Any]] = None
+        model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    class CollectArtifact(BaseModel):
+        data: list['CollectMixin.DataArtifact']
         probe_key: Optional[ProbeKey] = None
         metadata: Optional[dict] = Field(default_factory=dict)
         model_config = ConfigDict(arbitrary_types_allowed=True)
+
+        @property
+        def single_reference(self):
+            if len(self.data) <= 1:
+                return True
+            return len({json.dumps(x.compound_reference, sort_keys=True) for x in self.data or []}) == 1
+
+        @property
+        def single_reference_type(self):
+            if len(self.data) <= 1:
+                return True
+            return len({x.reference_type.name for x in self.data or []}) == 1
 
     class CollectConfig(BaseModel):
         """
@@ -78,7 +95,7 @@ class CollectMixin(ABC):
                 cls._collect_and_save(collect_config)
 
             except Exception as e:
-                logger.error(f"Error: {e!s}")
+                logger.exception(f"Error: {e!s}")
                 raise click.Abort(f"Error: {e!s}") from e
 
         return make_command(collect_callback)
@@ -90,24 +107,31 @@ class CollectMixin(ABC):
             data.probe_key = ProbeKey(ip_address=collect_config.ip_address,
                                       probe_id=collect_config.probe_id,)
         if collect_config.load:
-            load_probe_metadata(
-                vendor=cls.vendor,
-                probe_key=data.probe_key,
-                data=data.metadata,
-            )
-            cls.send_data(
-                data=data.data,
-                metric=data.metric,
-                reference_type=data.reference_type,
-                compound_reference=data.compound_reference,
-                probe_key=data.probe_key,
-            )
+            cls.load_metadata(probe_key=data.probe_key, metadata=data.metadata)
+
+            for art in data.data:
+                cls.send_data(
+                    data=art.value,
+                    metric=art.metric,
+                    reference_type=art.reference_type,
+                    compound_reference=art.compound_reference,
+                    probe_key=data.probe_key,
+                )
         if collect_config.output_dir:
             file_content = cls.create_file_content(data)
             collect_config.output_dir.mkdir(parents=True, exist_ok=True)
             now_stamp = datetime.now(tz=timezone.utc).timestamp()
-            output = collect_config.output_dir / f'{repr(data.probe_key)}_{now_stamp}.txt'
+            output = collect_config.output_dir / f'{cls.vendor.parser_class}_{repr(data.probe_key)}_{now_stamp}.txt'
             output.write_text(file_content)
+
+    @classmethod
+    def filter_files(cls, files: list[Path]) -> list[Path]:
+        """Filter the files found in the input directory when loading this vendor's data files"""
+        return [f for f in files if f.name.startswith(f'{cls.vendor.parser_class}_') and f.stem == '.txt']
+
+    @classmethod
+    def load_metadata(cls, probe_key: ProbeKey, metadata: dict):
+        load_probe_metadata(vendor=cls.vendor, probe_key=probe_key, data=metadata)
 
     @classmethod
     @abstractmethod
@@ -117,7 +141,7 @@ class CollectMixin(ABC):
 
     @classmethod
     @abstractmethod
-    def create_file_content(cls, CollectArtifact: CollectArtifact) -> str:
+    def create_file_content(cls, collect_artifact: CollectArtifact) -> str:
         """Given a CollectArtifact, create the str content for a file"""
         pass
 
