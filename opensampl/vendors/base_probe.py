@@ -489,7 +489,7 @@ class BaseProbe(ABC):
         if probe_key is None:
             raise ValueError("send data must be called with probe_key if used as class method")
 
-        if hasattr(self, 'chunk_size') and self.chunk_size:
+        if hasattr(self, "chunk_size") and self.chunk_size:
             for chunk_start in range(0, len(data), self.chunk_size):
                 chunk = data.iloc[chunk_start : chunk_start + self.chunk_size]
                 load_time_data(
@@ -537,7 +537,6 @@ class BaseProbe(ABC):
         """Send metadata to the database."""
         load_probe_metadata(vendor=cls.vendor, probe_key=probe_key, data=metadata)
         logger.debug(f"Sent metadata for probe {probe_key}")
-
 
     def send_metadata(self):
         """Send metadata to database"""

@@ -7,7 +7,7 @@ import json
 import os
 import socket
 import urllib.request
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
@@ -16,7 +16,6 @@ from opensampl.load.table_factory import TableFactory
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
-    from opensampl.vendors.constants import ProbeKey
 
 _GEO_CACHE: dict[str, tuple[float, float, str]] = {}
 
@@ -64,6 +63,7 @@ def _lookup_geo_ipapi(ip: str) -> tuple[float, float, str] | None:
     _GEO_CACHE[ip] = out
     return out
 
+
 def create_location(session: Session, geolocate_enabled: bool, ip_address: str, geo_override: dict) -> str | None:
     """
     Set probe ``name``, ``public``, and ``location_uuid`` on NTP metadata before ``probe_metadata`` insert.
@@ -71,7 +71,6 @@ def create_location(session: Session, geolocate_enabled: bool, ip_address: str, 
     Uses ``additional_metadata.geo_override`` when present (lat/lon/label). Otherwise resolves the remote
     host, uses RFC1918/loopback defaults from env, or ip-api.com for public IPs (HTTP, no API key).
     """
-
     lat: float | None = None
     lon: float | None = None
     name: str | None = None
@@ -114,4 +113,3 @@ def create_location(session: Session, geolocate_enabled: bool, ip_address: str, 
     if loc:
         return loc.uuid
     return None
-

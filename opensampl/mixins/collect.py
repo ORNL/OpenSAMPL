@@ -58,7 +58,7 @@ class CollectMixin(ABC):
 
         Attributes:
             output_dir: When provided, will save collected data as a file to provided directory.
-                Filename will be automatically generated as {ip_address}_{probe_id}_{vendor}_{timestamp}.txt
+                Filename will be automatically generated as {vendor}_{ip_address}_{probe_id}_{vendor}_{timestamp}.txt
             load: Whether to load collected data directly to the database
             duration: Number of seconds to collect data for
 

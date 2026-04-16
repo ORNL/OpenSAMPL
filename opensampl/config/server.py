@@ -5,11 +5,12 @@ This module provides the main configuration class for openSAMPL-server, handling
 configuration validation, and settings management.
 """
 
+from __future__ import annotations
+
 import shlex
 from importlib.resources import as_file, files
 from pathlib import Path
-from types import ModuleType
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any
 
 from dotenv import dotenv_values, set_key
 from loguru import logger
@@ -20,8 +21,11 @@ import opensampl.server
 from opensampl.config.base import BaseConfig
 from opensampl.server import check_command
 
+if TYPE_CHECKING:
+    from types import ModuleType
 
-def get_resolved_resource_path(pkg: Union[str, ModuleType], relative_path: str) -> str:
+
+def get_resolved_resource_path(pkg: str | ModuleType, relative_path: str) -> str:
     """Retrieve the resolved path to a resource in a package."""
     resource = files(pkg).joinpath(relative_path)
     with as_file(resource) as real_path:
@@ -56,7 +60,7 @@ class ServerConfig(BaseConfig):
         return ignored
 
     @model_validator(mode="after")
-    def get_docker_values(self) -> "ServerConfig":
+    def get_docker_values(self) -> ServerConfig:
         """Get the values that the docker containers will use on startup"""
         self.docker_env_values = dotenv_values(self.DOCKER_ENV_FILE)
         return self

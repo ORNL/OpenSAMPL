@@ -433,7 +433,10 @@ class MicrochipTP4100Metadata(Base):
     additional_metadata = Column(JSONB)
     probe = relationship("ProbeMetadata", back_populates="microchip_tp4100_metadata")
 
+
 class NtpMetadata(Base):
+    """NTP Clock Probe specific metadata"""
+
     __tablename__ = "ntp_metadata"
 
     probe_uuid = Column(String, ForeignKey("probe_metadata.uuid"), primary_key=True)
@@ -450,6 +453,7 @@ class NtpMetadata(Base):
     timeout = Column(Float)
     additional_metadata = Column(JSONB)
     probe = relationship("ProbeMetadata", back_populates="ntp_metadata")
+
 
 # --- CUSTOM TABLES ---      !! Do not remove line, used as reference when inserting metadata table
 

@@ -10,12 +10,12 @@ from sqlalchemy.orm import Session
 
 from opensampl.config.base import BaseConfig
 from opensampl.db.orm import Base, ProbeData
+from opensampl.helpers.geolocator import create_location
 from opensampl.load.routing import route
 from opensampl.load.table_factory import TableFactory
 from opensampl.metrics import MetricType
 from opensampl.references import ReferenceType
 from opensampl.vendors.constants import ProbeKey, VendorType
-from opensampl.helpers.geolocator import create_location
 
 conflict_actions = Literal["error", "replace", "update", "ignore"]
 
@@ -128,8 +128,7 @@ def load_time_data(
         )
         probe = data_definition.probe  # ty: ignore[possibly-unbound-attribute]
         probe_readable = (
-            probe.name
-            or f"{probe.ip_address} ({probe.probe_id})"  # ty: ignore[possibly-unbound-attribute]
+            probe.name or f"{probe.ip_address} ({probe.probe_id})"  # ty: ignore[possibly-unbound-attribute]
         )
 
         if any(x is None for x in [data_definition.probe, data_definition.metric, data_definition.reference]):
@@ -201,15 +200,18 @@ def load_probe_metadata(
 
         pm_cols = {col.name for col in pm_factory.inspector.columns}
         probe_info = {k: data.pop(k) for k in list(data.keys()) if k in pm_cols}
-        location_name = probe_info.pop('location_name', None)
-        geolocation = ({'name': location_name} if location_name else {}) | probe_info.pop('geolocation', {})
+        location_name = probe_info.pop("location_name", None)
+        geolocation = ({"name": location_name} if location_name else {}) | probe_info.pop("geolocation", {})
 
         if geolocation or _config.ENABLE_GEOLOCATE:
-            location_uuid = create_location(session,
-                                            geolocate_enabled=_config.ENABLE_GEOLOCATE,
-                                            geo_override=geolocation, ip_address=probe_key.ip_address)
+            location_uuid = create_location(
+                session,
+                geolocate_enabled=_config.ENABLE_GEOLOCATE,
+                geo_override=geolocation,
+                ip_address=probe_key.ip_address,
+            )
             if location_uuid:
-                probe_info.update({'location_uuid': location_uuid})
+                probe_info.update({"location_uuid": location_uuid})
 
         probe_info.update({"probe_id": probe_key.probe_id, "ip_address": probe_key.ip_address, "vendor": vendor.name})
         probe = pm_factory.write(data=probe_info, if_exists="update")
