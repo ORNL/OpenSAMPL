@@ -157,11 +157,13 @@ def load_time_data(
             total_rows = len(records)
             inserted = result.rowcount  # ty: ignore[unresolved-attribute]
             excluded = total_rows - inserted
-
-            logger.warning(
-                f"Inserted {inserted}/{total_rows} rows for {probe_readable}; "
-                f"{excluded}/{total_rows} rejected due to conflicts"
-            )
+            if excluded > 0:
+                logger.warning(
+                    f"Inserted {inserted}/{total_rows} rows for {probe_readable}; "
+                    f"{excluded}/{total_rows} rejected due to conflicts"
+                )
+            else:
+                logger.info(f"Inserted {inserted}/{total_rows} rows for {probe_readable}")
 
         except Exception as e:
             # In case of an error, roll back the session
