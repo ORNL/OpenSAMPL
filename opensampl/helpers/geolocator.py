@@ -28,8 +28,8 @@ def _env_bool(name: str, default: bool) -> bool:
 
 
 def _default_lab_coords() -> tuple[float, float]:
-    lat = float(os.getenv("DEFAULT_LAT", "37.4419"))
-    lon = float(os.getenv("DEFAULT_LON", "-122.1430"))
+    lat = float(os.getenv("DEFAULT_LAT", "35.9312"))
+    lon = float(os.getenv("DEFAULT_LON", "-84.3101"))
     return lat, lon
 
 
