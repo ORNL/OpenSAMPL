@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column(
             "probe_uuid",
             sa.String(),
-            sa.ForeignKey("probe_metadata.uuid"),
+            sa.ForeignKey(f"{SCHEMA}.probe_metadata.uuid"),
             primary_key=True,
             nullable=False,
         ),
@@ -118,13 +118,13 @@ def upgrade() -> None:
              name="Poll Interval",
              description="Time between requests sent to a time server in seconds",
              unit="s",
-             value_type=float,
+             value_type='float',
              ),
         dict(uuid=str(uuid.uuid4()),
              name="Sync Health",
              description="1.0 if synchronized/healthy, 0.0 otherwise (probe-defined)",
              unit="ratio",
-             value_type=float,
+             value_type='float',
              )
     ]
     op.bulk_insert(metric_type_table, new_metrics)

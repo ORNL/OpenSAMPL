@@ -39,7 +39,7 @@ class ServerConfig(BaseConfig):
 
     COMPOSE_FILE: str = Field(default="", description="Fully resolved path to the Docker Compose file.")
 
-    OVERRIDE_FILE: str | None = Field(defualt=None, description="Override for the compose file")
+    OVERRIDE_FILE: str | None = Field(default=None, description="Override for the compose file")
 
     DOCKER_ENV_FILE: str = Field(default="", description="Fully resolved path to the Docker .env file.")
 
