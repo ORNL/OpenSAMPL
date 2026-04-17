@@ -46,15 +46,15 @@ class NTPCollector(BaseModel):
     mode: ClassVar[Literal["remote", "local"]]
     metric_map: ClassVar[dict[str, MetricType]] = {
         "phase_offset_s": METRICS.PHASE_OFFSET,
-        "delay_s": METRICS.NTP_DELAY,
-        "jitter_s": METRICS.NTP_JITTER,
-        "stratum": METRICS.NTP_STRATUM,
-        "reachability": METRICS.NTP_REACHABILITY,
-        "dispersion_s": METRICS.NTP_DISPERSION,
+        "delay_s": METRICS.DELAY,
+        "jitter_s": METRICS.JITTER,
+        "stratum": METRICS.STRATUM,
+        "reachability": METRICS.REACHABILITY,
+        "dispersion_s": METRICS.DISPERSION,
         "root_delay_s": METRICS.NTP_ROOT_DELAY,
         "root_dispersion_s": METRICS.NTP_ROOT_DISPERSION,
-        "poll_interval_s": METRICS.NTP_POLL_INTERVAL,
-        "sync_health": METRICS.NTP_SYNC_HEALTH,
+        "poll_interval_s": METRICS.POLL_INTERVAL,
+        "sync_health": METRICS.SYNC_HEALTH,
     }
 
     target_host: str
@@ -62,7 +62,7 @@ class NTPCollector(BaseModel):
     sync_status: str = Field("unknown")
     sync_health: float | None = Field(None, json_schema_extra={"metric": True})
 
-    stratum: float | None = Field(None, json_schema_extra={"metric": True})
+    stratum: int | None = Field(None, json_schema_extra={"metric": True})
     reachability: int | None = Field(None, json_schema_extra={"metric": True})
     offset_s: float | None = Field(None, serialization_alias="phase_offset_s", json_schema_extra={"metric": True})
     delay_s: float | None = Field(None, json_schema_extra={"metric": True})
@@ -728,10 +728,10 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
         times = []
         metric_maps = {
             "offset": {"metric": METRICS.PHASE_OFFSET, "values": []},
-            "delay_s": {"metric": METRICS.NTP_DELAY, "values": []},
-            "jitter_s": {"metric": METRICS.NTP_JITTER, "values": []},
-            "stratum": {"metric": METRICS.NTP_STRATUM, "values": []},
-            "sync_health": {"metric": METRICS.NTP_SYNC_HEALTH, "values": []},
+            "delay_s": {"metric": METRICS.DELAY, "values": []},
+            "jitter_s": {"metric": METRICS.JITTER, "values": []},
+            "stratum": {"metric": METRICS.STRATUM, "values": []},
+            "sync_health": {"metric": METRICS.SYNC_HEALTH, "values": []},
         }
 
         for i in range(num_samples):
@@ -746,7 +746,7 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
 
             delay_s = 0.02 + abs(0.0001 * random.random())
             jitter_s = abs(float(config.noise_amplitude * 5))
-            stratum = 2.0 + (1.0 if random.random() < 0.05 else 0.0)
+            stratum = 2 + (1 if random.random() < 0.05 else 0)
             sync_health = 1.0
             metric_maps["offset"]["values"].append(offset)
             metric_maps["delay_s"]["values"].append(delay_s)

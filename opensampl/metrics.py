@@ -62,59 +62,67 @@ class METRICS:
         unit="unknown",
         value_type=object,
     )
-    NTP_DELAY = MetricType(
-        name="NTP Delay",
-        description="Round-trip delay (RTT) to the NTP server or observed path delay in seconds",
-        unit="s",
-        value_type=float,
-    )
-    NTP_JITTER = MetricType(
-        name="NTP Jitter",
+    DELAY = MetricType(
+        name="Delay",
         description=(
-            "Jitter or offset variation for NTP in seconds (true value from chrony/ntpq when available; "
-            "remote single-packet collection may use a delay/dispersion bound estimate)"
+            "Round-trip delay (RTD) or Round-Trip Time (RTT). The time in seconds it takes for a data signal to "
+            "travel from a source to a destination and back, including acknowledgement."
         ),
         unit="s",
         value_type=float,
     )
-    NTP_STRATUM = MetricType(
-        name="NTP Stratum",
-        description="NTP stratum level (distance from reference clock)",
-        unit="level",
+    JITTER = MetricType(
+        name="Jitter",
+        description=("Jitter or offset variation in delay in seconds. Represents inconsistent response times."),
+        unit="s",
         value_type=float,
     )
-    NTP_REACHABILITY = MetricType(
-        name="NTP Reachability",
-        description="NTP reachability register (0-255) as a scalar for plotting",
+    STRATUM = MetricType(
+        name="Stratum",
+        description=(
+            'Stratum level. Hierarchical layer defining the distance (or "hops") between device and reference.'
+        ),
+        unit="level",
+        value_type=int,
+    )
+    REACHABILITY = MetricType(
+        name="Reachability",
+        description=(
+            "Reachability register (0-255) as a scalar for plotting. Ability of a source node to communicate "
+            "with a target node."
+        ),
         unit="count",
         value_type=float,
     )
-    NTP_DISPERSION = MetricType(
-        name="NTP Dispersion",
-        description="Combined error budget / dispersion in seconds",
+    DISPERSION = MetricType(
+        name="Dispersion",
+        description="Uncertainty in a clock's time relative to its reference source in seconds",
         unit="s",
         value_type=float,
     )
     NTP_ROOT_DELAY = MetricType(
         name="NTP Root Delay",
-        description="Root delay from NTP packet or local estimate in seconds",
+        description=(
+            "Total round-trip network delay from the local system"
+            " all the way to the primary reference clock (stratum 0)"
+        ),
         unit="s",
         value_type=float,
     )
     NTP_ROOT_DISPERSION = MetricType(
         name="NTP Root Dispersion",
-        description="Root dispersion from NTP packet or local estimate in seconds",
+        description="The total accumulated clock uncertainty from the local system back to the primary reference clock",
         unit="s",
         value_type=float,
     )
-    NTP_POLL_INTERVAL = MetricType(
-        name="NTP Poll Interval",
-        description="Poll interval in seconds",
+    POLL_INTERVAL = MetricType(
+        name="Poll Interval",
+        description="Time between requests sent to a time server in seconds",
         unit="s",
         value_type=float,
     )
-    NTP_SYNC_HEALTH = MetricType(
-        name="NTP Sync Health",
+    SYNC_HEALTH = MetricType(
+        name="Sync Health",
         description="1.0 if synchronized/healthy, 0.0 otherwise (probe-defined)",
         unit="ratio",
         value_type=float,
