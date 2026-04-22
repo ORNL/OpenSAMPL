@@ -14,7 +14,7 @@ import textwrap
 from pathlib import Path
 from pprint import pformat
 from string import Template
-from typing import Any, Optional, Union
+from typing import Any
 
 import yaml
 from loguru import logger
@@ -36,8 +36,8 @@ class MetadataField(BaseModel):
     """
 
     name: str
-    sqlalchemy_type: Optional[str] = Field(default="Text")
-    primary_key: Optional[bool] = False
+    sqlalchemy_type: str | None = Field(default="Text")
+    primary_key: bool | None = False
 
 
 class DEFAULT_METADATA:  # noqa N801
@@ -70,7 +70,7 @@ class VendorConfig(VendorType):
     metadata_fields: list[MetadataField]
 
     @classmethod
-    def from_config_file(cls, config_path: Union[str, Path]) -> "VendorConfig":
+    def from_config_file(cls, config_path: str | Path) -> "VendorConfig":
         """
         Convert file config into Config object.
 

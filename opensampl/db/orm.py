@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from geoalchemy2 import Geometry, WKTElement
 from geoalchemy2.shape import to_shape
@@ -43,7 +43,7 @@ class BaseHelpers:
         return {c.name: convert_value(getattr(self, c.name)) for c in self.__table__.columns}
 
     @classmethod
-    def identifiable_constraint(cls) -> Optional[str]:
+    def identifiable_constraint(cls) -> str | None:
         """
         Get the name of the unique constraint used for identification.
 
@@ -57,7 +57,7 @@ class BaseHelpers:
         """
         return None
 
-    def resolve_references(self, session: Optional[Session] = None) -> None:  # noqa: ARG002
+    def resolve_references(self, session: Session | None = None) -> None:  # noqa: ARG002
         """
         Resolve UUIDs for other entries in the database given a unique constraint.
 
@@ -203,7 +203,7 @@ class ProbeMetadata(Base):
             self._test_name = test_name
 
     @classmethod
-    def identifiable_constraint(cls) -> Optional[str]:
+    def identifiable_constraint(cls) -> str | None:
         """
         Get the name of the unique constraint used for identification.
 
@@ -213,7 +213,7 @@ class ProbeMetadata(Base):
         """
         return "uq_probe_metadata_ipaddress_probeid"
 
-    def resolve_references(self, session: Optional[Session] = None):
+    def resolve_references(self, session: Session | None = None):
         """
         Resolve references to location and/or test entries when given just the name.
 

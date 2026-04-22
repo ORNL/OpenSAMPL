@@ -9,7 +9,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import click
 import yaml
@@ -35,7 +35,7 @@ BANNER = r"""
 """
 
 
-def load_config(env_file: Optional[str] = None) -> CLIConfig:
+def load_config(env_file: str | None = None) -> CLIConfig:
     """
     Load the configuration settings
 
@@ -64,7 +64,7 @@ def load_config(env_file: Optional[str] = None) -> CLIConfig:
 class CaseInsensitiveGroup(click.Group):
     """Defines Click group options as case-insensitive. By default, click groups are case-sensitive."""
 
-    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:  # noqa: ARG002
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:  # noqa: ARG002
         """Normalize command name to lower case"""
         cmd_name = cmd_name.lower()
         # Match against lowercased command names
@@ -200,7 +200,7 @@ for vendor in VENDORS.all():
         collect.add_command(_vend.get_collect_cli_command(), name=vendor.name)
 
 
-def path_or_string(value: str) -> Union[dict, list]:
+def path_or_string(value: str) -> dict | list:
     """Get content from a file or use the string directly"""
     # Get content - either from file or use the string directly
     content = value
@@ -236,9 +236,7 @@ def path_or_string(value: str) -> Union[dict, list]:
 )
 @click.argument("table_name", type=click.Choice(get_table_names()))
 @click.argument("filepath", type=path_or_string)
-def table_load(
-    filepath: Union[dict, list], table_name: str, if_exists: Literal["update", "error", "replace", "ignore"]
-):
+def table_load(filepath: dict | list, table_name: str, if_exists: Literal["update", "error", "replace", "ignore"]):
     r"""
     Perform a Table load into the database.
 

@@ -5,8 +5,9 @@ import json
 import os
 import sys
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import Any, Callable, Optional
+from typing import Any
 
 import pandas as pd
 import psycopg2
@@ -103,9 +104,9 @@ def get_keys():
 
 
 def require_api_key(bootstrap: bool = False):
-    """Factory that returns a configured dependency."""
+    """Return function to validate api key with or without bootstrap."""
 
-    def validate_api_key(api_key: str = Security(api_key_header)):
+    def validate_api_key(api_key: str = Security(api_key_header)) -> str | None:
         """Validate provided API key"""
         if not USE_API_KEY:
             return None  # Security is disabled
@@ -200,9 +201,9 @@ def write_to_table(
 @app.post("/load_time_data")
 async def load_time_data(  # noqa: PLR0912, C901
     probe_key_str: str = Form(...),
-    metric_type_str: Optional[str] = Form(None),
-    reference_type_str: Optional[str] = Form(None),
-    compound_key_str: Optional[str] = Form(None),
+    metric_type_str: str | None = Form(None),
+    reference_type_str: str | None = Form(None),
+    compound_key_str: str | None = Form(None),
     file: UploadFile = File(...),
     api_key: str = Depends(require_api_key()),
     session: Session = Depends(get_db),
@@ -318,7 +319,7 @@ def create_new_tables(
 
 @app.get("/gen_api_key")
 def generate_api_key(
-    expire_after: Optional[int] = None,
+    expire_after: int | None = None,
     api_key: str | None = Depends(require_api_key(bootstrap=True)),
     session: Session = Depends(get_db),
 ):

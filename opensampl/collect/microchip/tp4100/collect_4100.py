@@ -11,7 +11,7 @@ import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import pandas as pd
 import requests
@@ -44,8 +44,8 @@ class TP4100Collector:
         port: int = 443,
         output_dir: str = "./output",
         duration: int = 600,
-        channels: Optional[list[str]] = None,
-        metrics: Optional[list[str]] = None,
+        channels: list[str] | None = None,
+        metrics: list[str] | None = None,
         method: Literal["chart_data", "download_file"] = "chart_data",
         save_full_status: bool = False,
     ):
@@ -171,7 +171,7 @@ class TP4100Collector:
             elif self.method == "download_file":
                 self.download_files(request_tpl)
 
-    def get_filename(self, detail: Optional[str] = None, extension: str = ".txt"):
+    def get_filename(self, detail: str | None = None, extension: str = ".txt"):
         """
         Generate timestamped filename for probe connection
 
@@ -194,7 +194,7 @@ class TP4100Collector:
         return filename
 
     def collect_chart_data(
-        self, request_key: tuple[MonitoringConfig, int, MetricInfo], download_dict: Optional[dict[str, Any]] = None
+        self, request_key: tuple[MonitoringConfig, int, MetricInfo], download_dict: dict[str, Any] | None = None
     ):
         """
         Collect chart data for a specific metric and channel.
@@ -271,7 +271,7 @@ class TP4100Collector:
         df.to_csv(new_file, mode="a", index=False)
 
     def download_files(
-        self, request_key: tuple[MonitoringConfig, int, MetricInfo], download_dict: Optional[dict[str, Any]] = None
+        self, request_key: tuple[MonitoringConfig, int, MetricInfo], download_dict: dict[str, Any] | None = None
     ):
         """
         Download data files directly from the device.
@@ -341,8 +341,8 @@ def main(
     port: int = 443,
     output_dir: str = "./output",
     duration: int = 600,
-    channels: Optional[list[str]] = None,
-    metrics: Optional[list[str]] = None,
+    channels: list[str] | None = None,
+    metrics: list[str] | None = None,
     method: Literal["chart_data", "download_file"] = "chart_data",
     save_full_status: bool = False,
 ):

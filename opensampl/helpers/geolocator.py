@@ -75,12 +75,11 @@ def create_location(session: Session, geolocate_enabled: bool, ip_address: str, 
     lon: float | None = None
     name: str | None = None
 
-    if isinstance(geo_override, dict) and geo_override.get("lat") is not None and geo_override.get("lon") is not None:
+    if geo_override.get("lat") is not None and geo_override.get("lon") is not None:
         lat = float(geo_override["lat"])
         lon = float(geo_override["lon"])
 
-    if isinstance(geo_override, dict) and geo_override.get("name") is not None:
-        name = geo_override["name"]
+    name = geo_override.get("name")
 
     if geolocate_enabled and lat is None and lon is None:
         ip_for_geo = ip_address
@@ -104,20 +103,17 @@ def create_location(session: Session, geolocate_enabled: bool, ip_address: str, 
     if name:
         loc = loc_factory.find_existing({"name": name})
 
-    if loc is not None:
-        return loc.uuid
-
-    if lat is None or lon is None or name is None:
-        logger.warning(
-            "Skipping location creation for {}: insufficient location data (name={!r}, lat={!r}, lon={!r})",
-            ip_address,
-            name,
-            lat,
-            lon,
-        )
-        return None
-
     if loc is None:
+        if any(x is None for x in [lat, lon, name]):
+            logger.warning(
+                "Skipping location creation for {}: insufficient location data (name={!r}, lat={!r}, lon={!r})",
+                ip_address,
+                name,
+                lat,
+                lon,
+            )
+            return None
+
         loc = loc_factory.write(
             {"name": name, "lat": lat, "lon": lon, "public": True},
             if_exists="ignore",

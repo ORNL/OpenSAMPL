@@ -1,7 +1,7 @@
 """Main functionality for loading data into the database"""
 
 import json
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import pandas as pd
 from loguru import logger
@@ -26,7 +26,7 @@ def write_to_table(
     data: dict[str, Any],
     _config: BaseConfig,
     if_exists: conflict_actions = "update",
-    session: Optional[Session] = None,
+    session: Session | None = None,
 ):
     """
     Write object to table with configurable behavior for handling conflicts.
@@ -80,9 +80,9 @@ def load_time_data(
     reference_type: ReferenceType,
     data: pd.DataFrame,
     _config: BaseConfig,
-    compound_key: Optional[dict[str, Any]] = None,
+    compound_key: dict[str, Any] | None = None,
     strict: bool = True,
-    session: Optional[Session] = None,
+    session: Session | None = None,
 ):
     """
     Write time data to probe_data table
@@ -184,7 +184,7 @@ def load_probe_metadata(
     probe_key: ProbeKey,
     data: dict[str, Any],
     _config: BaseConfig,
-    session: Optional[Session] = None,
+    session: Session | None = None,
 ):
     """Write object to table"""
     if _config.ROUTE_TO_BACKEND:
@@ -230,7 +230,7 @@ def load_probe_metadata(
 
 
 @route("create_new_tables", method="GET")
-def create_new_tables(*, _config: BaseConfig, create_schema: bool = True, session: Optional[Session] = None):
+def create_new_tables(*, _config: BaseConfig, create_schema: bool = True, session: Session | None = None):
     """Use the ORM definition to create all tables, optionally creating the schema as well"""
     if _config.ROUTE_TO_BACKEND:
         return {"create_schema": create_schema}
