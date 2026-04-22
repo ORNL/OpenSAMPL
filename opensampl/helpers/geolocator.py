@@ -104,6 +104,19 @@ def create_location(session: Session, geolocate_enabled: bool, ip_address: str, 
     if name:
         loc = loc_factory.find_existing({"name": name})
 
+    if loc is not None:
+        return loc.uuid
+
+    if lat is None or lon is None or name is None:
+        logger.warning(
+            "Skipping location creation for {}: insufficient location data (name={!r}, lat={!r}, lon={!r})",
+            ip_address,
+            name,
+            lat,
+            lon,
+        )
+        return None
+
     if loc is None:
         loc = loc_factory.write(
             {"name": name, "lat": lat, "lon": lon, "public": True},

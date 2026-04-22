@@ -12,6 +12,7 @@ import textwrap
 import time
 from datetime import datetime, timedelta, timezone
 from io import StringIO
+from pathlib import Path
 from typing import Any, Callable, ClassVar, Literal, TypeVar
 
 import click
@@ -540,9 +541,9 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
             description="random.uniform(-1e-12, 1e-12)",
         )
 
-    def __init__(self, input_file: str):
+    def __init__(self, input_file: str | Path, chunk_size: int | None = None, **kwargs: dict):
         """Initialize NtpProbe from input file"""
-        super().__init__(input_file)
+        super().__init__(input_file=input_file, chunk_size=chunk_size, **kwargs)
         self.collection_probe = None
 
     def process_metadata(self) -> dict:
