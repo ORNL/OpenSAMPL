@@ -102,28 +102,23 @@ def get_keys():
         return []
 
 
-def validate_api_key(api_key: str = Security(api_key_header)):
-    """Validate provided API key"""
-    if not USE_API_KEY:
-        return None  # Security is disabled
-    if api_key not in get_keys():
-        raise HTTPException(status_code=403, detail="Invalid or missing API key")
-    return api_key
+def require_api_key(bootstrap: bool = False):
+    """Factory that returns a configured dependency."""
 
+    def validate_api_key(api_key: str = Security(api_key_header)):
+        """Validate provided API key"""
+        if not USE_API_KEY:
+            return None  # Security is disabled
 
-def validate_api_key_or_allow_bootstrap(api_key: str = Security(api_key_header)):
-    """Require an existing API key unless none have been provisioned yet."""
-    if not USE_API_KEY:
-        return None
+        keys = get_keys()
+        if not keys and bootstrap:
+            logger.warning("No API keys configured; allowing bootstrap API key generation")
+            return None
+        if api_key not in keys:
+            raise HTTPException(status_code=403, detail="Invalid or missing API key")
+        return api_key
 
-    keys = get_keys()
-    if not keys:
-        logger.warning("No API keys configured; allowing bootstrap API key generation")
-        return None
-
-    if api_key not in keys:
-        raise HTTPException(status_code=403, detail="Invalid or missing API key")
-    return api_key
+    return validate_api_key
 
 
 def get_db():
@@ -160,7 +155,7 @@ async def docs_redirect():
 
 
 @app.get("/setloglevel")
-def set_log_level(newloglevel: str, api_key: str = Depends(validate_api_key)):
+def set_log_level(newloglevel: str, api_key: str = Depends(require_api_key())):
     """Change visible log level in backend container"""
     newloglevel = newloglevel.upper()
     logger.configure(handlers=[{"sink": sys.stderr, "level": newloglevel}])
@@ -168,7 +163,7 @@ def set_log_level(newloglevel: str, api_key: str = Depends(validate_api_key)):
 
 
 @app.get("/checkloglevel")
-def check_log_level(api_key: str = Depends(validate_api_key)):
+def check_log_level(api_key: str = Depends(require_api_key())):
     """Check which log levels are visible in backend container"""
     logger.debug("Debug test")
     logger.info("Info test")
@@ -180,7 +175,7 @@ def check_log_level(api_key: str = Depends(validate_api_key)):
 
 @app.post("/write_to_table")
 def write_to_table(
-    payload: WriteTablePayload, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)
+    payload: WriteTablePayload, api_key: str = Depends(require_api_key()), session: Session = Depends(get_db)
 ):
     """Write given data to specified table"""
     try:
@@ -209,7 +204,7 @@ async def load_time_data(  # noqa: PLR0912, C901
     reference_type_str: Optional[str] = Form(None),
     compound_key_str: Optional[str] = Form(None),
     file: UploadFile = File(...),
-    api_key: str = Depends(validate_api_key),
+    api_key: str = Depends(require_api_key()),
     session: Session = Depends(get_db),
 ):
     """Load provided data for given probe"""
@@ -273,7 +268,7 @@ async def load_time_data(  # noqa: PLR0912, C901
 
 @app.post("/load_probe_metadata")
 def load_probe_metadata(
-    payload: ProbeMetadataPayload, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)
+    payload: ProbeMetadataPayload, api_key: str = Depends(require_api_key()), session: Session = Depends(get_db)
 ):
     """Load metadata for given probe"""
     logger.debug(f"Received payload: {payload.model_dump()}")
@@ -304,7 +299,7 @@ def load_probe_metadata(
 
 @app.get("/create_new_tables")
 def create_new_tables(
-    create_schema: bool = True, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)
+    create_schema: bool = True, api_key: str = Depends(require_api_key()), session: Session = Depends(get_db)
 ):
     """Update DB based on ORM Tables"""
     try:
@@ -324,7 +319,7 @@ def create_new_tables(
 @app.get("/gen_api_key")
 def generate_api_key(
     expire_after: Optional[int] = None,
-    api_key: str = Depends(validate_api_key_or_allow_bootstrap),
+    api_key: str | None = Depends(require_api_key(bootstrap=True)),
     session: Session = Depends(get_db),
 ):
     """Generate new API key in the database"""
