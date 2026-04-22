@@ -510,8 +510,8 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
         ip_address: str = "127.0.0.1"
         port: int | None = None
         mode: Literal["remote", "local"] = "local"
-        interval: float = 0.0
-        duration: int = 1
+        interval: float = Field(0.0, ge=0.0)
+        duration: int = Field(1, ge=1)
         timeout: float = 3.0
         collection_ip: str = Field(default_factory=collect_ip_factory)
         collection_id: str = Field(default_factory=collect_id_factory)
@@ -540,7 +540,7 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
             description="random.uniform(-1e-12, 1e-12)",
         )
 
-    def __init__(self, input_file: str):
+    def __init__(self, input_file: str, ):
         """Initialize NtpProbe from input file"""
         super().__init__(input_file)
         self.collection_probe = None
