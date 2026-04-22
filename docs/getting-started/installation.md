@@ -2,7 +2,7 @@
 
 ## Installation for Users
 
-1. Ensure you have Python 3.9 or higher installed
+1. Ensure you have Python 3.10 or higher installed
 2. Pip install the latest version of openSAMPL: 
 ```bash
 pip install opensampl
