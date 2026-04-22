@@ -111,6 +111,21 @@ def validate_api_key(api_key: str = Security(api_key_header)):
     return api_key
 
 
+def validate_api_key_or_allow_bootstrap(api_key: str = Security(api_key_header)):
+    """Require an existing API key unless none have been provisioned yet."""
+    if not USE_API_KEY:
+        return None
+
+    keys = get_keys()
+    if not keys:
+        logger.warning("No API keys configured; allowing bootstrap API key generation")
+        return None
+
+    if api_key not in keys:
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
+    return api_key
+
+
 def get_db():
     """Get database session"""
     Session = sessionmaker(bind=engine)  # noqa: N806
@@ -307,7 +322,11 @@ def create_new_tables(
 
 
 @app.get("/gen_api_key")
-def generate_api_key(expire_after: Optional[int] = None, session: Session = Depends(get_db)):
+def generate_api_key(
+    expire_after: Optional[int] = None,
+    api_key: str = Depends(validate_api_key_or_allow_bootstrap),
+    session: Session = Depends(get_db),
+):
     """Generate new API key in the database"""
     try:
         new_key = APIAccessKey()
