@@ -20,149 +20,153 @@
 </div>
 
 
-OpenSAMPL was created to provide a set of Python tools for managing clock data in a TimescaleDB database, specifically designed for synchronization analytics and monitoring.
-This project came out of [**CAST**](https://cast.ornl.gov), the **C**enter for **A**lternative **S**yncrhonization and **T**iming, a research group at Oak Ridge National Laboratory (ORNL).
-The name OpenSAMPL stands for **O**pen **S**ynchronization **A**nalytics and **M**onitoring **PL**atform, and provides the code and logic for uploading, managing, and visualizing clock data from various sources, including ADVA probes and Microchip TWST data files,
-with the goal of this project being to provide a comprehensive and open-source solution for clock data management and analysis. 
-Visualizations are provided via [grafana](https://grafana.com/), and the data is stored in a [TimescaleDB](https://www.timescale.com/) database, which is a time-series database built on PostgreSQL.
+OpenSAMPL provides Python tools for collecting, loading, and visualizing clock data in a
+TimescaleDB-backed synchronization analytics stack.
+This project came out of [**CAST**](https://cast.ornl.gov), the **C**enter for
+**A**lternative **S**ynchronization and **T**iming at Oak Ridge National Laboratory (ORNL).
+The name OpenSAMPL stands for **O**pen **S**ynchronization **A**nalytics and
+**M**onitoring **PL**atform.
+
+The current codebase supports loading and analysis workflows for ADVA, Microchip TWST,
+Microchip TP4100, and NTP-derived probe data. Visualization is provided through
+[Grafana](https://grafana.com/), and the data is stored in
+[TimescaleDB](https://www.timescale.com/), which is built on PostgreSQL.
 
 
 ### (**O**pen **S**ynchronization **A**nalytics and **M**onitoring **PL**atform)
 
-python tools for adding clock data to a timescale db. 
+Python tools for adding clock and timing data to a TimescaleDB database.
 
-## CLI TOOL
+## Installation
 
-### Installation
+1. Ensure you have Python 3.10 or higher installed.
+2. Install the latest release:
 
-1. Ensure you have Python 3.10 or higher installed
-2. Pip install the latest version of opensampl: 
 ```bash
 pip install opensampl
 ```
 
 ### Development Setup
+
 ```bash
 uv venv
-uv sync --extra all
+uv sync --all-extras --dev
 source .venv/bin/activate
 ```
-This will create a virtual environment and install the development dependencies.
+This creates a virtual environment and installs the development dependencies.
 
 ### Environment Setup
 
-The tool requires several environment variables. Create a `.env` file in your project root:
+The CLI reads configuration from environment variables or a local `.env` file.
 
-When routing through a backend:
+When routing through a backend service:
 ```bash
-ROUTE_TO_BACKEND=true  # Set to true if using backend service
-BACKEND_URL=http://localhost:8000  # Only needed if ROUTE_TO_BACKEND is true
+ROUTE_TO_BACKEND=true
+BACKEND_URL=http://localhost:8000
 
-# Archive configuration
-ARCHIVE_PATH=/path/to/archive  # Where processed files are stored
+ARCHIVE_PATH=/path/to/archive
 ```
-When directly accessing db: 
+
+When connecting directly to PostgreSQL / TimescaleDB:
 ```bash
-# Database connection
 DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<database>
-
-# Archive configuration
-ARCHIVE_PATH=/path/to/archive  # Where processed files are stored
+ARCHIVE_PATH=/path/to/archive
 ```
 
-### Basic Usage
+Use `opensampl config show` to inspect the current resolved configuration.
 
-The CLI tool provides several commands. You can use `opensampl --help` (or, any deeper `opensampl [command] --help`) to get details
+## CLI
 
-If you plan to use the NTP collector, install the optional collect extras:
+The main CLI exposes `collect`, `config`, `create`, `init`, and `load`.
+Use `opensampl --help` and `opensampl <command> --help` for current options.
+
+If you plan to use the NTP collector, install the optional collection dependencies:
 
 ```bash
-uv sync --extra collect
+pip install "opensampl[collect]"
 ```
 
-#### Load Probe Data
+### Load Probe Data
 
-Load data from ADVA probes:
+Load data with the probe type name directly:
 
 ```bash
-# Load single file
-opensampl load probe adva path/to/file.txt.gz
-
-# Load directory of files
-opensampl load probe adva path/to/directory/
+opensampl load ADVA path/to/file.txt.gz
+opensampl load ADVA path/to/directory/
 ```
-ADVA probes have all their metadata and their time data in each file, so no need to use the `-m` or `-t` options, though if you want to skip loading one or the other it becomes useful! 
 
-options:
-- `--metadata` (`-m`): Only load probe metadata
-- `--time-data` (`-t`): Only load time series data
-- `--no-archive` (`-n`): Don't archive processed files
-- `--archive-path` (`-a`): Override default archive directory
-- `--max-workers` (`-w`): Maximum number of worker threads (default: 4)
-- `--chunk-size` (`-c`): Number of time data entries per batch (default: 10000)
-
-#### Load Direct Table Data
-
-Load data directly into a database table. Format can be yaml or json. Can be a list of dictionaries or a single dictionary.
-
-you do not have to specify schema, is assumed to be castdb. 
-
-The --if-exists option controls how to handle conflicts:
-  - update: Only update fields that are provided and non-default (default)
-  - error: Raise an error if entry exists
-  - replace: Replace all non-primary-key fields with new values
-  - ignore: Skip if entry exists
+ADVA files bundle metadata and time-series data in a single file, so the split flags are
+usually not needed.
 
 ```bash
-opensampl load table table_name path/to/data.yaml
+opensampl load MicrochipTWST path/to/twst-output
+opensampl load MicrochipTP4100 path/to/tp4100-output
 ```
 
-So, you can do things like the following  
+NTP data is collected first and then loaded from the output directory:
+
 ```bash
-opensampl load table locations --if-exists replace updated_location.yaml
+opensampl collect ntp --mode remote --server pool.ntp.org --output-path ./ntp-out
+opensampl load NTP ./ntp-out
 ```
-Where this is the updated_location
+
+Load options:
+
+- `--metadata` / `-m`: load only probe metadata
+- `--time-data` / `-t`: load only time-series data
+- `--no-archive` / `-n`: skip archiving processed files
+- `--archive-path` / `-a`: override the archive directory
+- `--max-workers` / `-w`: set the worker count
+- `--chunk-size` / `-c`: set the batch size for time-series inserts
+
+### Load Direct Table Data
+
+Load YAML or JSON directly into a table:
+
+```bash
+opensampl load table locations updated_location.yaml
+```
+
+Conflict handling is controlled by `--if-exists`:
+
+- `update`: fill null fields in an existing row
+- `error`: raise if the row exists
+- `replace`: replace non-primary-key values
+- `ignore`: skip existing rows
+
+Example input:
+
 ```yaml
 name: EPB Chattanooga
 lat: 35.9311256
 lon: -84.3292469
 ```
-And it will overwrite the existing entry for EPB Chattanooga, or create a new one if it doesn't exist yet.
-
 
 ### View Configuration
 
-Display current environment configuration:
-
 ```bash
-# Show all variables
-poetry run opensampl config show
-
-# Show with descriptions
-poetry run opensampl config show --explain
-
-# Show specific variable
-poetry run opensampl config show --var DATABASE_URL
+opensampl config show
+opensampl config show --explain
+opensampl config show --var DATABASE_URL
 ```
 
 ### Set Configuration
 
-Update environment variables:
-
 ```bash
-poetry run opensampl config set VARIABLE_NAME value
+opensampl config set VARIABLE_NAME value
 ```
 
 ## File Format Support
 
-The tool currently supports:
+The loaders currently support:
 
-ADVA probe data files with the following naming convention:
-`<ip_address>CLOCK_PROBE-<probe_id>-YYYY-MM-DD-HH-MM-SS.txt.gz`
+- ADVA probe files named like
+  `<ip_address>CLOCK_PROBE-<probe_id>-YYYY-MM-DD-HH-MM-SS.txt.gz>`
+- Microchip TWST and TP4100 output produced by the collector tooling
+- NTP snapshot output produced by `opensampl collect ntp`
 
-Example: `10.0.0.121CLOCK_PROBE-1-1-2024-01-02-18-24-56.txt.gz`
-
-Microchip TWST Data Files as generated by the script available. 
+Example ADVA file:
+`10.0.0.121CLOCK_PROBE-1-1-2024-01-02-18-24-56.txt.gz`
 
 # Contributing
 We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.

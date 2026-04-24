@@ -1,19 +1,21 @@
 # CLI
 
-The CLI tool provides several commands. You can use `opensampl --help` (or, any deeper `opensampl [command] --help`) to get details
+Use `opensampl --help` to see the top-level commands, or `opensampl <command> --help`
+for subcommand-specific options.
 
 ## Load Data
 
 ### Probe Data
-Command: `opensampl load <PROBE TYPE> <INPUT PATH> [OPTIONS]` <br>
-Arguments: 
+Command: `opensampl load <PROBE TYPE> <INPUT PATH> [OPTIONS]`  
+Arguments:
 
-* `PROBE TYPE`: Specify the probe type, which defines how to process the data files 
-    * See API reference for currently supported Probe Types. 
-    * You can also try the experimental `create` method, described [below](#create), to define your own probe type.
-* `INPUT PATH`: The path to the input. Can be a single file, or a directory of files. 
+* `PROBE TYPE`: The loader implementation to use for the input files
+* `INPUT PATH`: A single file or a directory of files
 
-Options: 
+Supported probe types currently exposed by the CLI include `ADVA`, `MicrochipTWST`,
+`MicrochipTP4100`, `NTP`, and `random`.
+
+Options:
 
 * `--metadata` (`-m`): Only load probe metadata
 * `--time-data` (`-t`): Only load time series data
@@ -23,41 +25,57 @@ Options:
 * `--chunk-size` (`-c`): Number of time data entries per batch (default: 10000)
 
 #### ADVA
-The tool currently supports ADVA probe data files with the following naming convention: 
+The CLI supports ADVA probe data files with the following naming convention:
 > `<ip_address>CLOCK_PROBE-<probe_id>-YYYY-MM-DD-HH-MM-SS.txt.gz` 
 
-Example: 
+Example:
 > `10.0.0.121CLOCK_PROBE-1-1-2024-01-02-18-24-56.txt.gz`
 
-With the file format of having metadata at the beginning (on lines starting with `#`), followed by 
-tab separated `time value` measurements. 
+The file format contains metadata at the beginning on lines starting with `#`, followed by
+tab-separated `time value` measurements.
 
-As ADVA probes have all their metadata and their time data in each file, there is no need to use the `-m` or `-t` options, though if you want to skip loading one or the other it becomes useful!
+As ADVA probes have metadata and time-series data in each file, there is usually no need
+to split metadata and time-data loading.
 
 #### Microchip 
-Microchip TWST and TP4100 modems are also supported, the file names are supported as created via `opensampl-collect`
+Microchip TWST and TP4100 files are supported. Collection for those devices is still done
+through the dedicated `opensampl-collect` entry point, while loading is handled through
+`opensampl load MicrochipTWST ...` or `opensampl load MicrochipTP4100 ...`.
+
+#### NTP
+NTP data can be collected with the main CLI and then loaded with the `NTP` probe type.
+
+```bash
+opensampl collect ntp --mode remote --server pool.ntp.org --output-path ./ntp-out
+opensampl load NTP ./ntp-out
+```
+
+For local collection, point the collector at an `ntpq` output file or let it inspect the
+local system directly, depending on your deployment. See the [collection guide](collection.md)
+for the current collection modes and configuration options.
 
 ### Direct Table Entries
-Load data directly into a database table from a file, whose format can be yaml or json. 
+Load data directly into a database table from a file. The file format can be YAML or JSON.
 
-The file should contain either one dictionary (for one entry) or a list of dictionaries (for many entries)
+The file should contain either one dictionary or a list of dictionaries.
 
-Command: `opensampl load table <TABLE NAME> <INPUT PATH> [OPTIONS]` <br>
-Arguments: 
+Command: `opensampl load table <TABLE NAME> <INPUT PATH> [OPTIONS]`  
+Arguments:
 
-* `TABLE NAME`: Which table to write to. 
+* `TABLE NAME`: Which table to write to
 * `INPUT PATH`: The path to the input file, whose format can be yaml or json. See the [page on expected formatting for writing to table](expected_table_format.md) to ensure the provided file matches the table's expected format.
 
 Options:
 
 * `--if-exists` (`-i`): How to handle conflicts:
-    - `update`: Insert non-primary-key fields that are `NULL` in existing entry (default)
-    - `error`: Raise an error if entry exists
-    - `replace`: Replace all non-primary-key fields with new values
-    - `ignore`: Skip if entry exists
+  - `update`: Insert non-primary-key fields that are `NULL` in an existing entry (default)
+  - `error`: Raise an error if the entry already exists
+  - `replace`: Replace all non-primary-key fields with new values
+  - `ignore`: Skip the entry if it already exists
 
 ## Configuration
-See the [configuration](configuration.md) page for details on how the config command works
+See the [configuration](configuration.md) page for how `opensampl config` reads and writes
+environment-backed settings.
 
 ### View
 
@@ -78,15 +96,15 @@ opensampl config show -e -v BACKEND_URL  # Show specific variable with descripti
 ### Set
 
 Command: `opensampl config set <VAR NAME> <VAR VALUE>` <br>
-Arguments: 
+Arguments:
 
 * `VAR NAME`: the env var you want to change
 * `VAR VALUE`: the new value to set it as
 
 ## Create
-** <mark>Experimental</mark> ** <br>
-Create a new probe type with scaffolding, based on a config file.
-See the [Create page](create_probe_type.md) for how to use
+**<mark>Experimental</mark>**  
+Create a new probe type scaffold from a configuration file. See the
+[Create page](create_probe_type.md) for the current workflow and limitations.
 
 Command: `opensampl create <CONFIG PATH> [OPTIONS]` <br>
 Arguments: 
@@ -95,6 +113,5 @@ Arguments:
 
 Options:
 
-* `--update-db` (`-u`):  Update the database with the new probe type
-
+* `--update-db` (`-u`): Update the database with the new probe type
 
