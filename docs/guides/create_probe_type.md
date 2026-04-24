@@ -7,7 +7,8 @@ probe family inside a local clone of the repository.
 
 1. Clone the repository locally.
 2. Install OpenSAMPL in the development environment.
-3. Run `opensampl create` to generate the scaffold.
+3. Run `opensampl create` to generate the scaffold. 
+   4. include `--collect-mixin` flag if you intend to implement timing collection as well to prefill those functions
 4. Fill in the generated parser, metadata model, and any collector mixins you need.
 5. Run `opensampl init` or `opensampl create --update-db ...` to create the new tables in the database.
 

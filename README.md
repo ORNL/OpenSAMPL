@@ -80,7 +80,7 @@ Use `opensampl config show` to inspect the current resolved configuration.
 The main CLI exposes `collect`, `config`, `create`, `init`, and `load`.
 Use `opensampl --help` and `opensampl <command> --help` for current options.
 
-If you plan to use the NTP collector, install the optional collection dependencies:
+If you plan to use the NTP, Microchip TWST, or Microchip TP4100 collectors, install the optional collection dependencies:
 
 ```bash
 pip install "opensampl[collect]"
