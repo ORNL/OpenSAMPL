@@ -46,6 +46,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🔥 Compact reference/source metadata views in dashboards to improve interpretation of NTP-backed timing data
 - 🔥 Documentation covering the NTP extension path, collection semantics, and geolocation behavior
 - 🔥 Additional unit and integration-style tests for NTP collection, loading, geolocation helpers, and seeded database defaults
+- 🔥 Moved alembic migration code into openSAMPL along with Docker image information
+- 🔥 Moved backend api code into openSAMPL along with Docker image information
+- 🔥 Docker-compose for developers which installs openSAMPL as editable on backend image
 
 ### Changed
 - ⚡ Hardened dashboard queries and variables to avoid brittle empty-filter handling and varchar-versus-UUID failures
@@ -59,14 +62,6 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🩹 When direct measured jitter is unavailable from a single remote NTP response, OpenSAMPL now stores a documented estimate/bound instead
 - 🩹 Geolocation helper coverage now exercises override, cache, lookup, and no-data paths without depending on live outbound access
 - 🩹 Seeded default metric UUID handling in the MockDB test harness now points to the UNKNOWN metric as intended
-
-## [Unreleased] - YYYY-MM-DD
-### Added
-- 🔥 Moved alembic migration code into openSAMPL along with Docker image information
-- 🔥 Moved backend api code into openSAMPL along with Docker image information
-- 🔥 Docker-compose for developers which installs openSAMPL as editable on backend image
-
-### Fixed
 - 🩹 Bug which caused random data duration to always be 1 hour
 
 ## [1.1.5] - 2025-09-22
