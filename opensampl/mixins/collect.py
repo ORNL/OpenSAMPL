@@ -145,7 +145,7 @@ class CollectMixin(ABC):
     @classmethod
     def filter_files(cls, files: list[Path]) -> list[Path]:
         """Filter the files found in the input directory when loading this vendor's data files"""
-        return [f for f in files if f.name.startswith(f"{cls.vendor.parser_class}_") and f.stem == ".txt"]
+        return [f for f in files if f.name.startswith(f"{cls.vendor.parser_class}_") and f.suffix == ".txt"]
 
     @classmethod
     def load_metadata(cls, probe_key: ProbeKey, metadata: dict) -> None:
