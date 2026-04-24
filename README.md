@@ -74,6 +74,12 @@ ARCHIVE_PATH=/path/to/archive  # Where processed files are stored
 
 The CLI tool provides several commands. You can use `opensampl --help` (or, any deeper `opensampl [command] --help`) to get details
 
+If you plan to use the NTP collector, install the optional collect extras:
+
+```bash
+uv sync --extra collect
+```
+
 #### Load Probe Data
 
 Load data from ADVA probes:
