@@ -30,7 +30,7 @@ class $parser_class(BaseProbe, CollectMixin):
 
     def __init__(self, input_file: str, **kwargs):
         """Initialize $parser_class from input file"""
-        super().__init__(input_file)
+        super().__init__(input_file, **kwargs)
         # TODO: parse self.input_file contents or file name to extract ip_address and id to self.probe_key
         # self.probe_key = ProbeKey(probe_id=..., ip_address=...)
 

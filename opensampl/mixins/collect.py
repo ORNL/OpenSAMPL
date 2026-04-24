@@ -2,9 +2,10 @@
 
 import json
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 import click
 import pandas as pd
@@ -27,15 +28,15 @@ class CollectMixin(ABC):
         value: pd.DataFrame
         metric: MetricType = METRICS.UNKNOWN
         reference_type: ReferenceType = REF_TYPES.UNKNOWN
-        compound_reference: Optional[dict[str, Any]] = None
+        compound_reference: dict[str, Any] | None = None
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
     class CollectArtifact(BaseModel):
         """Model for a single probe's collected data"""
 
         data: list["CollectMixin.DataArtifact"]
-        probe_key: Optional[ProbeKey] = None
-        metadata: Optional[dict] = Field(default_factory=dict)
+        probe_key: ProbeKey | None = None
+        metadata: dict | None = Field(default_factory=dict)
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
         @property
@@ -64,7 +65,7 @@ class CollectMixin(ABC):
 
         """
 
-        output_dir: Optional[Path] = None
+        output_dir: Path | None = None
         load: bool = False
         duration: int = 300
 

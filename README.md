@@ -35,7 +35,7 @@ python tools for adding clock data to a timescale db.
 
 ### Installation
 
-1. Ensure you have Python 3.9 or higher installed
+1. Ensure you have Python 3.10 or higher installed
 2. Pip install the latest version of opensampl: 
 ```bash
 pip install opensampl
@@ -234,4 +234,3 @@ adva_mask_margin: 0  # Mask margin
 - Table relationships are maintained through UUID references
 - Geographic coordinates use WGS84 projection (SRID 4326) by default
 - Boolean fields (public) are optional and can be null
-

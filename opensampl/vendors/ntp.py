@@ -12,7 +12,7 @@ import textwrap
 import time
 from datetime import datetime, timedelta, timezone
 from io import StringIO
-from typing import Any, Callable, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import click
 import numpy as np
@@ -34,6 +34,10 @@ from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import VENDORS, ProbeKey
 
 T = TypeVar("T")
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
 
 
 def _merge(a: T | None, b: T | None) -> T | None:
@@ -190,7 +194,7 @@ class NTPLocalCollector(NTPCollector):
         m = re.search(r"last offset\s*:\s*([+-]?[\d.eE+-]+)\s*seconds?", text, re.IGNORECASE)
         if m:
             with contextlib.suppress(ValueError):
-                self.offset_s = _merge(self.offset_s, (m.group(1)))
+                self.offset_s = _merge(self.offset_s, float(m.group(1)))
 
         m = re.search(r"rms offset\s*:\s*([+-]?[\d.eE+-]+)\s*seconds?", text, re.IGNORECASE)
         if m:
@@ -508,7 +512,7 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
         """
 
         ip_address: str = "127.0.0.1"
-        port: int | None = None
+        port: int = 123
         mode: Literal["remote", "local"] = "local"
         interval: float = Field(0.0, ge=0.0)
         duration: int = Field(1, ge=1)
@@ -540,9 +544,9 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
             description="random.uniform(-1e-12, 1e-12)",
         )
 
-    def __init__(self, input_file: str, ):
+    def __init__(self, input_file: str | Path, **kwargs: dict):
         """Initialize NtpProbe from input file"""
-        super().__init__(input_file)
+        super().__init__(input_file=input_file, **kwargs)
         self.collection_probe = None
 
     def process_metadata(self) -> dict:
@@ -666,7 +670,8 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
             return collect_once()
 
         artifact = None
-        for _ in range(max(collect_config.duration, 1)):
+        sample_count = max(collect_config.duration, 1)
+        for sample_idx in range(sample_count):
             newer = collect_once()
             if artifact is None:
                 artifact = newer
@@ -674,7 +679,8 @@ class NtpProbe(BaseProbe, CollectMixin, RandomDataMixin):
                 artifact.data.extend(newer.data)
                 artifact.metadata |= newer.metadata
 
-            time.sleep(collect_config.interval)
+            if sample_idx < sample_count - 1:
+                time.sleep(collect_config.interval)
 
         return artifact
 
