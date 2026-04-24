@@ -42,6 +42,9 @@ opensampl-collect microchip twst --help
 
 # View TP4100 device specific options
 opensampl-collect microchip tp4100 --help
+
+# View NTP collection options
+opensampl collect ntp --help
 ```
 
 ### Collecting from Microchip TWST Modems
@@ -210,7 +213,7 @@ The NTP collector supports two modes:
 Basic command structure:
 
 ```bash
-opensampl-collect ntp <local|remote> [OPTIONS]
+opensampl collect ntp [OPTIONS]
 ```
 
 #### Common options
@@ -226,15 +229,15 @@ opensampl-collect ntp <local|remote> [OPTIONS]
 #### Local mode examples
 
 ```bash
-opensampl-collect ntp local --probe-id local-chrony --output-dir ./ntp-out
-opensampl-collect ntp local --probe-id local-chrony --load
+opensampl collect ntp --mode local --probe-id local-chrony --output-dir ./ntp-out
+opensampl collect ntp --mode local --probe-id local-chrony --load
 ```
 
 #### Remote mode examples
 
 ```bash
-opensampl-collect ntp remote --host time.cloudflare.com --probe-id public-time --output-dir ./ntp-out
-opensampl-collect ntp remote --host 127.0.0.1 --port 10123 --probe-id mock-a --count 5 --interval 10 --load
+opensampl collect ntp --mode remote --host time.cloudflare.com --probe-id public-time --output-dir ./ntp-out
+opensampl collect ntp --mode remote --host 127.0.0.1 --port 10123 --probe-id mock-a --count 5 --interval 10 --load
 ```
 
 #### NTP metadata behavior

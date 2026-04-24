@@ -28,9 +28,10 @@ If you're new here, start your journey:
 Master the art of customization and configuration:
 
 [//]: # (* [Configuration]&#40;guides/configuration.md&#41; – Learn how to set up and tweak `opensampl` to your liking.)
-* [Customization](guides/configuration) – Discover advanced tweaks that put you in complete control.
+* [Customization](guides/configuration.md) – Discover advanced tweaks that put you in complete control.
 * [Using the `opensampl` CLI](guides/opensampl-cli.md) – A comprehensive guide to using the `opensampl` CLI tool.
 * [Using the `opensampl-server` CLI](guides/opensampl-server.md) – A comprehensive guide to using the `opensampl-server` CLI tool.
+* [NTP Extension Guide](guides/ntp-extension.md) – How the NTP probe family, loading path, dashboards, and geolocation behavior fit together.
 
 ## API Reference
 

@@ -5,7 +5,6 @@ This section contains the automatically generated API reference for the openSAMP
 ## Module Index
 
 * [cli](api/cli.md)
-* [constants](api/constants.md)
 * [load_data](api/load_data.md)
 * **db/**
     * [access_orm](api/db/access_orm.md)

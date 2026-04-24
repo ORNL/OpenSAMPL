@@ -1,6 +1,6 @@
-# `opensampl.ats6502.readings`
+# `opensampl.collect.microchip.twst.readings`
 
-::: opensampl.ats6502.readings
+::: opensampl.collect.microchip.twst.readings
     options:
       show_root_heading: false
       show_submodules: true

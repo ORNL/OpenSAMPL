@@ -1,6 +1,6 @@
-# `opensampl.ats6502.context`
+# `opensampl.collect.microchip.twst.context`
 
-::: opensampl.ats6502.context
+::: opensampl.collect.microchip.twst.context
     options:
       show_root_heading: false
       show_submodules: true

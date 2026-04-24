@@ -1,6 +1,6 @@
-# `opensampl.ats6502.modem`
+# `opensampl.collect.modem`
 
-::: opensampl.ats6502.modem
+::: opensampl.collect.modem
     options:
       show_root_heading: false
       show_submodules: true
