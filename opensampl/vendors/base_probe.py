@@ -159,9 +159,8 @@ class BaseProbe(ABC):
         self.metadata_parsed: bool = False
 
     @classmethod
-    @property
     def help_str(cls) -> str:
-        """Defines the help string for use in the CLI."""
+        """Help string for use in the CLI."""
         return (
             f"Processes a file or directory to load {cls.__name__} metadata and/or time series data.\n\n"
             "By default, both metadata and time series data are processed. "
@@ -317,7 +316,7 @@ class BaseProbe(ABC):
         def make_command(f: Callable) -> Callable:
             for option in reversed(cls.get_cli_options()):
                 f = option(f)
-            return click.command(name=cls.vendor.name.lower(), help=cls.help_str)(f)
+            return click.command(name=cls.vendor.name.lower(), help=cls.help_str())(f)
 
         def load_callback(ctx: click.Context, **kwargs: dict) -> None:
             """Load probe data from file or directory."""

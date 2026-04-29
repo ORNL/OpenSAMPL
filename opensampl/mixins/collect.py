@@ -73,9 +73,8 @@ class CollectMixin(ABC):
         probe_id: str = "1-1"
 
     @classmethod
-    @property
     def collect_help_str(cls) -> str:
-        """Defines the help string for use in the CLI."""
+        """Help string for use in the collect CLI."""
         return (
             f"Collect data readings for {cls.__name__}\n\n"
             "Can collect data to a directory (using --output-dir), straight into the database (--load), or both"
@@ -103,7 +102,7 @@ class CollectMixin(ABC):
         def make_command(f: Callable) -> Callable:
             for option in reversed(cls.get_collect_cli_options()):
                 f = option(f)
-            return click.command(name=cls.vendor.name.lower(), help=cls.collect_help_str)(f)
+            return click.command(name=cls.vendor.name.lower(), help=cls.collect_help_str())(f)
 
         def collect_callback(
             ctx: click.Context,  # noqa: ARG001

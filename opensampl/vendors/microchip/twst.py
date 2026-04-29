@@ -91,34 +91,30 @@ class MicrochipTWSTProbe(BaseProbe, RandomDataMixin):
             click.option(
                 "--num-channels",
                 type=int,
-                help=(
-                    f"Number of remote channels to generate data for "
-                    f"(default: {cls.RandomDataConfig.model_fields.get('num_channels').default})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("num_channels").default,
+                show_default=True,
+                help=("Number of remote channels to generate data for "),
             ),
             click.option(
                 "--ebno-base-value",
                 type=float,
-                help=(
-                    f"Base value for Eb/No measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('base_value').description!s})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("base_value").description,
+                show_default=True,
+                help=("Base value for Eb/No measurements "),
             ),
             click.option(
                 "--ebno-noise-amplitude",
                 type=float,
-                help=(
-                    f"Noise amplitude/standard deviation for Eb/No measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('noise_amplitude').description!s})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("noise_amplitude").description,
+                show_default=True,
+                help=("Noise amplitude/standard deviation for Eb/No measurements "),
             ),
             click.option(
                 "--ebno-drift-rate",
                 type=float,
-                help=(
-                    f"Linear drift rate per second for Eb/No measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('drift_rate').description!s})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("drift_rate").description,
+                show_default=True,
+                help=("Linear drift rate per second for Eb/No measurements "),
             ),
         ]
         return vendor_options + base_options
