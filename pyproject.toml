@@ -18,10 +18,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Physics",
@@ -37,7 +38,7 @@ classifiers = [
     "Framework :: Pydantic",
     "Framework :: Pydantic :: 2"
 ]
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.10,<3.15"
 dependencies = [
     "pydantic>=2.10.3,<3",
     "pydantic-settings>=2.9.0",
@@ -54,11 +55,12 @@ dependencies = [
     "loguru>=0.7.0,<0.8",
     "psycopg2-binary>=2.9.0,<3",
     "python-dotenv",
-    "python-multipart>=0.0.20,<0.0.21",
+    "python-multipart>=0.0.26,<0.0.27",
     "astor",
     "libcst",
     "jinja2>=3.1.6",
-    "tabulate"
+    "tabulate",
+    "pydanclick",
 ]
 
 [project.urls]
@@ -68,8 +70,18 @@ Documentation = "https://ornl.github.io/OpenSAMPL"
 Changelog = "https://github.com/ORNL/OpenSAMPL/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-server = []
-collect = ["telnetlib3==2.0.4"]
+migrations = [
+    "alembic",
+]
+backend = [
+    "fastapi",
+    "uvicorn",
+    "prometheus-client",
+]
+collect = [
+    "telnetlib3==2.0.4",
+    "ntplib>=0.4.0,<0.5"
+]
 
 [project.scripts]
 opensampl = "opensampl.cli:cli"
@@ -89,13 +101,19 @@ dev = [
     "mkdocs-gen-files",
     "mkdocs-material",
     "mkdocs-click",
+    "psycopg[binary]",
+    "pytest-postgresql"
 ]
 
 [tool.hatch.build.targets.sdist]
 include = [
     "opensampl/server/docker-compose.yaml",
+    "opensampl/server/docker-compose.dev.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
+    "opensampl/server/backend/*",
+    "opensampl/create/templates/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
@@ -103,8 +121,12 @@ exclude = [".env"]
 [tool.hatch.build.targets.wheel]
 include = [
     "opensampl/server/docker-compose.yaml",
+    "opensampl/server/docker-compose.dev.yaml",
     "opensampl/server/default.env",
+    "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
+    "opensampl/server/backend/*",
+    "opensampl/create/templates/*",
     "opensampl/**/*.py",
 ]
 exclude = [".env"]
@@ -115,7 +137,7 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 120
-exclude = [".git", "__pycache__", "venv", "env", ".venv", ".env", "build", "dist", "docs"]
+exclude = [".git", "__pycache__", "venv", "env", ".venv", ".env", "build", "dist", "docs", "opensampl/server/migrations/**/*.py"]
 include = ["opensampl/**/*.py"]
 
 [tool.ruff.lint]
@@ -125,10 +147,12 @@ select = ["F", "E", "W", "C", "I", "D", "N", "B", "ERA", "ANN", "S", "A", "COM",
           "FLY", "PERF", "PL", "UP", "FURB", "RUF", "TRY"]
 ignore = ["D203", "D212", "D400", "D415", "ANN401", "S101", "PLR2004", "COM812",
           "ANN201", "B011", "EM102", "TRY003", "ANN204", "FA100", "PIE790", "EM101",
-            "PLC0415"]
+            "PLC0415", 'E741']
 
 [tool.ruff.lint.per-file-ignores]
 "opensampl/vendors/**/*.py" = ['S311'] # we want to ignore the errors about random
+"opensampl/server/backend/main.py" = ['B008', 'ARG001'] #ignore complaints about calling functions in args
+"opensampl/mixins/random_data.py" = ['S311']
 
 [tool.ruff.lint.pylint]
 max-args = 10

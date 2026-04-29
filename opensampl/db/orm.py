@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from geoalchemy2 import Geometry, WKTElement
 from geoalchemy2.shape import to_shape
@@ -43,7 +43,7 @@ class BaseHelpers:
         return {c.name: convert_value(getattr(self, c.name)) for c in self.__table__.columns}
 
     @classmethod
-    def identifiable_constraint(cls) -> Optional[str]:
+    def identifiable_constraint(cls) -> str | None:
         """
         Get the name of the unique constraint used for identification.
 
@@ -57,7 +57,7 @@ class BaseHelpers:
         """
         return None
 
-    def resolve_references(self, session: Optional[Session] = None) -> None:  # noqa: ARG002
+    def resolve_references(self, session: Session | None = None) -> None:  # noqa: ARG002
         """
         Resolve UUIDs for other entries in the database given a unique constraint.
 
@@ -181,6 +181,7 @@ class ProbeMetadata(Base):
     adva_metadata = relationship("AdvaMetadata", back_populates="probe", uselist=False)
     microchip_twst_metadata = relationship("MicrochipTWSTMetadata", back_populates="probe", uselist=False)
     microchip_tp4100_metadata = relationship("MicrochipTP4100Metadata", back_populates="probe", uselist=False)
+    ntp_metadata = relationship("NtpMetadata", back_populates="probe", uselist=False)
 
     # --- CUSTOM PROBE METADATA RELATIONSHIP ---
 
@@ -202,7 +203,7 @@ class ProbeMetadata(Base):
             self._test_name = test_name
 
     @classmethod
-    def identifiable_constraint(cls) -> Optional[str]:
+    def identifiable_constraint(cls) -> str | None:
         """
         Get the name of the unique constraint used for identification.
 
@@ -212,7 +213,7 @@ class ProbeMetadata(Base):
         """
         return "uq_probe_metadata_ipaddress_probeid"
 
-    def resolve_references(self, session: Optional[Session] = None):
+    def resolve_references(self, session: Session | None = None):
         """
         Resolve references to location and/or test entries when given just the name.
 
@@ -431,6 +432,27 @@ class MicrochipTP4100Metadata(Base):
     probe_uuid = Column(String, ForeignKey("probe_metadata.uuid"), primary_key=True)
     additional_metadata = Column(JSONB)
     probe = relationship("ProbeMetadata", back_populates="microchip_tp4100_metadata")
+
+
+class NtpMetadata(Base):
+    """NTP Clock Probe specific metadata"""
+
+    __tablename__ = "ntp_metadata"
+
+    probe_uuid = Column(String, ForeignKey("probe_metadata.uuid"), primary_key=True)
+    mode = Column(Text)
+    reference = Column(Boolean, comment="Is used as a reference for other probes")
+    target_host = Column(Text)
+    target_port = Column(Integer)
+    sync_status = Column(Text)
+    leap_status = Column(Text)
+    reference_id = Column(Text)
+    observation_sources = Column(JSONB)
+    collection_id = Column(Text)
+    collection_ip = Column(Text)
+    timeout = Column(Float)
+    additional_metadata = Column(JSONB)
+    probe = relationship("ProbeMetadata", back_populates="ntp_metadata")
 
 
 # --- CUSTOM TABLES ---      !! Do not remove line, used as reference when inserting metadata table

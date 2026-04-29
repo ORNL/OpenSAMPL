@@ -9,7 +9,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import click
 import yaml
@@ -19,6 +19,8 @@ from loguru import logger
 from opensampl.config.base import BaseConfig as CLIConfig
 from opensampl.db.orm import get_table_names
 from opensampl.load_data import create_new_tables, write_to_table
+from opensampl.mixins.collect import CollectMixin
+from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.vendors.constants import VENDORS
 
 BANNER = r"""
@@ -33,7 +35,7 @@ BANNER = r"""
 """
 
 
-def load_config(env_file: Optional[str] = None) -> CLIConfig:
+def load_config(env_file: str | None = None) -> CLIConfig:
     """
     Load the configuration settings
 
@@ -62,7 +64,7 @@ def load_config(env_file: Optional[str] = None) -> CLIConfig:
 class CaseInsensitiveGroup(click.Group):
     """Defines Click group options as case-insensitive. By default, click groups are case-sensitive."""
 
-    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:  # noqa: ARG002
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:  # noqa: ARG002
         """Normalize command name to lower case"""
         cmd_name = cmd_name.lower()
         # Match against lowercased command names
@@ -184,12 +186,21 @@ def random():
     """Generate and send random test data to the database"""
 
 
+@cli.group(cls=CaseInsensitiveGroup)
+def collect():
+    """Collect and send data to the database"""
+
+
 for vendor in VENDORS.all():
-    load.add_command(vendor.get_parser().get_cli_command(), name=vendor.name)
-    random.add_command(vendor.get_parser().get_random_data_cli_command(), name=vendor.name)
+    _vend = vendor.get_parser()
+    load.add_command(_vend.get_cli_command(), name=vendor.name)
+    if issubclass(_vend, RandomDataMixin):
+        random.add_command(_vend.get_random_data_cli_command(), name=vendor.name)
+    if issubclass(_vend, CollectMixin):
+        collect.add_command(_vend.get_collect_cli_command(), name=vendor.name)
 
 
-def path_or_string(value: str) -> Union[dict, list]:
+def path_or_string(value: str) -> dict | list:
     """Get content from a file or use the string directly"""
     # Get content - either from file or use the string directly
     content = value
@@ -225,9 +236,7 @@ def path_or_string(value: str) -> Union[dict, list]:
 )
 @click.argument("table_name", type=click.Choice(get_table_names()))
 @click.argument("filepath", type=path_or_string)
-def table_load(
-    filepath: Union[dict, list], table_name: str, if_exists: Literal["update", "error", "replace", "ignore"]
-):
+def table_load(filepath: dict | list, table_name: str, if_exists: Literal["update", "error", "replace", "ignore"]):
     r"""
     Perform a Table load into the database.
 
@@ -266,12 +275,19 @@ def table_load(
     is_flag=True,
     help="Update the database with the new probe type",
 )
-def create_probe_command(config_path: Path, update_db: bool):
+@click.option(
+    "--collect-mixin",
+    "-c",
+    is_flag=True,
+    help="include shell for collect mixin ",
+)
+def create_probe_command(config_path: Path, update_db: bool, collect_mixin: bool):
     """Create a new probe type with scaffolding, based on a config file."""
     from opensampl.create.create_vendor import VendorConfig
+    # TODO figure out best way to allow Vendor Config be through cli flags (too complicated nesting for pydanclick)
 
     vendor_config = VendorConfig.from_config_file(config_path)
-    vendor_config.create()
+    vendor_config.create(collect_mixin=collect_mixin)
     if update_db:
         create_new_tables()
 

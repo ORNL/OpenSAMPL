@@ -6,7 +6,7 @@ configuration validation, and settings management.
 """
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from dotenv import set_key
 from loguru import logger
@@ -28,19 +28,25 @@ class BaseConfig(BaseSettings):
     ROUTE_TO_BACKEND: bool = Field(
         False, description="URL of the backend service when routing is enabled", alias="ROUTE_TO_BACKEND"
     )
-    BACKEND_URL: Optional[str] = Field(
+    BACKEND_URL: str | None = Field(
         None, description="URL of the backend service when routing is enabled", alias="BACKEND_URL"
     )
-    DATABASE_URL: Optional[str] = Field(None, description="URL for direct database connections", alias="DATABASE_URL")
+    DATABASE_URL: str | None = Field(None, description="URL for direct database connections", alias="DATABASE_URL")
     ARCHIVE_PATH: Path = Field(
         Path("archive"),
         description="Default path that files are moved to after they have been processed",
         alias="ARCHIVE_PATH",
     )
     LOG_LEVEL: str = Field("INFO", description="Log level for opensampl cli", alias="LOG_LEVEL")
-    API_KEY: Optional[str] = Field(None, description="Access key for interacting with the backend", alias="API_KEY")
+    API_KEY: str | None = Field(None, description="Access key for interacting with the backend", alias="API_KEY")
     INSECURE_REQUESTS: bool = Field(
         False, description="Allow insecure requests to be made to the backend", alias="INSECURE_REQUESTS"
+    )
+
+    ENABLE_GEOLOCATE: bool = Field(
+        False,
+        description="Enable geolocate features which extract a location from ip addresses",
+        alias="ENABLE_GEOLOCATE",
     )
 
     @field_serializer("ARCHIVE_PATH")
@@ -111,7 +117,7 @@ class BaseConfig(BaseSettings):
 
         set_key(self.env_file, name, str(value))
 
-    def save_config(self, values: Optional[list[str]] = None):
+    def save_config(self, values: list[str] | None = None):
         """
         Save the current env configuration.
 

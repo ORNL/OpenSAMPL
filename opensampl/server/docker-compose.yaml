@@ -26,6 +26,7 @@ services:
     image: savannah.ornl.gov/opensampl/grafana:latest
     build:
       context: ./grafana
+    restart: "always"
     ports:
       - "3015:3000"
     environment:
@@ -35,6 +36,8 @@ services:
 
   migrations:
     image: savannah.ornl.gov/opensampl/migrations:latest
+    build:
+      context: ./migrations
     restart: "no"
     environment:
       - DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
@@ -46,6 +49,9 @@ services:
 
   backend:
     image: savannah.ornl.gov/opensampl/backend:latest
+    build:
+      context: ./backend
+      target: prod
     ports:
       - "8015:8000"
     restart: always

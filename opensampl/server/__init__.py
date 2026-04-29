@@ -12,10 +12,14 @@ def check_command(command: list[str]) -> bool:
         return False
 
 
-if not check_command(["docker", "--version"]):
-    raise ImportError("Docker is not installed or not found in PATH. Please install Docker.")
+def ensure_docker():
+    """Ensure Docker and Docker Compose are installed, error if not"""
+    if not check_command(["docker", "--version"]):
+        raise RuntimeError("Docker is not installed or not found in PATH. Please install Docker.")
 
-compose_installed = check_command(["docker", "compose", "version"]) or check_command(["docker-compose", "--version"])
+    compose_installed = check_command(["docker", "compose", "version"]) or check_command(
+        ["docker-compose", "--version"]
+    )
 
-if not compose_installed:
-    raise ImportError("Neither 'docker compose' nor 'docker-compose' is installed. Please install Docker Compose.")
+    if not compose_installed:
+        raise RuntimeError("Neither 'docker compose' nor 'docker-compose' is installed. Please install Docker Compose.")

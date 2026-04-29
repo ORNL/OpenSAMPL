@@ -7,7 +7,7 @@ channel configurations, and monitoring parameters for various timing interfaces.
 """
 
 from dataclasses import dataclass
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 
 @dataclass
@@ -76,7 +76,7 @@ class MonitoringConfig:
     channel_str: str
     ids: list[int]
     metrics: list[MetricInfo]
-    default_download: Optional[dict] = None
+    default_download: dict | None = None
 
     @property
     def download_path(self):
@@ -90,7 +90,7 @@ class MonitoringConfig:
         return f"perfmon_{self.channel_str}_stat"
 
     def download_payload(
-        self, download: Optional[dict] = None, which_id: int = 1, down_metric: MetricInfo = MONITOR_METRIC.TE
+        self, download: dict | None = None, which_id: int = 1, down_metric: MetricInfo = MONITOR_METRIC.TE
     ):
         """
         Generate payload for data download requests.

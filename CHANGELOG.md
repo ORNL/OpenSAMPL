@@ -37,6 +37,31 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
+## [1.2.0] - 2026-04-29
+### Added
+- 🔥 First-class NTP vendor and probe support using the existing OpenSAMPL extension model
+- 🔥 Local and remote NTP collection paths, including `ntp_metadata` loading behavior
+- 🔥 NTP-focused metrics such as jitter, delay, stratum, reachability, root delay, root dispersion, poll interval, and sync health
+- 🔥 Additional NTP metadata handling for collector/target probe relationships and reference-backed loading
+- 🔥 Compact reference/source metadata views in dashboards to improve interpretation of NTP-backed timing data
+- 🔥 Documentation covering the NTP extension path, collection semantics, and geolocation behavior
+- 🔥 Additional unit and integration-style tests for NTP collection, loading, geolocation helpers, and seeded database defaults
+- 🔥 Moved alembic migration code into openSAMPL along with Docker image information
+- 🔥 Moved backend api code into openSAMPL along with Docker image information
+- 🔥 Docker-compose for developers which installs openSAMPL as editable on backend image
+
+### Changed
+- ⚡ Hardened dashboard queries and variables to avoid brittle empty-filter handling and varchar-versus-UUID failures
+- ⚡ Updated timing dashboards and wording to use reference-safe terminology for NTP-backed demo paths
+- ⚡ Reworked integration-style tests to use the project MockDB harness instead of requiring a locally spawned PostgreSQL instance
+- ⚡ Updated CI to install PostgreSQL/PostGIS tooling so the workflow can support `pytest-postgresql`-style environments when needed
+
+### Fixed
+- 🩹 Seeded default metric UUID handling in the MockDB test harness now points to the UNKNOWN metric as intended
+- 🩹 Bug which caused random data duration to always be 1 hour
+- 🩹 Issue with CI order causing linting to fail
+- 🩹 Fixed variable assignment for mkdocs-click integration
+
 ## [1.1.5] - 2025-09-22
 ### Fixed
 - 🩹 More durable timestamp extrapolation in time data insertion

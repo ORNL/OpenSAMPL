@@ -2,7 +2,7 @@
 
 import random
 from pathlib import Path
-from typing import ClassVar, Optional, Union
+from typing import ClassVar
 
 import click
 import pandas as pd
@@ -11,12 +11,13 @@ from loguru import logger
 from pydantic import Field
 
 from opensampl.metrics import METRICS
+from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import VENDORS, ProbeKey
 
 
-class MicrochipTP4100Probe(BaseProbe):
+class MicrochipTP4100Probe(BaseProbe, RandomDataMixin):
     """MicrochipTP4100 Probe Object"""
 
     vendor = VENDORS.MICROCHIP_TP4100
@@ -25,17 +26,17 @@ class MicrochipTP4100Probe(BaseProbe):
     }
     REFERENCES: ClassVar = {"GNSS": REF_TYPES.GNSS}
 
-    class RandomDataConfig(BaseProbe.RandomDataConfig):
+    class RandomDataConfig(RandomDataMixin.RandomDataConfig):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
 
         # Time series parameters
-        base_value: Optional[float] = Field(
+        base_value: float | None = Field(
             default_factory=lambda: random.uniform(-5e-7, 5e-7), description="random.uniform(-5e-7, 5e-7)"
         )
-        noise_amplitude: Optional[float] = Field(
+        noise_amplitude: float | None = Field(
             default_factory=lambda: random.uniform(1e-8, 5e-8), description="random.uniform(1e-8, 5e-8)"
         )
-        drift_rate: Optional[float] = Field(
+        drift_rate: float | None = Field(
             default_factory=lambda: random.uniform(-1e-10, 1e-10), description="random.uniform(-1e-10, 1e-10)"
         )
 
@@ -58,9 +59,9 @@ class MicrochipTP4100Probe(BaseProbe):
         ]
         return base_options + vendor_options
 
-    def __init__(self, input_file: Union[str, Path]):
+    def __init__(self, input_file: str | Path, **kwargs: dict):
         """Initialize MicrochipTP4100 object given input_file and determines probe identity from file headers"""
-        super().__init__(input_file=input_file)
+        super().__init__(input_file=input_file, **kwargs)
         self.header = self.get_header()
         self.probe_key = ProbeKey(
             ip_address=self.header.get("host"), probe_id=self.header.get("probe_id", None) or "1-1"

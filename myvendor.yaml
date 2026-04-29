@@ -1,0 +1,47 @@
+# =============================================================================
+# openSAMPL Vendor Config Template
+# Usage: pass this file to the create_vendor command
+# =============================================================================
+
+# REQUIRED: Human-readable vendor name. Used to auto-generate all fields below
+# if they are not explicitly provided. Spaces permitted as they are removed/replaced as needed
+name: My Vendor
+
+# OPTIONAL: The Python class name for the probe parser.
+# Auto-generated from name if omitted → e.g. "My Vendor" → "MyVendorProbe"
+# parser_class: MyVendorProbe
+
+# OPTIONAL: The Python module name (file) under opensampl/vendors/.
+# Auto-generated from name if omitted → e.g. "My Vendor" → "my_vendor"
+#parser_module: my_vendor
+
+# OPTIONAL: The database table name for this vendor's metadata.
+# Auto-generated from name if omitted → e.g. "My Vendor" → "my_vendor_metadata"
+#metadata_table: my_vendor_metadata
+
+# OPTIONAL: The SQLAlchemy ORM class name for the metadata table.
+# Auto-generated from name if omitted → e.g. "My Vendor" → "MyVendorMetadata"
+# metadata_orm: MyVendorMetadata
+
+# OPTIONAL: Vendor-specific metadata fields to store alongside each probe.
+# If omitted or malformed, defaults to only `additional_metadata` (JSONB) and probe uuid
+#
+# Each field requires:
+#   - name: column name in the metadata table
+#   - type: SQLAlchemy column type (default: Text if omitted)
+#
+# Common SQLAlchemy types:
+#   Text, String, Integer, Float, Boolean, DateTime, JSONB, Numeric
+metadata_fields:
+  - name: serial_number
+    type: Text
+  - name: firmware_version
+    type: Text
+  - name: location
+    type: Text
+  - name: sample_rate_hz
+    type: Integer
+  # Add more fields as needed...
+  #
+  # NOTE: `additional_metadata` (JSONB) and 'probe_uuid' (Text) is always appended automatically —
+  # no need to include it here.

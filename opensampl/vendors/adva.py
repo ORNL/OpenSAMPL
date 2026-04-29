@@ -5,7 +5,7 @@ import random
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import ClassVar, TextIO, Union
+from typing import ClassVar, TextIO
 
 import click
 import pandas as pd
@@ -13,12 +13,13 @@ from loguru import logger
 from pydantic import Field
 
 from opensampl.metrics import METRICS
+from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import VENDORS, ProbeKey
 
 
-class AdvaProbe(BaseProbe):
+class AdvaProbe(BaseProbe, RandomDataMixin):
     """ADVA Probe Object"""
 
     timestamp: datetime
@@ -32,7 +33,7 @@ class AdvaProbe(BaseProbe):
         r"(?P<hour>\d+)-(?P<minute>\d+)-(?P<second>\d+)\.txt(?:\.gz)?"
     )
 
-    class RandomDataConfig(BaseProbe.RandomDataConfig):
+    class RandomDataConfig(RandomDataMixin.RandomDataConfig):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
 
         # Time series parameters
@@ -62,9 +63,9 @@ class AdvaProbe(BaseProbe):
         ]
         return base_options + vendor_options
 
-    def __init__(self, input_file: Union[str, Path]):
+    def __init__(self, input_file: str | Path, **kwargs: dict):
         """Initialize AdvaProbe object give input_file and determines probe identity from filename"""
-        super().__init__(input_file=input_file)
+        super().__init__(input_file=input_file, **kwargs)
         self.probe_key, self.timestamp = self.parse_file_name(self.input_file)
 
     @classmethod
@@ -94,7 +95,7 @@ class AdvaProbe(BaseProbe):
             return ProbeKey(probe_id=probe_id, ip_address=ip_address), timestamp
         raise ValueError(f"Could not parse file name {file_name} into probe key and timestamp for ADVA probe")
 
-    def _open_file(self) -> Union[TextIO, gzip.GzipFile]:
+    def _open_file(self) -> TextIO | gzip.GzipFile:
         """Open the input file, handling both .txt and .txt.gz formats"""
         if self.input_file.name.endswith(".gz"):
             return gzip.open(self.input_file, "rt")

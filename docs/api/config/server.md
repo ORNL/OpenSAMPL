@@ -1,6 +1,6 @@
-# `opensampl.load.probe`
+# `opensampl.config.server`
 
-::: opensampl.load.probe
+::: opensampl.config.server
     options:
       show_root_heading: false
       show_submodules: true

@@ -299,6 +299,59 @@ class TestLoadProbeMetadata:
         assert entry.probe_id == sample_probe_key.probe_id
         assert entry.ip_address == sample_probe_key.ip_address
 
+    def test_ntp_metadata_creates_probe_and_vendor_rows(
+        self,
+        mock_config: Mock,
+        mock_session: Session,
+        test_db: MockDB,
+        mock_table_factory_with_mockdb: Any,
+    ):  # noqa: ARG002
+        """NTP metadata loading should create both probe_metadata and ntp_metadata records."""
+        from opensampl.vendors.constants import ProbeKey, VENDORS
+
+        mock_config.return_value.ENABLE_GEOLOCATE = False
+        probe_key = ProbeKey(probe_id="public-time", ip_address="time.cloudflare.com")
+        payload = {
+            "mode": "remote",
+            "reference": False,
+            "target_host": "time.cloudflare.com",
+            "target_port": 123,
+            "sync_status": "synchronized",
+            "leap_status": "no_warning",
+            "reference_id": "GPS",
+            "observation_sources": ["ntplib"],
+            "collection_id": "collector-host",
+            "collection_ip": "10.0.0.5",
+            "timeout": 1.5,
+            "additional_metadata": {"version": 3},
+        }
+
+        result = load_probe_metadata(
+            vendor=VENDORS.NTP,
+            probe_key=probe_key,
+            data=payload.copy(),
+            session=mock_session,
+        )
+
+        ProbeMetadata = test_db.table_mappings["ProbeMetadata"]  # noqa: N806
+        NtpMetadata = test_db.table_mappings["NtpMetadata"]  # noqa: N806
+
+        assert result is None
+
+        probe_row = mock_session.query(ProbeMetadata).filter_by(ip_address="time.cloudflare.com").one()
+        ntp_row = mock_session.query(NtpMetadata).filter_by(probe_uuid=probe_row.uuid).one()
+
+        assert probe_row.vendor == "NTP"
+        assert probe_row.probe_id == "public-time"
+        assert probe_row.ip_address == "time.cloudflare.com"
+        assert ntp_row.probe_uuid == probe_row.uuid
+        assert ntp_row.mode == "remote"
+        assert ntp_row.target_host == "time.cloudflare.com"
+        assert ntp_row.target_port == 123
+        assert ntp_row.sync_status == "synchronized"
+        assert ntp_row.collection_id == "collector-host"
+        assert ntp_row.collection_ip == "10.0.0.5"
+
 
 class TestMockDb:
     """Tests for the mock database itself"""
