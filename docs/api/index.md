@@ -1,33 +1,52 @@
 # API Reference
 
-This section contains the generated module reference for the current public package layout.
+Welcome to the OpenSAMPL API documentation.
 
+Browse the modules and packages below:
+
+- [Cli](cli.md)
 - Collect
-  - [Context](ats6502/context.md)
-  - [Modem](ats6502/modem.md)
-  - [Readings](ats6502/readings.md)
-- [CLI](cli.md)
+    - [Cli](collect/cli.md)
+    - Microchip
+        - Tp4100
+            - [Collect 4100](collect/microchip/tp4100/collect_4100.md)
+        - Twst
+            - [Context](collect/microchip/twst/context.md)
+            - [Generate Twst Files](collect/microchip/twst/generate_twst_files.md)
+            - [Readings](collect/microchip/twst/readings.md)
+    - [Modem](collect/modem.md)
 - Config
-  - [Base](config/base.md)
-- Database
-  - [Access ORM](db/access_orm.md)
-  - [ORM](db/orm.md)
+    - [Base](config/base.md)
+    - [Server](config/server.md)
+    - [Tp4100](config/tp4100.md)
+- Create
+    - [Create Vendor](create/create_vendor.md)
+    - [Insert Markers](create/insert_markers.md)
+- Db
+    - [Access Orm](db/access_orm.md)
+    - [Orm](db/orm.md)
 - Helpers
-  - [Create Vendor](helpers/create_vendor.md)
-  - [Insert Markers](helpers/insert_markers.md)
-  - [Source Writer Notes](helpers/source_writer.md)
+    - [Geolocator](helpers/geolocator.md)
 - Load
-  - [Data](load/data.md)
-  - [Probe Abstractions](load/probe.md)
-  - [Routing](load/routing.md)
-  - [Table Factory](load/table_factory.md)
+    - [Data](load/data.md)
+    - [Routing](load/routing.md)
+    - [Table Factory](load/table_factory.md)
 - [Load Data](load_data.md)
 - [Metrics](metrics.md)
+- Mixins
+    - [Collect](mixins/collect.md)
+    - [Random Data](mixins/random_data.md)
 - [References](references.md)
 - Server
-  - [CLI](server/cli.md)
+    - Backend
+        - [Main](server/backend/main.md)
+    - [Cli](server/cli.md)
+    - [Cli2](server/cli2.md)
 - Vendors
-  - [ADVA](vendors/adva.md)
-  - [Base Probe](vendors/base_probe.md)
-  - [Constants](vendors/constants.md)
-  - [Microchip TWST](vendors/microsemi_twst.md)
+    - [Adva](vendors/adva.md)
+    - [Base Probe](vendors/base_probe.md)
+    - [Constants](vendors/constants.md)
+    - Microchip
+        - [Tp4100](vendors/microchip/tp4100.md)
+        - [Twst](vendors/microchip/twst.md)
+    - [Ntp](vendors/ntp.md)

@@ -31,8 +31,7 @@ OpenSAMPL currently supports probe families including ADVA, Microchip TWST, Micr
 
 ## API references
 
-- [openSAMPL API Reference](python-api-reference.md)
-- [Server API Reference](server-api-reference.md)
+- [openSAMPL API Reference](api/index.md)
 
 ## Repository
 
