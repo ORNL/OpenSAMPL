@@ -53,14 +53,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 - ⚡ Hardened dashboard queries and variables to avoid brittle empty-filter handling and varchar-versus-UUID failures
 - ⚡ Updated timing dashboards and wording to use reference-safe terminology for NTP-backed demo paths
-- ⚡ Updated initialization and bootstrap documentation to reflect the current schema/bootstrap flow
 - ⚡ Reworked integration-style tests to use the project MockDB harness instead of requiring a locally spawned PostgreSQL instance
 - ⚡ Updated CI to install PostgreSQL/PostGIS tooling so the workflow can support `pytest-postgresql`-style environments when needed
 
 ### Fixed
-- 🩹 Remote NTP collection now persists stratum correctly and no longer leaves the remote jitter path empty
-- 🩹 When direct measured jitter is unavailable from a single remote NTP response, OpenSAMPL now stores a documented estimate/bound instead
-- 🩹 Geolocation helper coverage now exercises override, cache, lookup, and no-data paths without depending on live outbound access
 - 🩹 Seeded default metric UUID handling in the MockDB test harness now points to the UNKNOWN metric as intended
 - 🩹 Bug which caused random data duration to always be 1 hour
 
