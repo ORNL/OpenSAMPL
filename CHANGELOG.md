@@ -59,6 +59,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - 🩹 Seeded default metric UUID handling in the MockDB test harness now points to the UNKNOWN metric as intended
 - 🩹 Bug which caused random data duration to always be 1 hour
+- 🩹 Issue with CI order causing linting to fail
 
 ## [1.1.5] - 2025-09-22
 ### Fixed
