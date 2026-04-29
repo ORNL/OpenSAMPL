@@ -11,7 +11,9 @@ MKDOCS_YML = Path("mkdocs.yaml")
 
 click_progname_map = {
     'opensampl.cli': 'opensampl',
-    'opensampl.server.cli': 'opensampl-server'
+    'opensampl.server.cli': 'opensampl-server',
+    'opensampl.server.cli2': 'opensampl-server2',
+    'opensampl.collect.cli': 'opensampl-collect'
 }
 
 def get_click_command_name(file_path: Path) -> str | None:
