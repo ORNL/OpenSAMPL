@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import shutil
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import click
 import psycopg2.errors
@@ -461,16 +462,16 @@ class BaseProbe(ABC):
         return self.probe_key.ip_address
 
     @abstractmethod
-    def process_time_data(self) -> pd.DataFrame:
+    def process_time_data(self) -> None:
         """
-        Process time series data.
+        Parse and load time series data from self.input_file.
 
-        Returns
-        -------
-            pd.DataFrame: DataFrame with columns:
+        Use either send_time_data (which prefills METRICS.PHASE_OFFSET)
+        or send_data and provide alternative METRICS type.
+        Both require a df as follows:
+            pd.DataFrame with columns:
                 - time (datetime64[ns]): timestamp for each measurement
                 - value (float64): measured value at each timestamp
-
         """
 
     @dualmethod
@@ -483,13 +484,13 @@ class BaseProbe(ABC):
         probe_key: ProbeKey | None = None,
     ) -> None:
         """Ingests data into the database"""
-        if isinstance(self, BaseProbe):
+        if isinstance(self, BaseProbe) and probe_key is None:
             probe_key = self.probe_key
 
         if probe_key is None:
             raise ValueError("send data must be called with probe_key if used as class method")
 
-        if self.chunk_size:
+        if hasattr(self, "chunk_size") and self.chunk_size:
             for chunk_start in range(0, len(data), self.chunk_size):
                 chunk = data.iloc[chunk_start : chunk_start + self.chunk_size]
                 load_time_data(

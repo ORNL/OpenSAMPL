@@ -499,14 +499,14 @@ class MockDB:
 
         # Get all metric types from the METRICS class
         metrics = [attr for attr in METRICS.__dict__.values() if isinstance(attr, MetricType)]
-        phaseerr_uuid = None
+        unknown_uuid = None
         for m in metrics:
             metric = MetricTypeTable(**m.model_dump())
             session.add(metric)
             session.flush()
-            if metric.name == "PHASE":
-                phaseerr_uuid = metric.uuid
-        return phaseerr_uuid
+            if metric.name == "UNKNOWN":
+                unknown_uuid = metric.uuid
+        return unknown_uuid
 
     def _load_reference_types(self, session: Session) -> str:
         """Load reference types from opensampl.references.REF_TYPES and return the UNKNOWN one's UUID."""

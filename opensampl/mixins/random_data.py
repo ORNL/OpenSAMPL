@@ -2,9 +2,10 @@
 
 import random
 from abc import abstractmethod
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import click
 import numpy as np
@@ -25,7 +26,7 @@ class RandomDataMixin:
         # General configuration
         num_probes: int = 1
         duration_hours: float = 1.0
-        seed: Optional[int] = None
+        seed: int | None = None
 
         # Time series parameters
         sample_interval: float = 1
@@ -37,10 +38,10 @@ class RandomDataMixin:
         outlier_multiplier: float = 10.0
 
         # Start time (computed at runtime if None)
-        start_time: Optional[datetime] = None
+        start_time: datetime | None = None
 
-        probe_id: Union[str, None] = None
-        probe_ip: Optional[str] = None
+        probe_id: str | None = None
+        probe_ip: str | None = None
 
         @classmethod
         def _generate_random_ip(cls) -> str:
@@ -267,7 +268,7 @@ class RandomDataMixin:
         return cls.RandomDataConfig(**kwargs)
 
     @classmethod
-    def _setup_random_seed(cls, seed: Optional[int]) -> None:
+    def _setup_random_seed(cls, seed: int | None) -> None:
         """Set up random seed for reproducible data generation."""
         if seed is not None:
             random.seed(seed)

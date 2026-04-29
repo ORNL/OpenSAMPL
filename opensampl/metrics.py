@@ -62,5 +62,70 @@ class METRICS:
         unit="unknown",
         value_type=object,
     )
+    DELAY = MetricType(
+        name="Delay",
+        description=(
+            "Round-trip delay (RTD) or Round-Trip Time (RTT). The time in seconds it takes for a data signal to "
+            "travel from a source to a destination and back, including acknowledgement."
+        ),
+        unit="s",
+        value_type=float,
+    )
+    JITTER = MetricType(
+        name="Jitter",
+        description=("Jitter or offset variation in delay in seconds. Represents inconsistent response times."),
+        unit="s",
+        value_type=float,
+    )
+    STRATUM = MetricType(
+        name="Stratum",
+        description=(
+            'Stratum level. Hierarchical layer defining the distance (or "hops") between device and reference.'
+        ),
+        unit="level",
+        value_type=int,
+    )
+    REACHABILITY = MetricType(
+        name="Reachability",
+        description=(
+            "Reachability register (0-255) as a scalar for plotting. Ability of a source node to communicate "
+            "with a target node."
+        ),
+        unit="count",
+        value_type=float,
+    )
+    DISPERSION = MetricType(
+        name="Dispersion",
+        description="Uncertainty in a clock's time relative to its reference source in seconds",
+        unit="s",
+        value_type=float,
+    )
+    NTP_ROOT_DELAY = MetricType(
+        name="NTP Root Delay",
+        description=(
+            "Total round-trip network delay from the local system"
+            " all the way to the primary reference clock (stratum 0)"
+        ),
+        unit="s",
+        value_type=float,
+    )
+    NTP_ROOT_DISPERSION = MetricType(
+        name="NTP Root Dispersion",
+        description="The total accumulated clock uncertainty from the local system back to the primary reference clock",
+        unit="s",
+        value_type=float,
+    )
+    POLL_INTERVAL = MetricType(
+        name="Poll Interval",
+        description="Time between requests sent to a time server in seconds",
+        unit="s",
+        value_type=float,
+    )
+    SYNC_HEALTH = MetricType(
+        name="Sync Health",
+        description="1.0 if synchronized/healthy, 0.0 otherwise (probe-defined)",
+        unit="ratio",
+        value_type=float,
+    )
 
     # --- CUSTOM METRICS ---      !! Do not remove line, used as reference when inserting metric

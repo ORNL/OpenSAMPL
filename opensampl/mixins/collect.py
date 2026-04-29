@@ -2,9 +2,10 @@
 
 import json
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 import click
 import pandas as pd
@@ -27,15 +28,15 @@ class CollectMixin(ABC):
         value: pd.DataFrame
         metric: MetricType = METRICS.UNKNOWN
         reference_type: ReferenceType = REF_TYPES.UNKNOWN
-        compound_reference: Optional[dict[str, Any]] = None
+        compound_reference: dict[str, Any] | None = None
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
     class CollectArtifact(BaseModel):
         """Model for a single probe's collected data"""
 
         data: list["CollectMixin.DataArtifact"]
-        probe_key: Optional[ProbeKey] = None
-        metadata: Optional[dict] = Field(default_factory=dict)
+        probe_key: ProbeKey | None = None
+        metadata: dict | None = Field(default_factory=dict)
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
         @property
@@ -58,13 +59,13 @@ class CollectMixin(ABC):
 
         Attributes:
             output_dir: When provided, will save collected data as a file to provided directory.
-                Filename will be automatically generated as {ip_address}_{probe_id}_{vendor}_{timestamp}.txt
+                Filename will be automatically generated as {vendor}_{ip_address}_{probe_id}_{vendor}_{timestamp}.txt
             load: Whether to load collected data directly to the database
             duration: Number of seconds to collect data for
 
         """
 
-        output_dir: Optional[Path] = None
+        output_dir: Path | None = None
         load: bool = False
         duration: int = 300
 
@@ -144,7 +145,7 @@ class CollectMixin(ABC):
     @classmethod
     def filter_files(cls, files: list[Path]) -> list[Path]:
         """Filter the files found in the input directory when loading this vendor's data files"""
-        return [f for f in files if f.name.startswith(f"{cls.vendor.parser_class}_") and f.stem == ".txt"]
+        return [f for f in files if f.name.startswith(f"{cls.vendor.parser_class}_") and f.suffix == ".txt"]
 
     @classmethod
     def load_metadata(cls, probe_key: ProbeKey, metadata: dict) -> None:

@@ -1,16 +1,69 @@
-# Quick Start using Server 
+# Quickstart
 
-By running `opensampl-server up`, you get a full stack ready to receive your time data. 
+This quickstart uses the packaged Docker-backed server stack.
 
-This creates: 
+## Start the stack
 
-1. A TimescaleDB instance, with schema already fully formatted
-1. A BackendAPI ready to be used to ingest data
-    * Complete with Swagger documentation at: [http://localhost:8015](http://localhost:8015)
-1. A [Grafana](https://grafana.com/) server with a dashboard already built to visualize clock data. 
-    * Accessible at [http://localhost:3015](http://localhost:3015)
+Install the server extra first:
 
-In order to ingest data, you simply have to run `opensampl load` with appropriate arguments, and it will go straight into your new TimescaleDB
-instance and become visible on Grafana. 
+```bash
+pip install "opensampl[server]"
+```
 
-See the [Configuration](../guides/configuration.md#opensampl-server) page on configuring your server instance. 
+Then start the default stack:
+
+```bash
+opensampl-server up
+```
+
+That starts:
+
+1. PostgreSQL / TimescaleDB on `localhost:5415`
+2. the backend API on `http://localhost:8015`
+3. Grafana on `http://localhost:3015`
+
+When `opensampl-server up` completes, it also updates your local OpenSAMPL environment so future `opensampl load ...` commands route through the backend API by default.
+
+## Initialize and load data
+
+Create the schema if needed:
+
+```bash
+opensampl init
+```
+
+Load a probe file:
+
+```bash
+opensampl load ADVA ./path/to/file.txt.gz
+```
+
+Or load a directory:
+
+```bash
+opensampl load ADVA ./path/to/data-dir
+```
+
+The loaded data should then be visible through Grafana.
+
+## Inspect and stop
+
+Check service status:
+
+```bash
+opensampl-server ps
+```
+
+Follow logs:
+
+```bash
+opensampl-server logs
+```
+
+Stop the stack:
+
+```bash
+opensampl-server down
+```
+
+See the [Configuration](../guides/configuration.md#opensampl-server) and [Server guide](../guides/opensampl-server.md) pages for environment customization and compose overrides.

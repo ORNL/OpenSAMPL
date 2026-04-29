@@ -1,7 +1,7 @@
 """Main functionality for loading data into the database"""
 
 import json
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import pandas as pd
 from loguru import logger
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from opensampl.config.base import BaseConfig
 from opensampl.db.orm import Base, ProbeData
+from opensampl.helpers.geolocator import create_location
 from opensampl.load.routing import route
 from opensampl.load.table_factory import TableFactory
 from opensampl.metrics import MetricType
@@ -25,7 +26,7 @@ def write_to_table(
     data: dict[str, Any],
     _config: BaseConfig,
     if_exists: conflict_actions = "update",
-    session: Optional[Session] = None,
+    session: Session | None = None,
 ):
     """
     Write object to table with configurable behavior for handling conflicts.
@@ -79,9 +80,9 @@ def load_time_data(
     reference_type: ReferenceType,
     data: pd.DataFrame,
     _config: BaseConfig,
-    compound_key: Optional[dict[str, Any]] = None,
+    compound_key: dict[str, Any] | None = None,
     strict: bool = True,
-    session: Optional[Session] = None,
+    session: Session | None = None,
 ):
     """
     Write time data to probe_data table
@@ -125,9 +126,9 @@ def load_time_data(
             strict=strict,
             session=session,
         )
+        probe = data_definition.probe  # ty: ignore[possibly-unbound-attribute]
         probe_readable = (
-            data_definition.probe.name  # ty: ignore[possibly-unbound-attribute]
-            or f"{data_definition.probe.ip_address} ({data_definition.probe.probe_id})"  # ty: ignore[possibly-unbound-attribute]
+            probe.name or f"{probe.ip_address} ({probe.probe_id})"  # ty: ignore[possibly-unbound-attribute]
         )
 
         if any(x is None for x in [data_definition.probe, data_definition.metric, data_definition.reference]):
@@ -156,11 +157,13 @@ def load_time_data(
             total_rows = len(records)
             inserted = result.rowcount  # ty: ignore[unresolved-attribute]
             excluded = total_rows - inserted
-
-            logger.warning(
-                f"Inserted {inserted}/{total_rows} rows for {probe_readable}; "
-                f"{excluded}/{total_rows} rejected due to conflicts"
-            )
+            if excluded > 0:
+                logger.warning(
+                    f"Inserted {inserted}/{total_rows} rows for {probe_readable}; "
+                    f"{excluded}/{total_rows} rejected due to conflicts"
+                )
+            else:
+                logger.info(f"Inserted {inserted}/{total_rows} rows for {probe_readable}")
 
         except Exception as e:
             # In case of an error, roll back the session
@@ -181,7 +184,7 @@ def load_probe_metadata(
     probe_key: ProbeKey,
     data: dict[str, Any],
     _config: BaseConfig,
-    session: Optional[Session] = None,
+    session: Session | None = None,
 ):
     """Write object to table"""
     if _config.ROUTE_TO_BACKEND:
@@ -199,6 +202,19 @@ def load_probe_metadata(
 
         pm_cols = {col.name for col in pm_factory.inspector.columns}
         probe_info = {k: data.pop(k) for k in list(data.keys()) if k in pm_cols}
+        location_name = probe_info.pop("location_name", None)
+        geolocation = ({"name": location_name} if location_name else {}) | probe_info.pop("geolocation", {})
+
+        if geolocation or _config.ENABLE_GEOLOCATE:
+            location_uuid = create_location(
+                session,
+                geolocate_enabled=_config.ENABLE_GEOLOCATE,
+                geo_override=geolocation,
+                ip_address=probe_key.ip_address,
+            )
+            if location_uuid:
+                probe_info.update({"location_uuid": location_uuid})
+
         probe_info.update({"probe_id": probe_key.probe_id, "ip_address": probe_key.ip_address, "vendor": vendor.name})
         probe = pm_factory.write(data=probe_info, if_exists="update")
 
@@ -214,7 +230,7 @@ def load_probe_metadata(
 
 
 @route("create_new_tables", method="GET")
-def create_new_tables(*, _config: BaseConfig, create_schema: bool = True, session: Optional[Session] = None):
+def create_new_tables(*, _config: BaseConfig, create_schema: bool = True, session: Session | None = None):
     """Use the ORM definition to create all tables, optionally creating the schema as well"""
     if _config.ROUTE_TO_BACKEND:
         return {"create_schema": create_schema}
@@ -227,6 +243,7 @@ def create_new_tables(*, _config: BaseConfig, create_schema: bool = True, sessio
             session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {Base.metadata.schema}"))
             session.commit()
         Base.metadata.create_all(session.bind)
+        session.commit()
     except Exception as e:
         session.rollback()
         logger.error(f"Error writing to table: {e}")

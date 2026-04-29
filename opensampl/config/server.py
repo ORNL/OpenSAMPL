@@ -5,11 +5,12 @@ This module provides the main configuration class for openSAMPL-server, handling
 configuration validation, and settings management.
 """
 
+from __future__ import annotations
+
 import shlex
 from importlib.resources import as_file, files
 from pathlib import Path
-from types import ModuleType
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any
 
 from dotenv import dotenv_values, set_key
 from loguru import logger
@@ -20,8 +21,11 @@ import opensampl.server
 from opensampl.config.base import BaseConfig
 from opensampl.server import check_command
 
+if TYPE_CHECKING:
+    from types import ModuleType
 
-def get_resolved_resource_path(pkg: Union[str, ModuleType], relative_path: str) -> str:
+
+def get_resolved_resource_path(pkg: str | ModuleType, relative_path: str) -> str:
     """Retrieve the resolved path to a resource in a package."""
     resource = files(pkg).joinpath(relative_path)
     with as_file(resource) as real_path:
@@ -34,6 +38,8 @@ class ServerConfig(BaseConfig):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", env_prefix="OPENSAMPL_SERVER__")
 
     COMPOSE_FILE: str = Field(default="", description="Fully resolved path to the Docker Compose file.")
+
+    OVERRIDE_FILE: str | None = Field(default=None, description="Override for the compose file")
 
     DOCKER_ENV_FILE: str = Field(default="", description="Fully resolved path to the Docker .env file.")
 
@@ -54,7 +60,7 @@ class ServerConfig(BaseConfig):
         return ignored
 
     @model_validator(mode="after")
-    def get_docker_values(self) -> "ServerConfig":
+    def get_docker_values(self) -> ServerConfig:
         """Get the values that the docker containers will use on startup"""
         self.docker_env_values = dotenv_values(self.DOCKER_ENV_FILE)
         return self
@@ -66,6 +72,14 @@ class ServerConfig(BaseConfig):
         if v == "":
             return get_resolved_resource_path(opensampl.server, "docker-compose.yaml")
         return str(Path(v).expanduser().resolve())
+
+    @field_validator("OVERRIDE_FILE", mode="before")
+    @classmethod
+    def resolve_override_file(cls, v: Any) -> str:
+        """Resolve the provided compose file for docker to use, or default to the docker-compose.yaml provided"""
+        if v:
+            return str(Path(v).expanduser().resolve())
+        return v
 
     @field_validator("DOCKER_ENV_FILE", mode="before")
     @classmethod
@@ -89,6 +103,8 @@ class ServerConfig(BaseConfig):
         compose_command = self.get_compose_command()
         command = shlex.split(compose_command)
         command.extend(["--env-file", self.DOCKER_ENV_FILE, "-f", self.COMPOSE_FILE])
+        if self.OVERRIDE_FILE:
+            command.extend(["-f", self.OVERRIDE_FILE])
         return command
 
     def set_by_name(self, name: str, value: Any):

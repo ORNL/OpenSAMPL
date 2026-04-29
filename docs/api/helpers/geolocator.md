@@ -1,6 +1,6 @@
-# `opensampl.ats6502.context`
+# `opensampl.helpers.geolocator`
 
-::: opensampl.ats6502.context
+::: opensampl.helpers.geolocator
     options:
       show_root_heading: false
       show_submodules: true

@@ -9,7 +9,7 @@ import re
 import textwrap
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from loguru import logger
@@ -54,7 +54,7 @@ class ModemContextReader(ModemReader):
         return re.match(r"^\[OK\]", line) is not None
 
     @staticmethod
-    def finished_error(line: str) -> tuple[bool, Optional[str]]:
+    def finished_error(line: str) -> tuple[bool, str | None]:
         """
         Check if a command completed with an error.
 
