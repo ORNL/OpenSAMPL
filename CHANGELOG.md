@@ -37,7 +37,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
-## [1.2.0] - Unreleased
+## [1.2.0] - 2026-04-29
 ### Added
 - 🔥 First-class NTP vendor and probe support using the existing OpenSAMPL extension model
 - 🔥 Local and remote NTP collection paths, including `ntp_metadata` loading behavior
@@ -60,6 +60,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🩹 Seeded default metric UUID handling in the MockDB test harness now points to the UNKNOWN metric as intended
 - 🩹 Bug which caused random data duration to always be 1 hour
 - 🩹 Issue with CI order causing linting to fail
+- 🩹 Fixed variable assignment for mkdocs-click integration
 
 ## [1.1.5] - 2025-09-22
 ### Fixed
