@@ -1,6 +1,6 @@
-# `opensampl.helpers.create_vendor`
+# `opensampl.collect.microchip.twst.context`
 
-::: opensampl.helpers.create_vendor
+::: opensampl.collect.microchip.twst.context
     options:
       show_root_heading: false
       show_submodules: true

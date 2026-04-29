@@ -1,47 +1,40 @@
 # openSAMPL Documentation
-python tools for adding clock data to a timescale db. 
+
+Python tools for loading, storing, and visualizing clock data in PostgreSQL / TimescaleDB.
 
 ## Overview
 
-`opensampl` is a package released by the Oak Ridge National Laboratory (ORNL) that provides tools for adding clock 
-data to a postgres database. 
+`opensampl` is an Oak Ridge National Laboratory (ORNL) project for synchronization analytics and monitoring data.
 
-The package includes a CLI tool that allows users to load data from ADVA probes into a 
-PostgreSQL database (preferably a [TimescaleDB](https://www.timescale.com/) flavor of PostgreSQL, but it can work with 
-any PostgreSQL-based databases) 
+The package provides:
 
-The tool supports loading both metadata and time series data from files, with options to
-skip loading one or the other. It also provides features for archiving processed files and setting the maximum number 
-of worker threads for parallel processing, and helper functions for easily adding additional clocks to the database.
+- a CLI for loading probe files and direct table data
+- collection tooling for supported probe families
+- optional Docker-backed server helpers
+- Grafana dashboards and supporting backend components
 
-There is also an optional `server` extra which can be used to set your environment up more easily. 
+OpenSAMPL currently supports probe families including ADVA, Microchip TWST, Microchip TP4100, and NTP.
 
-## Getting Started
+## Getting started
 
-If you're new here, start your journey:
-
-- **Installation:** Follow the steps in [Installation](getting-started/installation.md) to arm yourself with the essentials.
-- **Quickstart:** For a rapid initiation, dive into our [Quickstart](getting-started/quickstart.md) guide.
+- [Installation](getting-started/installation.md)
+- [Quickstart](getting-started/quickstart.md)
 
 ## Guides
 
-Master the art of customization and configuration:
+- [Configuration](guides/configuration.md)
+- [Using the `opensampl` CLI](guides/opensampl-cli.md)
+- [Using the `opensampl-server` CLI](guides/opensampl-server.md)
+- [Collection Guide](guides/collection.md)
+- [Random Data Guide](guides/random-data-generation.md)
+- [NTP Extension Guide](guides/ntp-extension.md)
 
-[//]: # (* [Configuration]&#40;guides/configuration.md&#41; – Learn how to set up and tweak `opensampl` to your liking.)
-* [Customization](guides/configuration) – Discover advanced tweaks that put you in complete control.
-* [Using the `opensampl` CLI](guides/opensampl-cli.md) – A comprehensive guide to using the `opensampl` CLI tool.
-* [Using the `opensampl-server` CLI](guides/opensampl-server.md) – A comprehensive guide to using the `opensampl-server` CLI tool.
+## API references
 
-## API Reference
+- [openSAMPL API Reference](api/index.md)
 
-Dare to explore our API:
+## Repository
 
-* [openSAMPL API Reference](python-api-reference.md) – A comprehensive look into every function, class, and module that defines `opensampl`
-* [Server API Reference](server-api-reference.md) – A detailed breakdown of the Python API that powers `opensampl`.
----
-
-Each word here is designed to illuminate your path through the codebase. If you find yourself lost, refer back to this
-document for guidance. And remember, the journey of a thousand commits begins with a single `git clone`. 🚀
-```
+```bash
 git clone git@github.com:ORNL/OpenSAMPL.git
 ```

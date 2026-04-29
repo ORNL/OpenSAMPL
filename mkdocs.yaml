@@ -14,38 +14,57 @@ nav:
     - Create: guides/create_probe_type.md
   - Server: guides/opensampl-server.md
   - Collect: guides/collection.md
+  - Automatic Ingest: guides/automatic_ingest.md
+  - NTP Extension: guides/ntp-extension.md
   - Random Data: guides/random-data-generation.md
 - API:
   - index: api/index.md
-  - ats6502:
-    - context: api/ats6502/context.md
-    - modem: api/ats6502/modem.md
-    - readings: api/ats6502/readings.md
   - cli: api/cli.md
+  - collect:
+    - cli: api/collect/cli.md
+    - microchip:
+      - tp4100:
+        - collect_4100: api/collect/microchip/tp4100/collect_4100.md
+      - twst:
+        - context: api/collect/microchip/twst/context.md
+        - generate_twst_files: api/collect/microchip/twst/generate_twst_files.md
+        - readings: api/collect/microchip/twst/readings.md
+    - modem: api/collect/modem.md
   - config:
     - base: api/config/base.md
+    - server: api/config/server.md
+    - tp4100: api/config/tp4100.md
+  - create:
+    - create_vendor: api/create/create_vendor.md
+    - insert_markers: api/create/insert_markers.md
   - db:
     - access_orm: api/db/access_orm.md
     - orm: api/db/orm.md
   - helpers:
-    - create_vendor: api/helpers/create_vendor.md
-    - insert_markers: api/helpers/insert_markers.md
-    - source_writer: api/helpers/source_writer.md
+    - geolocator: api/helpers/geolocator.md
   - load:
     - data: api/load/data.md
-    - probe: api/load/probe.md
     - routing: api/load/routing.md
     - table_factory: api/load/table_factory.md
   - load_data: api/load_data.md
   - metrics: api/metrics.md
+  - mixins:
+    - collect: api/mixins/collect.md
+    - random_data: api/mixins/random_data.md
   - references: api/references.md
   - server:
+    - backend:
+      - main: api/server/backend/main.md
     - cli: api/server/cli.md
+    - cli2: api/server/cli2.md
   - vendors:
     - adva: api/vendors/adva.md
     - base_probe: api/vendors/base_probe.md
     - constants: api/vendors/constants.md
-    - microsemi_twst: api/vendors/microsemi_twst.md
+    - microchip:
+      - tp4100: api/vendors/microchip/tp4100.md
+      - twst: api/vendors/microchip/twst.md
+    - ntp: api/vendors/ntp.md
 plugins:
 - search
 - mkdocstrings:

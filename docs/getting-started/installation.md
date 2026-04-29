@@ -1,18 +1,41 @@
-# Installation of openSAMPL
+# Installation
 
-## Installation for Users
+## User install
 
-1. Ensure you have Python 3.10 or higher installed
-2. Pip install the latest version of openSAMPL: 
+OpenSAMPL requires Python 3.10 or newer.
+
+Install the published package with `pip`:
+
 ```bash
 pip install opensampl
 ```
 
-## Installation for Developers
-[Poetry](https://python-poetry.org/) is used for managing dependencies. To install the package in development mode, run the following commands:
+If you plan to use collection features such as remote NTP or Microchip collectors, install the optional collect dependencies:
+
 ```bash
-# Clone the repository
-git clone git@github.com:ORNL/OpenSAMPL.git
-cd opensampl
-poetry install
+pip install "opensampl[collect]"
 ```
+
+If you want the packaged Docker-backed server tooling as well:
+
+```bash
+pip install "opensampl[server]"
+```
+
+## Developer Installation
+
+The repository uses `uv` for local development workflows.
+
+```bash
+git clone git@github.com:ORNL/OpenSAMPL.git
+cd OpenSAMPL
+uv venv
+uv sync --all-extras --dev
+source .venv/bin/activate
+```
+
+That installs:
+
+- the package into the local virtual environment
+- all optional extras
+- development tools such as `pytest`, `ruff`, and `mkdocs`

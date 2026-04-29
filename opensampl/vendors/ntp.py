@@ -429,6 +429,7 @@ class NTPRemoteCollector(NTPCollector):
         self.leap_status = leap_map.get(leap, str(leap))
 
         stratum = int(resp.stratum)
+        self.stratum = stratum
 
         try:
             self.poll_interval_s = float(2 ** int(resp.poll))

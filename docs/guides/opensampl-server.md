@@ -1,187 +1,127 @@
 # openSAMPL Server CLI Usage Guide
 
-This guide explains how to use the openSAMPL Server command-line interface (CLI) tool to manage your openSAMPL server deployment.
+The `opensampl-server` CLI is a thin wrapper around the packaged Docker Compose stack in `opensampl.server`.
 
-## Overview
-
-The openSAMPL Server CLI provides commands for managing a Docker Compose deployment of the openSAMPL server infrastructure. It handles:
-
-- Starting and stopping services
-- Viewing logs
-- Checking service status
-- Running custom commands
+It is useful when you want a local database, backend API, migrations container, and Grafana instance without managing the compose arguments yourself.
 
 ## Prerequisites
 
-- Docker and Docker Compose installed
-- The openSAMPL Python package installed
+- Docker with either `docker compose` or `docker-compose`
+- OpenSAMPL installed with the server extra
 
-Install openSAMPL as normal: 
+```bash
+pip install "opensampl[server]"
 ```
-pip install opensampl
-```
 
-## Basic Commands
+## What `opensampl-server up` does
 
-### Starting the Server
-
-To start the openSAMPL server:
+Running:
 
 ```bash
 opensampl-server up
 ```
 
-This command:
-- Starts all services defined in the Docker Compose file
-- Runs containers in detached mode (`-d`)
-- Sets local environment variables to route `opensampl load` commands via the backend
+starts the packaged compose stack in detached mode and updates your local OpenSAMPL environment so future `opensampl load ...` commands route through the backend API.
 
-**Starting a specific service:**
+Specifically, it writes:
+
+- `ROUTE_TO_BACKEND=true`
+- `BACKEND_URL=http://localhost:8015`
+- `DATABASE_URL=postgresql://...@localhost:5415/...`
+
+The default stack exposes:
+
+- PostgreSQL / TimescaleDB on `localhost:5415`
+- the backend API on `localhost:8015`
+- Grafana on `localhost:3015`
+
+## Commands
+
+### Start all services
 
 ```bash
-opensampl-server up --service grafana
+opensampl-server up
 ```
-this will start up just the specified container, choices are: 
-- db
-- backend
-- grafana
-- migrations
 
-**Using a custom .env file:**
+### Start only selected services
+
+Additional arguments after `up` are passed through to Docker Compose. For example:
 
 ```bash
-opensampl-server up --env-file /path/to/custom.env
+opensampl-server up grafana
+opensampl-server up db backend
 ```
-uses default.env with values: 
-```dotenv
-COMPOSE_PROJECT_NAME=opensampl
 
-POSTGRES_DB=castdb
-POSTGRES_USER=castuser
-POSTGRES_PASSWORD=castpassword
-
-DB_URI="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
-GF_SECURITY_ADMIN_PASSWORD=secret
-
-BACKEND_LOG_LEVEL=DEBUG
-```
-### Stopping the Server
-
-To stop all services:
+### Stop services
 
 ```bash
 opensampl-server down
 ```
 
-**Stopping a specific service:**
-
-```bash
-opensampl-server down --service db
-```
-
-### Viewing Logs
-
-To view logs from all containers:
+### Show logs
 
 ```bash
 opensampl-server logs
 ```
 
-This command follows the logs (`-f`), showing new log entries as they arrive.
-
-### Checking Service Status
-
-To see the status of all services:
+### Show service status
 
 ```bash
 opensampl-server ps
 ```
 
-This displays:
-- Container names
-- Status (running, stopped, etc.)
-- Ports
-- Other container information
-
-### Running Custom Commands
-
-The `run` command allows you to execute commands in a service container:
+### Run a one-off compose command
 
 ```bash
 opensampl-server run backend python -m opensampl.cli init
 ```
 
-This example:
-- Creates a temporary container for the `backend` service
-- Runs the specified command
-- Removes the container after completion (`--rm`)
+This maps directly to `docker compose run --rm ...`.
 
-## Environment Configuration
+## Using a custom env file
 
-By default, the CLI uses the packaged `default.env` file for configuration. You can specify a custom environment file with the `--env-file` option for any command:
+`--env-file` is a top-level CLI option, so it must appear before the subcommand:
 
 ```bash
-opensampl-server up --env-file ./my-custom-env.env
+opensampl-server --env-file ./dev.env up
+opensampl-server --env-file ./dev.env ps
 ```
 
-## Technical Details
+By default, the server wrapper uses the packaged `default.env` values through `ServerConfig`.
 
-- The CLI automatically detects whether to use `docker-compose` or `docker compose` based on your system configuration
-- When starting the server, it configures your local environment to use the backend by setting:
-  - `BACKEND_URL=http://localhost:8015`
-  - `ROUTE_TO_BACKEND=true`
+The shipped defaults include:
 
-## Power users 
-
-For those who are more familiar with docker, there is a `opensampl-server2` which corresponds to the following, more directly 
-exposing the docker to users.
-`OPENSAMPL_SERVER__COMPOSE_FILE` is set in your .env file or environment.
-
-```bash
-opensampl-server2 --env-file ENV_FILE args
-docker compose --env-file ${ENV_FILE} -f ${OPENSAMPL_SERVER__COMPOSE_FILE} $@
+```dotenv
+COMPOSE_PROJECT_NAME=opensampl
+POSTGRES_DB=castdb
+POSTGRES_USER=castuser
+POSTGRES_PASSWORD=castpassword
+GF_SECURITY_ADMIN_PASSWORD=secret
+BACKEND_LOG_LEVEL=DEBUG
+USE_API_KEY=false
+API_KEYS=changeme123
 ```
+
+## Advanced configuration
+
+The server wrapper can be redirected to other compose files or docker env files with the server-specific environment variables described in the [configuration guide](configuration.md#opensampl-server):
+
+- `OPENSAMPL_SERVER__COMPOSE_FILE`
+- `OPENSAMPL_SERVER__OVERRIDE_FILE`
+- `OPENSAMPL_SERVER__DOCKER_ENV_FILE`
 
 ## Troubleshooting
 
-If you encounter issues:
+1. Confirm Docker is installed and running.
+2. Run `opensampl-server ps` to see whether services came up.
+3. Run `opensampl-server logs` to inspect startup failures.
+4. If you changed compose or env settings, confirm the files exist and are readable.
 
-1. Check that Docker and Docker Compose are installed and running
-2. Verify your environment file contains the necessary configuration
-3. Check the logs for specific error messages: `opensampl-server logs`
-
-## Examples
-
-**Full development workflow:**
+## Example workflow
 
 ```bash
-# Start the entire stack
 opensampl-server up
-
-# Check that all services are running
 opensampl-server ps
-
-# View logs to ensure everything started correctly
-opensampl-server logs
-
-# load clock data into the db
-opensampl load probe ADVA ./data
-
-# When finished, shut down the stack
+opensampl load ADVA ./data
 opensampl-server down
 ```
-
-**Development with custom environment:**
-
-```bash
-# Create a custom environment file
-cp $(opensampl-server get-default-env) ./dev.env
-
-# Edit the file with custom settings
-nano ./dev.env
-
-# Start the server with custom environment
-opensampl-server up --env-file ./dev.env
-```
-
-

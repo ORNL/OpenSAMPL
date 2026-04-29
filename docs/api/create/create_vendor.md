@@ -1,6 +1,6 @@
-# `opensampl.vendors.microsemi_twst`
+# `opensampl.create.create_vendor`
 
-::: opensampl.vendors.microsemi_twst
+::: opensampl.create.create_vendor
     options:
       show_root_heading: false
       show_submodules: true
