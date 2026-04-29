@@ -109,77 +109,65 @@ class RandomDataMixin:
             click.option(
                 "--num-probes",
                 type=int,
-                default=1,
-                help=(
-                    f"Number of probes to generate data for "
-                    f"(default={cls.RandomDataConfig.model_fields.get('num_probes').default})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("num_probes").default,
+                show_default=True,
+                help=("Number of probes to generate data for"),
             ),
             click.option(
                 "--duration",
                 type=float,
-                help=(
-                    f"Duration of data in hours "
-                    f"(default={cls.RandomDataConfig.model_fields.get('duration_hours').default})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("duration_hours").default,
+                show_default=True,
+                help=("Duration of data in hours"),
             ),
             click.option(
                 "--seed",
+                show_default=True,
+                default=cls.RandomDataConfig.model_fields.get("seed").default,
                 type=int,  # type: ignore[attr-defined]
-                help=(
-                    f"Random seed for reproducible results "
-                    f"(default={cls.RandomDataConfig.model_fields.get('seed').default})"
-                ),
+                help=("Random seed for reproducible results"),
             ),
             click.option(
                 "--sample-interval",
                 type=float,
-                help=(
-                    f"Sample interval in seconds "
-                    f"(default={cls.RandomDataConfig.model_fields.get('sample_interval').default})"
-                ),
+                show_default=True,
+                default=cls.RandomDataConfig.model_fields.get("sample_interval").default,
+                help=("Sample interval in seconds "),
             ),
             click.option(
                 "--base-value",
                 type=float,
-                help=(
-                    f"Base value for time offset measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('base_value').description!s})"
-                ),
+                show_default=True,
+                default=cls.RandomDataConfig.model_fields.get("base_value").description,
+                help=("Base value for time offset measurements"),
             ),
             click.option(
                 "--noise-amplitude",
                 type=float,
-                help=(
-                    f"Noise amplitude/standard deviation for time offset measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('noise_amplitude').description!s})"
-                ),
+                show_default=True,
+                default=cls.RandomDataConfig.model_fields.get("noise_amplitude").description,
+                help=("Noise amplitude/standard deviation for time offset measurements "),
             ),
             click.option(
                 "--drift-rate",
                 type=float,
-                help=(
-                    f"Linear drift rate per second for time offset measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('drift_rate').description!s})"
-                ),
+                show_default=True,
+                default=cls.RandomDataConfig.model_fields.get("drift_rate").description,
+                help=("Linear drift rate per second for time offset measurements "),
             ),
             click.option(
                 "--outlier-probability",
                 type=float,
-                default=0.01,
-                help=(
-                    f"Probability of outliers per sample "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('outlier_probability').default!s})"
-                ),
+                show_default=True,
+                default=cls.RandomDataConfig.model_fields.get("outlier_probability").default,
+                help=("Probability of outliers per sample "),
             ),
             click.option(
                 "--outlier-multiplier",
                 type=float,
-                default=10.0,
-                help=(
-                    f"Multiplier for outlier noise amplitude "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('outlier_multiplier').default!s})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("outlier_multiplier").default,
+                show_default=True,
+                help=("Multiplier for outlier noise amplitude "),
             ),
             click.option(
                 "--probe-ip",
