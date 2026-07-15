@@ -1,0 +1,65 @@
+name: Self-hosted Runner Smoke Test
+
+on:
+  workflow_dispatch: {}   # allows manual trigger from the Actions tab
+  push:
+    paths:
+      - .github/workflows/selfhosted-smoke-test.yml
+
+permissions:
+  contents: read
+
+jobs:
+  runner-check:
+    # If you added custom labels to your runner (e.g., 'macOS', 'ORNL'),
+    # replace 'self-hosted' with your specific labels:
+    # runs-on: [self-hosted, macOS]
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout (no repo content needed but proves token works)
+        uses: actions/checkout@v4
+
+      - name: Print runner basics
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Runner arch: $RUNNER_ARCH"
+          echo "Workspace: $GITHUB_WORKSPACE"
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Ref: $GITHUB_REF"
+          echo "Commit SHA: $GITHUB_SHA"
+          echo "Labels: $RUNNER_LABELS"
+
+      - name: List environment
+        run: env | sort
+
+      - name: Verify outbound connectivity to GitHub
+        run: |
+          set -e
+          echo "Pinging api.github.com..."
+          curl -sS -I https://api.github.com | head -n 1
+          echo "Pinging github.com..."
+          curl -sS -I https://github.com | head -n 1
+          echo "Connectivity OK."
+
+      - name: Verify connectivity to Checkmarx (HTTP(S) reachability)
+        # This confirms your runner can reach the on-prem server.
+        # If your Checkmarx uses a private CA, this may fail unless the CA is trusted locally.
+        continue-on-error: true
+        run: |
+          set -e
+          echo "Checking https://checkmarx.ornl.gov/cxrestapi/version..."
+          curl -sS -k https://checkmarx.ornl.gov/cxrestapi/version || true
+          echo "If this printed JSON version info, connectivity is good."
+
+      - name: Runner file system sanity check
+        run: |
+          echo "Creating a temp file in $RUNNER_TEMP ..."
+          echo "Hello from self-hosted runner at $(date)" > "$RUNNER_TEMP/hello.txt"
+          ls -al "$RUNNER_TEMP"
+          cat "$RUNNER_TEMP/hello.txt"
+
+      - name: Done
+        run: echo "✅ Self-hosted runner smoke test completed."
