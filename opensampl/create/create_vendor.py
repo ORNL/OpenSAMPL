@@ -23,6 +23,19 @@ from pydantic import BaseModel, Field, model_validator
 from opensampl.create.insert_markers import INSERT_MARKERS, InsertMarker
 from opensampl.vendors.constants import VendorType
 
+CONFIG_TEMPLATE_PATH = Path(__file__).parent / "templates" / "vendor_config.yaml"
+
+
+def write_config_template(config_path: str | Path) -> Path:
+    """Write an editable vendor configuration template without replacing an existing file."""
+    if isinstance(config_path, str):
+        config_path = Path(config_path)
+
+    with config_path.open("x", encoding="utf-8") as config_file:
+        config_file.write(CONFIG_TEMPLATE_PATH.read_text(encoding="utf-8"))
+
+    return config_path
+
 
 class MetadataField(BaseModel):
     """

@@ -77,7 +77,7 @@ Use `opensampl config show` to inspect the current resolved configuration.
 
 ## CLI
 
-The main CLI exposes `collect`, `config`, `create`, `init`, and `load`.
+The main CLI exposes `collect`, `config`, `create`, `init`, `load`, and `sdk`.
 Use `opensampl --help` and `opensampl <command> --help` for current options.
 
 If you plan to use the NTP, Microchip TWST, or Microchip TP4100 collectors, install the optional collection dependencies:
