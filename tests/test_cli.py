@@ -147,6 +147,81 @@ class TestCLI:
 
         assert result.exit_code == 0
 
+    def test_cli_sdk_commands(self, runner):
+        """Test the SDK command group and its subcommands."""
+        result = runner.invoke(cli, ["sdk", "--help"])
+
+        assert result.exit_code == 0
+        assert "create" in result.output
+        assert "template" in result.output
+
+        create_help = runner.invoke(cli, ["sdk", "create", "--help"])
+
+        assert create_help.exit_code == 0
+        assert "--collect-mixin" in create_help.output
+        assert "--update-db" in create_help.output
+
+    def test_cli_sdk_template_creates_valid_config(self, runner, tmp_path):
+        """The SDK template command should create a config accepted by VendorConfig."""
+        from opensampl.create.create_vendor import VendorConfig
+
+        config_path = tmp_path / "probe.yaml"
+
+        result = runner.invoke(cli, ["sdk", "template", str(config_path)])
+
+        assert result.exit_code == 0
+        assert config_path.is_file()
+        assert str(config_path) in result.output
+
+        config = VendorConfig.from_config_file(config_path)
+        assert config.name == "My Vendor"
+        assert config.parser_class == "MyVendorProbe"
+        assert config.parser_module == "my_vendor"
+        assert {field.name for field in config.metadata_fields} == {
+            "serial_number",
+            "firmware_version",
+            "sample_rate_hz",
+            "additional_metadata",
+        }
+
+    def test_cli_sdk_template_does_not_overwrite_existing_file(self, runner, tmp_path):
+        """The SDK template command should leave an existing destination untouched."""
+        config_path = tmp_path / "probe.yaml"
+        original_content = "user-owned content\n"
+        config_path.write_text(original_content)
+
+        result = runner.invoke(cli, ["sdk", "template", str(config_path)])
+
+        assert result.exit_code != 0
+        assert config_path.read_text() == original_content
+
+    def test_cli_sdk_template_does_not_create_parent_directories(self, runner, tmp_path):
+        """The SDK template command should fail when the destination parent is missing."""
+        config_path = tmp_path / "missing" / "probe.yaml"
+
+        result = runner.invoke(cli, ["sdk", "template", str(config_path)])
+
+        assert result.exit_code != 0
+        assert "Could not create config template" in result.output
+        assert not config_path.parent.exists()
+
+    @patch("opensampl.create.create_vendor.VendorConfig.from_config_file")
+    def test_cli_sdk_create_matches_top_level_create(self, mock_from_config, runner, tmp_path):
+        """SDK and top-level create commands should invoke the same scaffolding behavior."""
+        config_path = tmp_path / "probe.yaml"
+        config_path.write_text("name: Test Probe\nmetadata_fields: []\n")
+        vendor_config = Mock()
+        mock_from_config.return_value = vendor_config
+
+        root_result = runner.invoke(cli, ["create", str(config_path), "--collect-mixin"])
+        sdk_result = runner.invoke(cli, ["sdk", "create", str(config_path), "--collect-mixin"])
+
+        assert root_result.exit_code == 0
+        assert sdk_result.exit_code == 0
+        assert mock_from_config.call_count == 2
+        assert vendor_config.create.call_count == 2
+        vendor_config.create.assert_called_with(collect_mixin=True)
+
     def test_cli_config_command(self, runner):
         """Test the config command."""
         result = runner.invoke(cli, ['config', '--help'])
@@ -185,4 +260,4 @@ class TestCLI:
         result3 = runner.invoke(cli, ['load', 'Table', '--help'])
 
         # All should work the same
-        assert result1.exit_code == result2.exit_code == result3.exit_code == 0 
+        assert result1.exit_code == result2.exit_code == result3.exit_code == 0

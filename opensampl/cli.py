@@ -267,6 +267,25 @@ def table_load(filepath: dict | list, table_name: str, if_exists: Literal["updat
         raise click.Abort()  # noqa: RSE102,B904
 
 
+@cli.group()
+def sdk():
+    """Develop custom clock probe types for openSAMPL."""
+
+
+@sdk.command(name="template")
+@click.argument("config_path", type=click.Path(exists=False, dir_okay=False, path_type=Path))
+def create_config_template_command(config_path: Path):
+    """Write an editable probe configuration template to CONFIG_PATH."""
+    from opensampl.create.create_vendor import write_config_template
+
+    try:
+        write_config_template(config_path)
+    except OSError as exc:
+        raise click.ClickException(f"Could not create config template at {config_path}: {exc}") from exc
+
+    click.echo(f"Created probe configuration template at {config_path}")
+
+
 @cli.command(name="create")
 @click.argument("config_path", type=click.Path(exists=True, path_type=Path))
 @click.option(
@@ -284,12 +303,16 @@ def table_load(filepath: dict | list, table_name: str, if_exists: Literal["updat
 def create_probe_command(config_path: Path, update_db: bool, collect_mixin: bool):
     """Create a new probe type with scaffolding, based on a config file."""
     from opensampl.create.create_vendor import VendorConfig
+
     # TODO figure out best way to allow Vendor Config be through cli flags (too complicated nesting for pydanclick)
 
     vendor_config = VendorConfig.from_config_file(config_path)
     vendor_config.create(collect_mixin=collect_mixin)
     if update_db:
         create_new_tables()
+
+
+sdk.add_command(create_probe_command, name="create")
 
 
 if __name__ == "__main__":

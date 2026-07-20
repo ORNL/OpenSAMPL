@@ -1,0 +1,35 @@
+# openSAMPL clock probe configuration
+#
+# Generate a probe scaffold after editing this file:
+#   opensampl sdk create path/to/config.yaml
+
+# Required: human-readable name for the probe type. The optional identifiers below
+# are derived from this value when omitted.
+name: My Vendor
+
+# Optional: Python class name for the probe parser.
+# Default for "My Vendor": MyVendorProbe
+# parser_class: MyVendorProbe
+
+# Optional: Python module path under opensampl/vendors/.
+# Default for "My Vendor": my_vendor
+# parser_module: my_vendor
+
+# Optional: SQLAlchemy ORM class for the probe metadata table.
+# Default for "My Vendor": MyVendorMetadata
+# metadata_orm: MyVendorMetadata
+
+# Optional: database table for probe metadata.
+# Default for "My Vendor": my_vendor_metadata
+# metadata_table: my_vendor_metadata
+
+# Optional: vendor-specific metadata columns. Each entry requires a name and may
+# specify a SQLAlchemy column type; omitted types default to Text. Common types
+# include Text, String, Integer, Float, Boolean, DateTime, JSONB, and Numeric.
+# The generator supplies probe_uuid and additional_metadata automatically.
+metadata_fields:
+  - name: serial_number
+    type: Text
+  - name: firmware_version
+  - name: sample_rate_hz
+    type: Integer

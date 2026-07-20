@@ -103,10 +103,15 @@ Arguments:
 
 ## Create
 **<mark>Experimental</mark>**  
-Create a new probe type scaffold from a configuration file. See the
+Create a template configuration and use it to scaffold a new probe type. See the
 [Create page](create_probe_type.md) for the current workflow and limitations.
 
-Command: `opensampl create <CONFIG PATH> [OPTIONS]` <br>
+Commands:
+
+* `opensampl sdk template <CONFIG PATH>`: Write a starter YAML configuration without overwriting an existing file
+* `opensampl sdk create <CONFIG PATH> [OPTIONS]`: Create the probe scaffold from the edited configuration
+* `opensampl create <CONFIG PATH> [OPTIONS]`: Compatibility alias for `opensampl sdk create`
+
 Arguments: 
 
 * `CONFIG PATH`: The path to the config file defining the new probe type
@@ -114,4 +119,4 @@ Arguments:
 Options:
 
 * `--update-db` (`-u`): Update the database with the new probe type
-
+* `--collect-mixin` (`-c`): Include a shell for implementing probe collection
