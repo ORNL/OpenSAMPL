@@ -13,7 +13,7 @@ Arguments:
 * `INPUT PATH`: A single file or a directory of files
 
 Supported probe types currently exposed by the CLI include `ADVA`, `MicrochipTWST`,
-`MicrochipTP4100`, `NTP`, and `random`.
+`MicrochipTP4100`, `NTP`, `GNSS`, and `random`.
 
 Options:
 
@@ -53,6 +53,18 @@ opensampl load NTP ./ntp-out
 For local collection, point the collector at an `ntpq` output file or let it inspect the
 local system directly, depending on your deployment. See the [collection guide](collection.md)
 for the current collection modes and configuration options.
+
+#### GPS/GNSS
+
+GPS/GNSS receiver data can be collected from gpsd using the `gpspipe` system command:
+
+```bash
+opensampl collect gnss --host 127.0.0.1 --gpsd-port 2947 --probe-id roof-gnss \
+  --samples 20 --output-dir ./gnss-out
+opensampl load GNSS ./gnss-out
+```
+
+See the [collection guide](collection.md) for receiver metadata and fix-health semantics.
 
 ### Direct Table Entries
 Load data directly into a database table from a file. The file format can be YAML or JSON.
@@ -114,4 +126,3 @@ Arguments:
 Options:
 
 * `--update-db` (`-u`): Update the database with the new probe type
-

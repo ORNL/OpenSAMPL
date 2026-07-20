@@ -9,6 +9,7 @@ The collect API enables automated collection of measurement data from network-co
 - **Microchip TWST Modems** (ATS6502 series): Collect offset and EBNO tracking values along with contextual information
 - **Microchip TimeProvider® 4100** (TP4100): Collect timing performance metrics from various input channels via web interface
 - **NTP**: Collect local synchronization state or query remote NTP servers
+- **GPS/GNSS**: Collect receiver fixes from a local or remote gpsd using `gpspipe`
 
 ## Installation
 
@@ -65,6 +66,23 @@ opensampl collect ntp --mode local --probe-id local-chrony --load
 opensampl collect ntp --mode remote --host time.cloudflare.com --probe-id public-time --output-dir ./ntp-out
 opensampl collect ntp --mode remote --host 127.0.0.1 --port 10123 --probe-id mock-a --count 5 --interval 10 --load
 ```
+
+### Collecting from GPS/GNSS Receivers
+
+The GNSS probe uses the `gpspipe` CLI supplied by gpsd clients. Start gpsd for the
+receiver, install `gpspipe` using your operating system package manager, and collect
+a bounded number of JSON reports:
+
+```bash
+opensampl collect gnss --host 127.0.0.1 --gpsd-port 2947 \
+  --probe-id roof-gnss --samples 20 --output-dir ./gnss-out
+opensampl load gnss ./gnss-out
+```
+
+Add `--load` to write directly to the configured database. Each collection stores
+the latest fix position, fix mode, receiver/driver details, and visible/used satellite
+counts as metadata. It stores a sync-health sample (`1` for a 2D/3D fix, otherwise
+`0`) for each TPV report.
 
 #### NTP metadata behavior
 

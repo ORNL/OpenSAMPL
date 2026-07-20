@@ -78,6 +78,14 @@ class VENDORS:
         metadata_orm="NtpMetadata",
     )
 
+    GNSS = VendorType(
+        name="GNSS",
+        parser_class="GnssProbe",
+        parser_module="gnss",
+        metadata_table="gnss_metadata",
+        metadata_orm="GnssMetadata",
+    )
+
     # --- CUSTOM VENDORS ---      !! Do not remove line, used as reference when inserting vendor
 
     # --- VENDOR FUNCTIONS ---

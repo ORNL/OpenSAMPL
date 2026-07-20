@@ -182,6 +182,7 @@ class ProbeMetadata(Base):
     microchip_twst_metadata = relationship("MicrochipTWSTMetadata", back_populates="probe", uselist=False)
     microchip_tp4100_metadata = relationship("MicrochipTP4100Metadata", back_populates="probe", uselist=False)
     ntp_metadata = relationship("NtpMetadata", back_populates="probe", uselist=False)
+    gnss_metadata = relationship("GnssMetadata", back_populates="probe", uselist=False)
 
     # --- CUSTOM PROBE METADATA RELATIONSHIP ---
 
@@ -453,6 +454,26 @@ class NtpMetadata(Base):
     timeout = Column(Float)
     additional_metadata = Column(JSONB)
     probe = relationship("ProbeMetadata", back_populates="ntp_metadata")
+
+
+class GnssMetadata(Base):
+    """GPS/GNSS receiver metadata collected through gpsd."""
+
+    __tablename__ = "gnss_metadata"
+
+    probe_uuid = Column(String, ForeignKey("probe_metadata.uuid"), primary_key=True)
+    device = Column(Text)
+    driver = Column(Text)
+    fix_mode = Column(Integer)
+    satellites_visible = Column(Integer)
+    satellites_used = Column(Integer)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    altitude = Column(Float)
+    gpsd_host = Column(Text)
+    gpsd_port = Column(Integer)
+    additional_metadata = Column(JSONB)
+    probe = relationship("ProbeMetadata", back_populates="gnss_metadata")
 
 
 # --- CUSTOM TABLES ---      !! Do not remove line, used as reference when inserting metadata table

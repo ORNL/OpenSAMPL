@@ -110,6 +110,13 @@ opensampl collect ntp --mode remote --server pool.ntp.org --output-path ./ntp-ou
 opensampl load NTP ./ntp-out
 ```
 
+GPS/GNSS fixes can similarly be collected from gpsd when its `gpspipe` client is installed:
+
+```bash
+opensampl collect gnss --host 127.0.0.1 --gpsd-port 2947 --probe-id roof-gnss --samples 20 --output-dir ./gnss-out
+opensampl load GNSS ./gnss-out
+```
+
 Load options:
 
 - `--metadata` / `-m`: load only probe metadata
