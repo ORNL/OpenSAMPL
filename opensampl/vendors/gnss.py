@@ -41,7 +41,7 @@ class GnssProbe(BaseProbe, CollectMixin):
             ip_address: Host or IP address for Probe (default '127.0.0.1')
             gpsd_port: Port for gpsd (default 2947)
             output_dir: When provided, will save collected data as a file to provided directory. Filename will be
-                automatically generated as NTP_{ip_address}_{probe_id}_{vendor}_{timestamp}.txt
+                automatically generated as GnssProbe_{host}_{probe_id}_{timestamp}.txt
             load: Whether to load collected data directly to the database
             duration: Maximum JSON reports to request from gpspipe
             timeout: Timeout in seconds for gpspipe (default 15
