@@ -5,11 +5,9 @@ from __future__ import annotations
 import json
 import subprocess
 import textwrap
-from collections.abc import Callable
 from datetime import datetime, timezone
 from io import StringIO
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import click
 import pandas as pd
@@ -22,7 +20,11 @@ from opensampl.metrics import METRICS
 from opensampl.mixins.collect import CollectMixin
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
-from opensampl.vendors.constants import ProbeKey, VENDORS
+from opensampl.vendors.constants import VENDORS, ProbeKey
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
 
 
 class GnssProbe(BaseProbe, CollectMixin):
@@ -31,7 +33,20 @@ class GnssProbe(BaseProbe, CollectMixin):
     vendor = VENDORS.GNSS
 
     class CollectConfig(CollectMixin.CollectConfig):
-        """Options passed to ``gpspipe``."""
+        """
+                Options passed to ``gpspipe``.
+
+        Attributes:
+            probe_id: stable probe_id slug (defaults to gpsd)
+            ip_address: Host or IP address for Probe (default '127.0.0.1')
+            gpsd_port: Port for gpsd (default 2947)
+            output_dir: When provided, will save collected data as a file to provided directory. Filename will be
+                automatically generated as NTP_{ip_address}_{probe_id}_{vendor}_{timestamp}.txt
+            load: Whether to load collected data directly to the database
+            duration: Maximum JSON reports to request from gpspipe
+            timeout: Timeout in seconds for gpspipe (default 15
+
+        """
 
         ip_address: str = "127.0.0.1"
         probe_id: str = "gpsd"
@@ -48,6 +63,7 @@ class GnssProbe(BaseProbe, CollectMixin):
         ]
 
     def __init__(self, input_file: str | Path, **kwargs: Any):
+        """Initialize the collection config method."""
         super().__init__(input_file=input_file, **kwargs)
 
     def process_metadata(self) -> dict[str, Any]:
@@ -62,7 +78,7 @@ class GnssProbe(BaseProbe, CollectMixin):
             self.metadata = yaml.safe_load("".join(header)) or {}
             self.probe_key = ProbeKey(
                 ip_address=str(self.metadata.get("gpsd_host", "127.0.0.1")),
-                probe_id=str(self.metadata.get("probe_id", "gpsd")),
+                probe_id=str(self.metadata.get("probe_id", None)),
             )
             self.metadata_parsed = True
         return self.metadata
@@ -143,9 +159,7 @@ class GnssProbe(BaseProbe, CollectMixin):
             "altitude": latest.get("altHAE", latest.get("alt")),
             "additional_metadata": {"source": "gpspipe", "reports": len(reports)},
         }
-        data = cls.DataArtifact(
-            value=pd.DataFrame(rows), metric=METRICS.SYNC_HEALTH, reference_type=REF_TYPES.GNSS
-        )
+        data = cls.DataArtifact(value=pd.DataFrame(rows), metric=METRICS.SYNC_HEALTH, reference_type=REF_TYPES.GNSS)
         return cls.CollectArtifact(
             data=[data],
             probe_key=ProbeKey(ip_address=collect_config.ip_address, probe_id=collect_config.probe_id),
@@ -164,4 +178,5 @@ class GnssProbe(BaseProbe, CollectMixin):
 
     @classmethod
     def load_metadata(cls, probe_key: ProbeKey, metadata: dict) -> None:
+        """Load this probe's metadata."""
         load_probe_metadata(vendor=cls.vendor, probe_key=probe_key, data=metadata)
