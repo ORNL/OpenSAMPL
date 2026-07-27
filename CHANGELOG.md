@@ -37,6 +37,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
 -->
+## [1.3.0] - YYYY-MM-DD
+### Added
+- 🔥 GPS/GNSS collection via `gpsd` and `gpspipe`
+
 ## [1.2.1] - 2026-07-08
 ### Fixed
 - 🩹 Addressed CVEs by updating minimum package versions for urllib3 2.7.0, pillow 12.3.0, mako 1.3.12, starlette 1.3.1, fastapi 0.139.0, idna 3.18, pytest 9.1.1, python-dotenv 1.2.2, fonttools 4.63.0, requests 2.34.2, markdown 3.10.2, pymdown-extensions 10.21.3, pygments 2.20.0, and python-multipart 0.0.32.
