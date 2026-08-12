@@ -13,7 +13,7 @@ Arguments:
 * `INPUT PATH`: A single file or a directory of files
 
 Supported probe types currently exposed by the CLI include `ADVA`, `MicrochipTWST`,
-`MicrochipTP4100`, `NTP`, and `random`.
+`MicrochipTP4100`, `NTP`, `GPSD`, and `random`.
 
 Options:
 
@@ -53,6 +53,20 @@ opensampl load NTP ./ntp-out
 For local collection, point the collector at an `ntpq` output file or let it inspect the
 local system directly, depending on your deployment. See the [collection guide](collection.md)
 for the current collection modes and configuration options.
+
+#### GPSD
+
+Receiver data can be collected from GPSD using the `gpspipe` system command. A device is
+required because one daemon can expose multiple receivers:
+
+```bash
+opensampl collect gpsd --gpsd-host 127.0.0.1 --gpsd-port 2947 --device /dev/ttyACM0 \
+  --samples 20 --output-dir ./gpsd-out
+opensampl load GPSD ./gpsd-out
+```
+
+The probe identity is the GPSD host plus device path. See the [collection guide](collection.md)
+for TPV metric and metadata behavior.
 
 ### Direct Table Entries
 Load data directly into a database table from a file. The file format can be YAML or JSON.
@@ -114,4 +128,3 @@ Arguments:
 Options:
 
 * `--update-db` (`-u`): Update the database with the new probe type
-

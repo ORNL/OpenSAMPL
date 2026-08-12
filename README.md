@@ -110,6 +110,13 @@ opensampl collect ntp --mode remote --server pool.ntp.org --output-path ./ntp-ou
 opensampl load NTP ./ntp-out
 ```
 
+Receiver TPV metrics can similarly be collected from GPSD when its `gpspipe` client is installed:
+
+```bash
+opensampl collect gpsd --gpsd-host 127.0.0.1 --gpsd-port 2947 --device /dev/ttyACM0 --samples 20 --output-dir ./gpsd-out
+opensampl load GPSD ./gpsd-out
+```
+
 Load options:
 
 - `--metadata` / `-m`: load only probe metadata
