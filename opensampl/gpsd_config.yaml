@@ -1,0 +1,15 @@
+name: GPSD
+parser_class: GPSDProbe
+parser_module: gpsd
+metadata_orm: GPSDMetadata
+metadata_table: gpsd_metadata
+metadata_fields:
+  - name: device
+  - name: driver
+  - name: satellites_visible
+    type: Integer
+  - name: satellites_used
+    type: Integer
+  - name: gpsd_host
+  - name: gpsd_port
+    type: Integer

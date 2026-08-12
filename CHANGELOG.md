@@ -39,7 +39,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 -->
 ## [1.3.0] - YYYY-MM-DD
 ### Added
-- 🔥 GPS/GNSS collection via `gpsd` and `gpspipe`
+- 🔥 Device-specific GPSD TPV metric collection via `gpspipe`
 
 ## [1.2.1] - 2026-07-08
 ### Fixed

@@ -1,4 +1,4 @@
-"""add GNSS probe metadata
+"""add GPSD probe metadata
 
 Revision ID: a7d91f3e62c4
 Revises: c95e49e551be
@@ -22,7 +22,7 @@ SCHEMA = "castdb"
 
 def upgrade() -> None:
     op.create_table(
-        "gnss_metadata",
+        "gpsd_metadata",
         sa.Column(
             "probe_uuid",
             sa.String(),
@@ -31,12 +31,8 @@ def upgrade() -> None:
         ),
         sa.Column("device", sa.Text()),
         sa.Column("driver", sa.Text()),
-        sa.Column("fix_mode", sa.Integer()),
         sa.Column("satellites_visible", sa.Integer()),
         sa.Column("satellites_used", sa.Integer()),
-        sa.Column("latitude", sa.Float()),
-        sa.Column("longitude", sa.Float()),
-        sa.Column("altitude", sa.Float()),
         sa.Column("gpsd_host", sa.Text()),
         sa.Column("gpsd_port", sa.Integer()),
         sa.Column("additional_metadata", postgresql.JSONB(astext_type=sa.Text())),
@@ -45,4 +41,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table("gnss_metadata", schema=SCHEMA)
+    op.drop_table("gpsd_metadata", schema=SCHEMA)

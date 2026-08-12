@@ -9,7 +9,7 @@ The collect API enables automated collection of measurement data from network-co
 - **Microchip TWST Modems** (ATS6502 series): Collect offset and EBNO tracking values along with contextual information
 - **Microchip TimeProvider® 4100** (TP4100): Collect timing performance metrics from various input channels via web interface
 - **NTP**: Collect local synchronization state or query remote NTP servers
-- **GPS/GNSS**: Collect receiver fixes from a local or remote gpsd using `gpspipe`
+- **GPSD**: Collect TPV metrics for a selected receiver from a local or remote GPSD daemon using `gpspipe`
 
 ## Installation
 
@@ -67,22 +67,24 @@ opensampl collect ntp --mode remote --host time.cloudflare.com --probe-id public
 opensampl collect ntp --mode remote --host 127.0.0.1 --port 10123 --probe-id mock-a --count 5 --interval 10 --load
 ```
 
-### Collecting from GPS/GNSS Receivers
+### Collecting from GPSD Receivers
 
-The GNSS probe uses the `gpspipe` CLI supplied by gpsd clients. Start gpsd for the
-receiver, install `gpspipe` using your operating system package manager, and collect
-a bounded number of JSON reports:
+The GPSD probe uses the `gpspipe` CLI supplied by GPSD clients. Start GPSD for the
+receiver, install `gpspipe` using your operating system package manager, and select a
+specific device because one daemon can expose multiple receivers:
 
 ```bash
-opensampl collect gnss --host 127.0.0.1 --gpsd-port 2947 \
-  --probe-id roof-gnss --samples 20 --output-dir ./gnss-out
-opensampl load gnss ./gnss-out
+opensampl collect gpsd --gpsd-host 127.0.0.1 --gpsd-port 2947 \
+  --device /dev/ttyACM0 --samples 20 --output-dir ./gpsd-out
+opensampl load gpsd ./gpsd-out
 ```
 
-Add `--load` to write directly to the configured database. Each collection stores
-the latest fix position, fix mode, receiver/driver details, and visible/used satellite
-counts as metadata. It stores a sync-health sample (`1` for a 2D/3D fix, otherwise
-`0`) for each TPV report.
+Add `--load` to write directly to the configured database. The selected receiver is
+stored in `probe_metadata` using the daemon host as `ip_address` and the GPSD device
+path as `probe_id`. Daemon/device details and latest visible/used satellite counts are
+metadata. Supported non-deprecated TPV payload fields are stored as time-series metrics;
+`ept` maps to phase offset, while `mode` maps to sync health (`1` for a 2D/3D fix and
+`0` otherwise). Measurements retain the GNSS reference type.
 
 #### NTP metadata behavior
 
