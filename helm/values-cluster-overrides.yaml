@@ -1,4 +1,4 @@
-# values-production.yaml
+# Kubernetes cluster specific overrides. 
 
 global:
   imagePullPolicy: Always
@@ -39,7 +39,7 @@ grafana:
   port: 3000
   service:
     type: ClusterIP
-  rootUrl: "https://opensampl-test.ornl.gov/grafana"
+  rootUrl:"https://opensampl-test.eig3-orc1.ornl.gov/grafana"
   serveFromSubPath: true
 
 # Migrations (disabled until ready)
@@ -54,7 +54,7 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"  # If using cert-manager
     # nginx.ingress.kubernetes.io/ssl-redirect: "true"
   hosts:
-    - host: opensampl-test.ornl.gov  
+    - host: opensampl-test.eig3-orc1.ornl.gov
       paths:
       - path: /grafana
         pathType: Prefix
@@ -65,4 +65,4 @@ ingress:
   tls:
     - secretName: opensampl-tls
       hosts:
-        - opensampl-test.ornl.gov
+        - opensampl-test.eig3-orc1.ornl.gov
