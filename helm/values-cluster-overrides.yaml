@@ -39,7 +39,7 @@ grafana:
   port: 3000
   service:
     type: ClusterIP
-  rootUrl:"https://opensampl-test.eig3-orc1.ornl.gov/grafana"
+  rootUrl: "https://opensampl-test.eig3-orc1.ornl.gov/grafana"
   serveFromSubPath: true
 
 # Migrations (disabled until ready)

@@ -80,10 +80,12 @@ jobs:
           PR_NUMBER=$(echo ${GITHUB_REF} | awk -F'/' '{print $3}')
           
           helm install test-opensampl . \
+            -f values-cluster-overrides.yaml \
             --set db.image.tag=pr-${PR_NUMBER} \
             --set backend.image.tag=pr-${PR_NUMBER} \
             --set grafana.image.tag=pr-${PR_NUMBER} \
             --set migrations.enabled=false \
+            --set ingress.enabled=false \
             --wait \
             --timeout 5m
       
@@ -121,8 +123,17 @@ jobs:
           version: v3.14.0
 
       - name: Helm Lint
-        run: helm lint ./helm
+        run: |
+          helm lint ./helm
+          helm lint ./helm -f ./helm/values-cluster-overrides.yaml
 
+      - name: Render Helm Chart
+        run: |
+          helm template opensampl ./helm \
+            -f ./helm/values-cluster-overrides.yaml \
+            --namespace opensampl-test \
+            > /tmp/opensampl-rendered.yaml
+          
       - name: Package Chart
         run: helm package ./helm
 
