@@ -2,6 +2,11 @@
 global:
   imagePullPolicy: IfNotPresent
 
+busybox:
+  image:
+    repository: ghcr.io/ornl/opensampl-busybox
+    tag: "1.36.1"
+
 # PostgreSQL Database
 db:
   image:

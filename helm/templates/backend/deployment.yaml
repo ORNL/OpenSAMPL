@@ -21,7 +21,7 @@ spec:
     spec:
       initContainers:
         - name: wait-for-db
-          image: busybox
+          image: "{{ .Values.busybox.image.repository }}:{{ .Values.busybox.image.tag }}" 
           command:
             - sh
             - -c

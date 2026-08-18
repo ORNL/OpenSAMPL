@@ -1,4 +1,4 @@
-# Kubernetes cluster specific overrides. 
+# Laboratory and Kubernetes cluster specific overrides. 
 
 global:
   imagePullPolicy: Always
