@@ -138,18 +138,30 @@ def load_time_data(
         df["probe_uuid"] = data_definition.probe.uuid  # ty: ignore[possibly-unbound-attribute]
         df["reference_uuid"] = data_definition.reference.uuid  # ty: ignore[possibly-unbound-attribute]
         df["metric_type_uuid"] = data_definition.metric.uuid  # ty: ignore[possibly-unbound-attribute]
-        logger.debug(df.head())
-        # Ensure correct dtypes
+
+        # Ensure correct time dtypes
         df["time"] = pd.to_datetime(df["time"], format="mixed", utc=True, errors="raise")
-        df["value"] = df["value"].apply(json.dumps)
+
+        if data_definition.metric.is_numeric():
+            df["value_float"] = pd.to_numeric(df["value"], errors="raise")
+            df["value_jsonb"] = None
+        else:
+            df["value_float"] = None
+            df["value_jsonb"] = df["value"].apply(json.dumps)
+
+        logger.debug(df.head())
+
+        df = df.drop(columns=["value"])  # Drop original value column, as we now have value_float and value_jsonb
+        logger.debug(df.head())
+
         records = df.to_dict(orient="records")
         insert_stmt = text(f"""
-        INSERT INTO {ProbeData.__table__.schema}.{ProbeData.__tablename__}
-        (time, probe_uuid, reference_uuid, metric_type_uuid, value)
-        VALUES (:time, :probe_uuid, :reference_uuid, :metric_type_uuid, :value)
-        ON CONFLICT (time, probe_uuid, reference_uuid, metric_type_uuid)
-        DO NOTHING
-        """)  # noqa: S608
+                INSERT INTO {ProbeData.__table__.schema}.{ProbeData.__tablename__}
+                (time, probe_uuid, reference_uuid, metric_type_uuid, value_float, value_jsonb)
+                VALUES (:time, :probe_uuid, :reference_uuid, :metric_type_uuid, :value_float, :value_jsonb)
+                ON CONFLICT (time, probe_uuid, reference_uuid, metric_type_uuid)
+                DO NOTHING
+                """)  # noqa: S608
 
         try:
             result = session.execute(insert_stmt, records)
