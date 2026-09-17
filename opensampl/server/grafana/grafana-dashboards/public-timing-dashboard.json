@@ -650,7 +650,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  coalesce(pm.name, concat(pm.ip_address, ' Interface ', pm.probe_id)),\n  AVG(pd.value::FLOAT) * 1e9 AS value\nFROM castdb.probe_data pd JOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nWHERE\n  $__timeFilter(pd.time)\n  AND pm.vendor IN ('ADVA', 'MicrochipTP4100', 'NTP')\n  AND coalesce(pm.public, true)\n  AND (trim('${clock_name:csv}') = '' OR pd.probe_uuid = ANY(string_to_array(trim('${clock_name:csv}'), ',')))\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid,\n  pm.name,\n  pm.ip_address,\n  pm.probe_id\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  coalesce(pm.name, concat(pm.ip_address, ' Interface ', pm.probe_id)),\n  AVG(pd.value_float) * 1e9 AS value\nFROM castdb.probe_data pd JOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nWHERE\n  $__timeFilter(pd.time)\n  AND pm.vendor IN ('ADVA', 'MicrochipTP4100', 'NTP')\n  AND coalesce(pm.public, true)\n  AND (trim('${clock_name:csv}') = '' OR pd.probe_uuid = ANY(string_to_array(trim('${clock_name:csv}'), ',')))\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid,\n  pm.name,\n  pm.ip_address,\n  pm.probe_id\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -776,7 +776,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' Interface ', pm.probe_id)),\n  (MAX(pd.value::FLOAT) - MIN(pd.value::FLOAT)) * 1e9 AS value\nFROM castdb.probe_data pd JOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nWHERE\n  $__timeFilter(pd.time)\n  AND pm.vendor IN ('ADVA', 'MicrochipTP4100', 'NTP')\n  AND coalesce(pm.public, true)\n  AND (trim('${clock_name:csv}') = '' OR pd.probe_uuid = ANY(string_to_array(trim('${clock_name:csv}'), ',')))\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid,\n  pm.name,\n  pm.ip_address,\n  pm.probe_id\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, CONCAT(pm.ip_address, ' Interface ', pm.probe_id)),\n  (MAX(pd.value_float) - MIN(pd.value_float)) * 1e9 AS value\nFROM castdb.probe_data pd JOIN castdb.probe_metadata pm ON pd.probe_uuid = pm.uuid\nWHERE\n  $__timeFilter(pd.time)\n  AND pm.vendor IN ('ADVA', 'MicrochipTP4100', 'NTP')\n  AND coalesce(pm.public, true)\n  AND (trim('${clock_name:csv}') = '' OR pd.probe_uuid = ANY(string_to_array(trim('${clock_name:csv}'), ',')))\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid,\n  pm.name,\n  pm.ip_address,\n  pm.probe_id\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -916,7 +916,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  AVG(pd.value::FLOAT) * 1e9 AS value\nFROM castdb.probe_data pd\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid = ${clock_name:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  AVG(pd.value_float) * 1e9 AS value\nFROM castdb.probe_data pd\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid = ${clock_name:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1027,7 +1027,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  (MAX(pd.value::FLOAT) - MIN(pd.value::FLOAT)) * 1e9 AS value\nFROM castdb.probe_data pd\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid = ${clock_name:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  (MAX(pd.value_float) - MIN(pd.value_float)) * 1e9 AS value\nFROM castdb.probe_data pd\nWHERE\n  $__timeFilter(pd.time)\n  AND pd.probe_uuid = ${clock_name:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')\n",
           "refId": "A",
           "sql": {
             "columns": [
