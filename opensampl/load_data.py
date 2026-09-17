@@ -149,8 +149,6 @@ def load_time_data(
             df["value_float"] = None
             df["value_jsonb"] = df["value"].apply(json.dumps)
 
-        logger.debug(df.head())
-
         df = df.drop(columns=["value"])  # Drop original value column, as we now have value_float and value_jsonb
         logger.debug(df.head())
 
