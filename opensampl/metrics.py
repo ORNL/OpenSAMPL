@@ -21,6 +21,10 @@ class MetricType(BaseModel):
         """Convert a given value to the expected type for the Metric"""
         return self.value_type(value)
 
+    def is_numeric(self) -> bool:
+        """Return True if the metric's value_type is numeric (int or float)"""
+        return self.value_type in [int, float]
+
     @field_serializer("value_type")
     def serialize_type(self, value: type):
         """Return the name of value_type for serializing"""

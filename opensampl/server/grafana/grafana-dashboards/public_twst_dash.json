@@ -493,7 +493,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  coalesce(pm.name, pm.probe_id) AS channel,\n  AVG(pd.value::FLOAT) AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${ebno_uuid:sqlstring}) pd\nJOIN \n  castdb.reference r ON pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nWHERE \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.name,\n  pm.probe_id\nORDER BY \n  time\n",
+          "rawSql": "SELECT \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  coalesce(pm.name, pm.probe_id) AS channel,\n  AVG(pd.value_float) AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${ebno_uuid:sqlstring}) pd\nJOIN \n  castdb.reference r ON pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nWHERE \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.name,\n  pm.probe_id\nORDER BY \n  time\n",
           "refId": "B",
           "sql": {
             "columns": [
@@ -628,7 +628,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, pm.probe_id) as name,\n  AVG(pd.value::FLOAT) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nwhere \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
+          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, pm.probe_id) as name,\n  AVG(pd.value_float) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nwhere \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
           "refId": "B",
           "sql": {
             "columns": [
@@ -763,7 +763,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, pm.probe_id) as name,\n  (MAX(pd.value::FLOAT) - MIN(pd.value::FLOAT)) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nwhere \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
+          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  COALESCE(pm.name, pm.probe_id) as name,\n  (MAX(pd.value_float) - MIN(pd.value_float)) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nJOIN \n  castdb.probe_metadata pm ON r.compound_reference_uuid = pm.uuid\nwhere \n  $__timeFilter(pd.time)\n  and r.compound_reference_uuid in (${compound_ref:sqlstring})\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pm.uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
           "refId": "B",
           "sql": {
             "columns": [
@@ -1246,7 +1246,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  AVG(pd.value::FLOAT) AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${ebno_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nwhere \n  $__timeFilter(pd.time)\n  AND r.compound_reference_uuid = ${compound_ref:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
+          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  AVG(pd.value_float) AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${ebno_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nwhere \n  $__timeFilter(pd.time)\n  AND r.compound_reference_uuid = ${compound_ref:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
           "refId": "B",
           "sql": {
             "columns": [
@@ -1367,7 +1367,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  AVG(pd.value::FLOAT) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nwhere \n  $__timeFilter(pd.time)\n  AND r.compound_reference_uuid = ${compound_ref:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
+          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  AVG(pd.value_float) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nwhere \n  $__timeFilter(pd.time)\n  AND r.compound_reference_uuid = ${compound_ref:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
           "refId": "B",
           "sql": {
             "columns": [
@@ -1488,7 +1488,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  (MAX(pd.value::FLOAT) - MIN(pd.value::FLOAT)) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nwhere \n  $__timeFilter(pd.time)\n  AND r.compound_reference_uuid = ${compound_ref:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
+          "rawSql": "select \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC') AS time,\n  (MAX(pd.value_float) - MIN(pd.value_float)) * 1e9 AS value\nFROM \n  get_probe_data_by_probe_and_metric(${modem:sqlstring}, ${phase_offset_uuid:sqlstring}) pd\njoin castdb.reference r on pd.reference_uuid = r.uuid\nwhere \n  $__timeFilter(pd.time)\n  AND r.compound_reference_uuid = ${compound_ref:sqlstring}\nGROUP BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC'),\n  pd.probe_uuid\nORDER BY \n  time_bucket(${resolution:sqlstring}, pd.time AT TIME ZONE 'UTC')",
           "refId": "B",
           "sql": {
             "columns": [
