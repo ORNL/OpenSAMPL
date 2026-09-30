@@ -280,7 +280,8 @@ class ProbeData(Base):
         primary_key=True,
         comment="Foreign key to the metric type being measured",
     )
-    value = Column(JSONB, comment="Measurement value stored as JSON; value's expected type defined via metric")
+    value_float = Column(Float, nullable=True, comment="Float type value; value's expected type defined via metric")
+    value_jsonb = Column(JSONB, nullable=True, comment="Measurement value stored as JSON; value's expected type defined via metric")
 
 
 class MetricType(Base):

@@ -36,6 +36,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
+### Changed
+- ⚡ `probe_data` table now has `value_float` and `value_jsonb` columns instead of one `value` (jsonb type) column. 
+- ⚡ …
+
 -->
 ## [1.2.1] - 2026-07-08
 ### Fixed
