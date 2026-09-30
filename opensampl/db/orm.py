@@ -280,8 +280,16 @@ class ProbeData(Base):
         primary_key=True,
         comment="Foreign key to the metric type being measured",
     )
-    value_float = Column(Float, nullable=True, comment="Float type value; value's expected type defined via metric")
-    value_jsonb = Column(JSONB, nullable=True, comment="Measurement value stored as JSON; value's expected type defined via metric")
+    value_float = Column(
+        Float, 
+        nullable=True, 
+        comment="Float type value; value's expected type defined via metric"
+    )
+    value_jsonb = Column(
+        JSONB, 
+        nullable=True, 
+        comment="Measurement value stored as JSON; value's expected type defined via metric"
+    )
 
 
 class MetricType(Base):
@@ -299,9 +307,17 @@ class MetricType(Base):
         default=lambda: str(uuid.uuid4()),
         comment="Auto generated primary key UUID for the metric type",
     )
-    name = Column(String, unique=True, comment="Unique name for the metric type (e.g., phase offset, delay, quality)")
-    description = Column(Text, nullable=True, comment="Optional human-readable description of the metric")
-    unit = Column(String, nullable=False, comment="Measurement unit (e.g., ns, s, ppm)")
+    name = Column(
+        String, 
+        unique=True, 
+        comment="Unique name for the metric type (e.g., phase offset, delay, quality)"
+    )
+    description = Column(
+        Text, nullable=True, comment="Optional human-readable description of the metric"
+    )
+    unit = Column(
+        String, nullable=False, comment="Measurement unit (e.g., ns, s, ppm)"
+    )
     value_type = Column(
         String, nullable=False, default="string", comment="Data type of the value (e.g., float, int, string)"
     )
