@@ -44,7 +44,7 @@ services:
       context: migrations
     restart: "no"
     environment:
-      - DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DB_URI=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
       db:
         condition: service_healthy
@@ -59,7 +59,7 @@ services:
       - "8015:8000"
     restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - ROUTE_TO_BACKEND=false
       - BACKEND_LOG_LEVEL=${BACKEND_LOG_LEVEL}
       - USE_API_KEY=${USE_API_KEY}

@@ -6,7 +6,7 @@ ENV ROUTE_TO_BACKEND=false
 
 FROM base AS prod
 
-RUN pip install --no-cache-dir "opensampl[backend]==${OPENSAMPL_VERSION}"
+RUN pip install "opensampl[backend]==${OPENSAMPL_VERSION}"
 
 CMD ["uvicorn", "opensampl.server.backend.main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]
 

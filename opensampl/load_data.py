@@ -142,7 +142,7 @@ def load_time_data(
         # Ensure correct time dtypes
         df["time"] = pd.to_datetime(df["time"], format="mixed", utc=True, errors="raise")
 
-        if data_definition.metric.is_numeric():
+        if metric_type.is_numeric():
             df["value_float"] = pd.to_numeric(df["value"], errors="raise")
             df["value_jsonb"] = None
         else:
