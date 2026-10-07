@@ -39,7 +39,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 
 -->
-## [1.2.3] 
+## [1.2.3] = 2026-10-07
 ### Changed
 - ⚡ updated database drivers to use psycopg2 in server
 - ⚡ pinned geoalchemy2 to `>=0.18.0,<1` to comply with sqlalchemy requirements
