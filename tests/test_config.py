@@ -194,7 +194,7 @@ class TestServerConfig:
         }
         
         db_url = config.get_db_url()
-        assert db_url == "postgresql://testuser:testpass@localhost:5415/testdb"
+        assert db_url == "postgresql+psycopg2://testuser:testpass@localhost:5415/testdb"
 
         # Test missing environment variables
         config.docker_env_values = {}

@@ -443,15 +443,15 @@ wheels = [
 
 [[package]]
 name = "geoalchemy2"
-version = "0.16.0"
+version = "0.20.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
     { name = "sqlalchemy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/d6/b01fa413cb8d7b3407f7f832f9310c623597ba38d21e52082296a36c04fa/geoalchemy2-0.16.0.tar.gz", hash = "sha256:df64bb72af70daafaac3f359492c96501c37ab85ed20f9510c99cc6d02881100", size = 227842, upload-time = "2024-11-13T08:24:37.98Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/63/74/6cb1ef591bf47d28f41aa770f2f3a91c0a570aee0a4083bed7f8c533d8df/geoalchemy2-0.20.0.tar.gz", hash = "sha256:450f427f4bc3cf2d5ddee0af3763aed0f3eea2384e7c9a99798d8f1508279322", size = 280805, upload-time = "2026-05-12T14:50:26.132Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/43/b1a687122767d544d493776934687ab168b2224bd4a6c1e8b22640ce6227/GeoAlchemy2-0.16.0-py3-none-any.whl", hash = "sha256:b0f27d5500ee757af4654c6262e0f834b7a843504d193653ec747ef1128d2ab5", size = 74663, upload-time = "2024-11-13T08:24:36.234Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/08/b66ad4239f592e05202e25925c08cdd04cc14c3994000ec70ec61fea202c/geoalchemy2-0.20.0-py3-none-any.whl", hash = "sha256:1489a1d106519542a79c97cd0b4c537d80462c353610ebc2429cf2c43daac717", size = 96467, upload-time = "2026-05-12T14:50:24.998Z" },
 ]
 
 [[package]]
@@ -1090,7 +1090,7 @@ wheels = [
 
 [[package]]
 name = "opensampl"
-version = "1.2.0"
+version = "1.2.3"
 source = { editable = "." }
 dependencies = [
     { name = "allantools" },
@@ -1153,7 +1153,7 @@ requires-dist = [
     { name = "astor" },
     { name = "click", specifier = ">=8.0.0,<9" },
     { name = "fastapi", marker = "extra == 'backend'" },
-    { name = "geoalchemy2", specifier = "==0.16.0" },
+    { name = "geoalchemy2", specifier = ">=0.18.0,<1" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "libcst" },
     { name = "loguru", specifier = ">=0.7.0,<0.8" },

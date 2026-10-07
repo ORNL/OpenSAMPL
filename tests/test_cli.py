@@ -177,6 +177,22 @@ class TestCLI:
 
         assert result.exit_code == 0
 
+    def test_cli_maintenance_command(self, runner):
+        """Test the maintenance command group."""
+        result = runner.invoke(cli, ["maintenance", "--help"])
+
+        assert result.exit_code == 0
+        assert "value-backfill" in result.output
+
+    def test_cli_value_backfill_command(self, runner):
+        """Test the value-backfill command help."""
+        result = runner.invoke(cli, ["maintenance", "value-backfill", "--help"])
+
+        assert result.exit_code == 0
+        assert "--workers" in result.output
+        assert "--batch-size" in result.output
+        assert "--vacuum-every-batches" in result.output
+
     def test_cli_case_insensitive_commands(self, runner):
         """Test case-insensitive subcommand handling for 'load'."""
         # Only subcommands of 'load' are case-insensitive, not the top-level
@@ -185,4 +201,5 @@ class TestCLI:
         result3 = runner.invoke(cli, ['load', 'Table', '--help'])
 
         # All should work the same
-        assert result1.exit_code == result2.exit_code == result3.exit_code == 0 
+        assert result1.exit_code == result2.exit_code == result3.exit_code == 0
+

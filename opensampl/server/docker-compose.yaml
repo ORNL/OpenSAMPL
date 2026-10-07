@@ -40,12 +40,26 @@ services:
       context: ./migrations
     restart: "no"
     environment:
-      - DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DB_URI=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - CHUNK_INTERVAL=${CHUNK_INTERVAL}
       - RETENTION_POLICY=${RETENTION_POLICY}
     depends_on:
       db:
         condition: service_healthy
+
+  value-backfill:
+    image: savannah.ornl.gov/opensampl/migrations:latest
+    profiles: ["maintenance"]
+    restart: "no"
+    command: ["opensampl", "maintenance", "value-backfill"]
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - ROUTE_TO_BACKEND=false
+    depends_on:
+      db:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
 
   backend:
     image: savannah.ornl.gov/opensampl/backend:latest
@@ -56,7 +70,7 @@ services:
       - "8015:8000"
     restart: always
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - BACKEND_LOG_LEVEL=${BACKEND_LOG_LEVEL:-INFO}
       - USE_API_KEY=${USE_API_KEY:-false}
       - API_KEY=${API_KEY:-}

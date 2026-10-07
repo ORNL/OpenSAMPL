@@ -39,6 +39,19 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 
 -->
+## [1.2.3] 
+### Changed
+- ⚡ updated database drivers to use psycopg2 in server
+- ⚡ pinned geoalchemy2 to `>=0.18.0,<1` to comply with sqlalchemy requirements
+
+### Added
+- 🔥 docker bake definition file for migrations and backend
+- 🔥 value backfill to migrate numeric `value_jsonb` to `value_float` for existing data in `probe_data` table
+
+### Fixed
+- 🩹 Bug in load data related to metric_type
+- 🩹 Bug in server/backend for loading api keys
+
 ## [1.2.2] = 2026-09-30
 ### Changed
 - ⚡ `probe_data` table now has `value_float` and `value_jsonb` columns instead of one `value` (jsonb type) column. 
