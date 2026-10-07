@@ -30,18 +30,6 @@ def upgrade() -> None:
                   sa.Column("value_float", sa.Float(), nullable=True),
                   schema=SCHEMA)
 
-    # Backfill value_float from the numeric jsonb values
-    op.execute(
-        """
-        UPDATE castdb.probe_data pd
-        SET value_float = (pd.value_jsonb #>> '{}')::double precision
-        FROM castdb.metric_type mt
-        WHERE pd.metric_type_uuid = mt.uuid
-          AND mt.value_type IN ('float'
-            , 'int')
-        """
-    )
-
 
 def downgrade() -> None:
     op.execute(

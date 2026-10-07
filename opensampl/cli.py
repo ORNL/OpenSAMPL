@@ -18,6 +18,7 @@ from loguru import logger
 
 from opensampl.config.base import BaseConfig as CLIConfig
 from opensampl.db.orm import get_table_names
+from opensampl.helpers.convert_value import value_backfill
 from opensampl.load_data import create_new_tables, write_to_table
 from opensampl.mixins.collect import CollectMixin
 from opensampl.mixins.random_data import RandomDataMixin
@@ -174,6 +175,14 @@ def config_set(ctx: click.Context, name: str, value: str):
     conf = ctx.obj["conf"]
 
     conf.set_by_name(name=name, value=value)
+
+
+@cli.group(cls=CaseInsensitiveGroup)
+def maintenance():
+    """Run direct-database maintenance operations."""
+
+
+maintenance.add_command(value_backfill)
 
 
 @cli.group(cls=CaseInsensitiveGroup)

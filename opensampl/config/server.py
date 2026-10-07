@@ -133,5 +133,5 @@ class ServerConfig(BaseConfig):
         password = self.docker_env_values.get("POSTGRES_PASSWORD")
         db = self.docker_env_values.get("POSTGRES_DB")
         if all(x is not None for x in [user, password, db]):
-            return f"postgresql://{user}:{password}@localhost:5415/{db}"
+            return f"postgresql+psycopg2://{user}:{password}@localhost:5415/{db}"
         raise ValueError("Database environment variables POSTGRES_USER, POSTGRES_PASSWORD, or POSTGRES_DB are not set.")

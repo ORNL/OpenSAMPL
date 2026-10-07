@@ -78,6 +78,17 @@ opensampl-server run backend python -m opensampl.cli init
 
 This maps directly to `docker compose run --rm ...`.
 
+The packaged deployment also contains an opt-in service for the historical
+numeric value backfill:
+
+```bash
+opensampl-server run value-backfill
+```
+
+The service is not started by the normal `up` command. See the
+[value backfill guide](value-backfill.md) before running it, especially for a
+large database.
+
 ## Using a custom env file
 
 `--env-file` is a top-level CLI option, so it must appear before the subcommand:

@@ -3,7 +3,7 @@ FROM python:3.12
 ARG OPENSAMPL_VERSION=1.1.5
 
 WORKDIR /
-RUN pip install --no-cache-dir "opensampl[migrations]==${OPENSAMPL_VERSION}" alembic
+RUN pip install --no-cache-dir "opensampl[migrations]==${OPENSAMPL_VERSION}"
 
 RUN useradd -m alembic
 USER alembic

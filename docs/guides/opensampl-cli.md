@@ -3,6 +3,20 @@
 Use `opensampl --help` to see the top-level commands, or `opensampl <command> --help`
 for subcommand-specific options.
 
+## Maintenance
+
+Database maintenance commands are grouped under `opensampl maintenance`. The
+`value-backfill` command copies historical numeric JSON values into the
+optimized floating-point column introduced by the probe-data type migration:
+
+```bash
+opensampl maintenance value-backfill
+```
+
+It requires a direct database connection and refuses to run when
+`ROUTE_TO_BACKEND=true`. See the [value backfill guide](value-backfill.md) for
+prerequisites, tuning options, Compose usage, and recovery instructions.
+
 ## Load Data
 
 ### Probe Data
@@ -114,4 +128,3 @@ Arguments:
 Options:
 
 * `--update-db` (`-u`): Update the database with the new probe type
-

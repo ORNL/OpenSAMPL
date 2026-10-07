@@ -6,7 +6,11 @@ from sqlalchemy import pool
 
 from alembic import context
 
-sqlalchemy_url = os.environ.get('DB_URI')
+db_uri = os.environ.get('DB_URI')
+if db_uri and db_uri.startswith('postgresql://'):
+    db_uri = db_uri.replace('postgresql://', 'postgresql+psycopg2://', 1)
+
+sqlalchemy_url = db_uri
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

@@ -53,6 +53,9 @@ class ProbeMetadataPayload(BaseModel):
 
 
 DATABASE_URI = os.getenv("DATABASE_URL")
+if DATABASE_URI and DATABASE_URI.startswith("postgresql://"):
+    DATABASE_URI = DATABASE_URI.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 engine = create_engine(DATABASE_URI)
 
 loglevel = os.getenv("BACKEND_LOG_LEVEL", "INFO")
@@ -93,7 +96,7 @@ def get_keys():
         Session = sessionmaker(bind=engine)  # noqa: N806
         with Session() as session:
             now = datetime.now(tz=UTC)
-            stmt = select(APIAccessKey.key).where(or_(APIAccessKey.expires_at is None, APIAccessKey.expires_at > now))
+            stmt = select(APIAccessKey.key).where(or_(APIAccessKey.expires_at.is_(None), APIAccessKey.expires_at > now))
             result = session.execute(stmt)
             keys = [row[0] for row in result.all()]
             logger.debug("api access keys loaded from db")
