@@ -202,3 +202,4 @@ class TestCLI:
 
         # All should work the same
         assert result1.exit_code == result2.exit_code == result3.exit_code == 0
+
