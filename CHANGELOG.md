@@ -46,6 +46,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 - 🔥 docker bake definition file for migrations and backend
+- 🔥 value backfill to migrate numeric `value_jsonb` to `value_float` for existing data in `probe_data` table
 
 ### Fixed
 - 🩹 Bug in load data related to metric_type
