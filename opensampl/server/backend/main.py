@@ -53,8 +53,8 @@ class ProbeMetadataPayload(BaseModel):
 
 
 DATABASE_URI = os.getenv("DATABASE_URL")
-if DATABASE_URI and DATABASE_URI.startswith('postgresql://'):
-    DATABASE_URI = DATABASE_URI.replace('postgresql://', 'postgresql+psycopg2://', 1)
+if DATABASE_URI and DATABASE_URI.startswith("postgresql://"):
+    DATABASE_URI = DATABASE_URI.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 engine = create_engine(DATABASE_URI)
 
