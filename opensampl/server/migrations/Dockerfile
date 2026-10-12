@@ -3,7 +3,10 @@ FROM python:3.12
 ARG OPENSAMPL_VERSION=1.1.5
 
 WORKDIR /
-RUN pip install --no-cache-dir "opensampl[migrations]==${OPENSAMPL_VERSION}"
+RUN pip install --no-cache-dir \
+    "opensampl[migrations]==${OPENSAMPL_VERSION}" \
+    "mako>=1.4.2,<2" \
+    "urllib3>=2.8.0,<3"
 
 RUN useradd -m alembic
 USER alembic

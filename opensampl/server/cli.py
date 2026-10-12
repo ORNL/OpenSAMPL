@@ -15,8 +15,6 @@ from loguru import logger
 from opensampl.config.server import ServerConfig
 from opensampl.server import ensure_docker
 
-ensure_docker()
-
 
 def load_config(env_file: str | None = None) -> ServerConfig:
     """
@@ -64,6 +62,7 @@ BANNER = r"""
 @click.pass_context
 def cli(ctx: click.Context, env_file: str):
     """Command line interface for the opensampl server."""
+    ensure_docker()
     ctx.ensure_object(dict)
     conf = load_config(env_file)
     ctx.obj["conf"] = conf

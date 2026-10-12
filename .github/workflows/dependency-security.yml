@@ -1,0 +1,67 @@
+name: Dependency security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit locked dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv with audit support
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.21"
+
+      - name: Verify lockfile consistency
+        run: uv lock --check
+
+      - name: Audit comprehensive dependency graph
+        run: uv audit --locked --preview-features audit-command
+
+      - name: Audit installable dependency subsets
+        run: |
+          uv audit --locked --preview-features audit-command --no-default-groups --no-extra backend --no-extra migrations --no-extra collect
+          uv audit --locked --preview-features audit-command --no-default-groups --no-extra migrations --no-extra collect
+          uv audit --locked --preview-features audit-command --no-default-groups --no-extra backend --no-extra collect
+          uv audit --locked --preview-features audit-command --only-group dev
+
+      - name: Verify patched security minimums
+        run: |
+          uv sync --locked --all-extras --all-groups
+          uv run python - <<'PY'
+          from importlib.metadata import version
+          from packaging.version import Version
+
+          minimums = {
+              "anyio": "4.14.2",
+              "urllib3": "2.8.0",
+              "pymdown-extensions": "11.0.1",
+              "Mako": "1.4.2",
+              "mkdocs-material": "9.7.7",
+          }
+          for package, minimum in minimums.items():
+              installed = version(package)
+              assert Version(installed) >= Version(minimum), f"{package} {installed} is below {minimum}"
+          PY
+
+      - name: Generate dependency SBOM
+        run: uv export --locked --all-extras --all-groups --format cyclonedx1.5 --output-file dependency-sbom.cdx.json
+
+      - name: Upload dependency SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-sbom
+          path: dependency-sbom.cdx.json
+          if-no-files-found: error

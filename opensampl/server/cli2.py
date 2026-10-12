@@ -21,8 +21,6 @@ from loguru import logger
 from opensampl.config.server import ServerConfig
 from opensampl.server import ensure_docker
 
-ensure_docker()
-
 
 def load_config(env_file: str | None = None) -> ServerConfig:
     """
@@ -75,6 +73,7 @@ def cli(env_file: str, args: tuple):
     If you wish to skip this help, and get direct docker compose help instead, run as opensampl-server2 -- {commands};
     for example: opensampl-server2 -- --help to get the docker compose help text
     """
+    ensure_docker()
     conf = load_config(env_file)
     logger.configure(handlers=[{"sink": sys.stderr, "level": conf.LOG_LEVEL.upper()}])
 

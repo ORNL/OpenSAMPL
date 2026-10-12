@@ -42,6 +42,7 @@ nav:
     - access_orm: api/db/access_orm.md
     - orm: api/db/orm.md
   - helpers:
+    - convert_value: api/helpers/convert_value.md
     - geolocator: api/helpers/geolocator.md
   - load:
     - data: api/load/data.md

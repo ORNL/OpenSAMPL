@@ -16,7 +16,7 @@ variable "REGISTRY" {
 // Read the version straight out of the repo's pyproject.toml so the bake
 // file never drifts from the package version.
 variable "OPENSAMPL_VERSION" {
-  default = "1.2.3"
+  default = "1.2.4"
 }
 
 variable "PLATFORMS" {
