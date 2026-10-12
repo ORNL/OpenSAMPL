@@ -10,14 +10,23 @@ on:
 
 jobs:
   uv-pytest:
-    name: python
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.14"]
 
     steps:
       - uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.21"
+
+      - name: Install Python
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install PostgreSQL and PostGIS tooling
         run: |
@@ -26,7 +35,20 @@ jobs:
           echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
 
       - name: Install the project
-        run: uv sync --all-extras --dev
+        run: uv sync --python ${{ matrix.python-version }} --locked --all-extras --all-groups
 
       - name: Run tests
-        run: uv run pytest tests/
+        run: uv run --python ${{ matrix.python-version }} pytest tests/ -v
+
+      - name: Verify CLI entry points and optional imports
+        env:
+          DATABASE_URL: "sqlite:///:memory:"
+        run: |
+          uv run --python ${{ matrix.python-version }} opensampl --help
+          uv run --python ${{ matrix.python-version }} opensampl-collect --help
+          uv run --python ${{ matrix.python-version }} opensampl-server --help
+          uv run --python ${{ matrix.python-version }} opensampl-server2 --help
+          uv run --python ${{ matrix.python-version }} python -c "import alembic, anyio, fastapi, mako, opensampl.server.backend.main, urllib3"
+
+      - name: Build wheel and source distribution
+        run: uv build --python ${{ matrix.python-version }}

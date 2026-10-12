@@ -26,6 +26,7 @@ Browse the modules and packages below:
     - [Access Orm](db/access_orm.md)
     - [Orm](db/orm.md)
 - Helpers
+    - [Convert Value](helpers/convert_value.md)
     - [Geolocator](helpers/geolocator.md)
 - Load
     - [Data](load/data.md)

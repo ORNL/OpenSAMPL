@@ -16,11 +16,11 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          version: "0.7.3"
+          version: "0.12.21"
       - name: Set up Python
         run: uv python install
       - name: Sync project, including dev dependencies
-        run: uv sync --all-extras
+        run: uv sync --locked --all-extras --all-groups
       - uses: astral-sh/ruff-action@v3
         with:
           version: "0.12.12"
@@ -32,3 +32,5 @@ jobs:
         run: |
           uv run python ./scripts/gen_api_docs.py
           uv run mkdocs build --clean
+          test -s site/search/search_index.json
+          test -n "$(find site/assets/javascripts -type f -name '*.js' -print -quit)"
