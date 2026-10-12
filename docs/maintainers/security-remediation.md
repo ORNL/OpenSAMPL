@@ -91,6 +91,7 @@ The package version was advanced from 1.2.3 to 1.2.4 in `pyproject.toml`, `uv.lo
 | Documentation Docker image build/smoke | Pass; search index and JavaScript assets present |
 | Grafana Docker image build/provisioning inspection | Pass; data source and five dashboard files present |
 | `ty check` | Executed; original commit had 42 diagnostics and this branch has 41, so this is not yet a passing repository gate |
+| GitHub-hosted PR checks | Pass on PR #33: dependency audit, Ruff/docs, Python 3.10, Python 3.12, and Python 3.14 |
 
 The PostgreSQL/PostGIS integration suite covers schema creation, PostGIS availability, seeded metrics and reference types, default UUID behavior, and transaction rollback. The full production Alembic upgrade chain additionally requires TimescaleDB and `pg_cron`; only revision discovery and Mako rendering were exercised in this environment.
 
@@ -116,7 +117,7 @@ If a future finding cannot immediately be remediated, an exception requires huma
 
 ## Outstanding risks and unverified items
 
-- GitHub-hosted CI and Dependabot alert closure can only be confirmed after the branch is pushed and the pull request/default branch are processed.
+- GitHub-hosted CI passed on PR #33. Dependabot alert closure can only be confirmed after merge and default-branch reprocessing.
 - Hardware-in-the-loop collection against physical ADVA and Microchip equipment was unavailable. Existing parser/collector unit coverage and CLI imports passed; live equipment behavior was not claimed.
 - NTP behavior was covered by the existing unit suite, but no external NTP appliance was used.
 - The complete Alembic upgrade chain was not executed against the private production TimescaleDB/`pg_cron` image. Migration imports, revision discovery, Mako rendering, PostgreSQL/PostGIS ORM integration, and the migrations container were validated.
