@@ -1,6 +1,6 @@
-FROM ghcr.io/astral-sh/uv:0.12.21 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
 
-FROM python:3.11 AS builder
+FROM python:3.14 AS builder
 WORKDIR /app
 COPY --from=uv /uv /uvx /bin/
 COPY . .

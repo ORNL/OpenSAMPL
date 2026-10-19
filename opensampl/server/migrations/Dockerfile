@@ -1,4 +1,4 @@
-FROM python:3.12
+FROM python:3.14
 
 ARG OPENSAMPL_VERSION=1.1.5
 

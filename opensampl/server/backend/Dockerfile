@@ -1,4 +1,4 @@
-FROM python:3.12 AS base
+FROM python:3.14 AS base
 ARG OPENSAMPL_VERSION=1.1.5
 
 WORKDIR /tmp
