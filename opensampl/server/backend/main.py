@@ -6,7 +6,7 @@ import os
 import sys
 import time
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pandas as pd
@@ -95,7 +95,7 @@ def get_keys():
     try:
         Session = sessionmaker(bind=engine)  # noqa: N806
         with Session() as session:
-            now = datetime.now(tz=UTC)
+            now = datetime.now(tz=timezone.utc)
             stmt = select(APIAccessKey.key).where(or_(APIAccessKey.expires_at.is_(None), APIAccessKey.expires_at > now))
             result = session.execute(stmt)
             keys = [row[0] for row in result.all()]
@@ -331,7 +331,7 @@ def generate_api_key(
         new_key = APIAccessKey()
         new_key.generate_key()
         if expire_after:
-            new_key.expires_at = datetime.now(tz=UTC) + timedelta(days=expire_after)
+            new_key.expires_at = datetime.now(tz=timezone.utc) + timedelta(days=expire_after)
 
         session.add(new_key)
 
