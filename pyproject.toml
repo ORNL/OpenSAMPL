@@ -50,7 +50,7 @@ dependencies = [
     "numpy>=1.26.4,<2; python_version < '3.13'",
     # NumPy 2.4 supports both Python 3.13 and 3.14 with published wheels.
     "numpy>=2.4.0,<3; python_version >= '3.13'",
-    "pytz~=2024.1",
+    "pytz>=2024.1,<2027.0",
     "requests>=2.32.4,<3",
     # requests permits a broad urllib3 range; keep published installs above the
     # fixes for GHSA-8988-9cw3-xx77, GHSA-vxq7-64xx-v4gw, and GHSA-gh4c-6fx4-qh6g.
