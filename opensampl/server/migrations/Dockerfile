@@ -1,6 +1,6 @@
-FROM python:3.12
+FROM python:3.14
 
-ARG OPENSAMPL_VERSION=1.1.5
+ARG OPENSAMPL_VERSION=1.2.5
 
 WORKDIR /
 RUN pip install --no-cache-dir \
