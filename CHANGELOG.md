@@ -39,6 +39,18 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 
 -->
+## [1.2.5] = 2026-10-21
+### Security
+- 🔐 Remediated Dependabot alerts by raising python minor and patch groups
+- 🔐 Updated pull_request target for Dependabot PRs to `bugfix/dependabot`
+- 🔐 Added weekly Dependabot updates and CI dependency auditing to prevent vulnerable dependency regressions.
+
+### Changed
+- ⚡ updated `OPENSAMPL_VERSION` in the Dockerfiles
+
+### Added
+- 🔥 ensure_branch job to the dependabot security review workflow
+
 ## [1.2.4] = 2026-10-12
 ### Security
 - 🔐 Remediated nine Dependabot alerts by raising the secure minimum versions of AnyIO, urllib3, PyMdown Extensions, Mako, and Material for MkDocs.

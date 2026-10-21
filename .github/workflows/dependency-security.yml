@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [bugfix/dependabot]
   schedule:
     - cron: "17 9 * * 1"
   workflow_dispatch:
@@ -13,11 +13,28 @@ permissions:
   contents: read
 
 jobs:
+
+  ensure-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create bugfix branch if missing
+        run: |
+          if git ls-remote --exit-code --heads origin bugfix/dependabot > /dev/null; then
+            echo "bugfix/dependabot already exists"
+          else
+            git push origin origin/main:refs/heads/bugfix/dependabot
+          fi
+
   audit:
+    needs: ensure-branch
     name: Audit locked dependencies
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv with audit support
         uses: astral-sh/setup-uv@v7
@@ -60,7 +77,7 @@ jobs:
         run: uv export --locked --all-extras --all-groups --format cyclonedx1.5 --output-file dependency-sbom.cdx.json
 
       - name: Upload dependency SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-sbom
           path: dependency-sbom.cdx.json
