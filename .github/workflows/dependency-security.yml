@@ -13,7 +13,24 @@ permissions:
   contents: read
 
 jobs:
+
+  ensure-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create bugfix branch if missing
+        run: |
+          if git ls-remote --exit-code --heads origin bugfix/dependabot > /dev/null; then
+            echo "bugfix/dependabot already exists"
+          else
+            git push origin origin/main:refs/heads/bugfix/dependabot
+          fi
+
   audit:
+    needs: ensure-branch
     name: Audit locked dependencies
     runs-on: ubuntu-latest
     steps:
