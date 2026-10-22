@@ -82,7 +82,7 @@ migrations = [
     "mako>=1.4.2,<2",
 ]
 backend = [
-    "fastapi>=0.146.0<1",
+    "fastapi>=0.146.0,<1",
     "uvicorn",
     "prometheus-client",
     # FastAPI/Starlette permit older AnyIO releases that contain TLS and
