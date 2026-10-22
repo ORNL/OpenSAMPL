@@ -51,6 +51,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - ⚡ updated `OPENSAMPL_VERSION` in the Dockerfiles
+- ⚡ updated workflows so Ubuntu 26.0.4 has access to Postgres 16
 
 
 ## [1.2.5] = 2026-10-21
