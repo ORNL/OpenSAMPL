@@ -30,6 +30,13 @@ jobs:
 
       - name: Install PostgreSQL and PostGIS tooling
         run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+
+          sudo curl -fsSL \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+             -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt resolute-pgdg main" \
+              | sudo tee /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update
           sudo apt-get install -y postgresql-16 postgresql-client-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts
           echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
