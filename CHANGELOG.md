@@ -39,6 +39,16 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 
 -->
+## [1.2.6] = 2026-10-22
+### Security
+- 🔐 Remediated Dependabot alerts by raising python minor and patch groups
+- 🔐 Bumps the container-minor-and-patch group with 1 update in the / directory: astral-sh/uv.
+- 🔐 Updates astral-sh/uv from 0.13.1 to 0.13.4 in the docs Dockerfile
+
+### Changed
+- ⚡ updated `OPENSAMPL_VERSION` in the Dockerfiles
+
+
 ## [1.2.5] = 2026-10-21
 ### Security
 - 🔐 Remediated Dependabot alerts by raising python minor and patch groups
