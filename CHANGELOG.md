@@ -47,6 +47,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🔐 Updates sqlalchemy from 2.0.54 to 2.0.55 
 - 🔐 Updates fastapi from 0.143.3 to 0.146.0
 - 🔐 Updates pytest-mock from 3.16.0 to 3.17.0
+- 🔐 Updates telnet3 from 2.0.4 to 5.0.1
 
 ### Changed
 - ⚡ updated `OPENSAMPL_VERSION` in the Dockerfiles
