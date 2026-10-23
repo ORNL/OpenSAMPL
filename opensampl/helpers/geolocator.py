@@ -39,6 +39,7 @@ def _is_private_or_loopback(ip: str) -> bool:
         return True
     return bool(addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved)
 
+
 def _lookup_geo_ipapi(ip: str) -> tuple[float, float, str] | None:
     if ip in _GEO_CACHE:
         return _GEO_CACHE[ip]
