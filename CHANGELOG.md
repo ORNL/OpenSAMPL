@@ -39,7 +39,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 
 -->
-## [1.2.6] = 2026-10-22
+## [1.2.6] = 2026-10-23
 ### Security
 - 🔐 Remediated Dependabot alerts by raising python minor and patch groups
 - 🔐 Bumps the container-minor-and-patch group with 1 update in the / directory: astral-sh/uv.
