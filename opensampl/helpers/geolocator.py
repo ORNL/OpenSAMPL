@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import ipaddress
-import json
 import os
 import socket
-import urllib.request
 from typing import TYPE_CHECKING
 
+import requests
 from loguru import logger
 
 from opensampl.load.table_factory import TableFactory
@@ -40,16 +39,26 @@ def _is_private_or_loopback(ip: str) -> bool:
         return True
     return bool(addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved)
 
-
 def _lookup_geo_ipapi(ip: str) -> tuple[float, float, str] | None:
     if ip in _GEO_CACHE:
         return _GEO_CACHE[ip]
-    url = f"http://ip-api.com/json/{ip}?fields=status,lat,lon,city,country"
+
     try:
-        # URL scheme is explicitly HTTP; no arbitrary schemes are permitted
-        with urllib.request.urlopen(url, timeout=4.0) as resp:  # noqa S310
-            body = json.loads(resp.read().decode("utf-8"))
-    except Exception as e:
+        validated_ip = ipaddress.ip_address(ip)
+
+        url = f"http://ip-api.com/json/{validated_ip.compressed}"
+        params = {"fields": "status,lat,lon,city,country"}
+
+        response = requests.get(
+            url,
+            params=params,
+            timeout=4.0,
+            allow_redirects=False,
+        )
+        response.raise_for_status()
+        body = response.json()
+
+    except (ValueError, requests.RequestException) as e:
         logger.warning("ip-api geolocation failed for {}: {}", ip, e)
         return None
 
