@@ -46,7 +46,8 @@ def _lookup_geo_ipapi(ip: str) -> tuple[float, float, str] | None:
         return _GEO_CACHE[ip]
     url = f"http://ip-api.com/json/{ip}?fields=status,lat,lon,city,country"
     try:
-        with urllib.request.urlopen(url, timeout=4.0) as resp:
+        # URL scheme is explicitly HTTP; no arbitrary schemes are permitted
+        with urllib.request.urlopen(url, timeout=4.0) as resp:  # noqa S310
             body = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
         logger.warning("ip-api geolocation failed for {}: {}", ip, e)
