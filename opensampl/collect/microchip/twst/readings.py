@@ -53,7 +53,7 @@ class ModemStatusReader(ModemReader):
                 if not line:
                     break  # EOF
                 await self.queue.put(line)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.debug(f"Timeout waiting for data from {self.host}:{self.port}")
         finally:
             await self.queue.put(SENTINEL)
@@ -105,7 +105,7 @@ class ModemStatusReader(ModemReader):
                     break
                 parsed = self.parse_line(line)
                 if parsed:
-                    timestamp, definition, value = parsed
+                    _timestamp, definition, _value = parsed
                     if self.should_keep(definition):
                         self.readings.append(parsed)
             finally:

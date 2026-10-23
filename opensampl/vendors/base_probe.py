@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
@@ -297,7 +297,7 @@ class BaseProbe(ABC):
         Puts the file in the archive directory, with year/month/vendor/ipaddress_id hierarchy based on
         date that the file was processed.
         """
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         archive_path = archive_dir / str(now.year) / f"{now.month:02d}" / self.vendor.name / str(self.probe_key)
         archive_path.mkdir(parents=True, exist_ok=True)
         shutil.move(str(self.input_file), str(archive_path / self.input_file.name))
@@ -447,7 +447,7 @@ class BaseProbe(ABC):
                 for future in futures:
                     try:
                         future.result()
-                    except Exception as e:  # noqa: PERF203
+                    except Exception as e:
                         logger.error(f"Error in thread: {e!s}")
 
     @property

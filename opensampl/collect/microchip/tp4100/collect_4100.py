@@ -5,10 +5,9 @@ This tool utilizes the web interface that is accessible at the IP address of the
 See the user guide for how to configure access to the web interface.
 """
 
-import sys
 import textwrap
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Literal
@@ -21,11 +20,6 @@ from urllib3.exceptions import InsecureRequestWarning
 
 from opensampl.collect.microchip.tp4100 import DEFAULT_MONITOR_CONFIG, MetricInfo, MonitoringConfig
 from opensampl.config.tp4100 import TP4100Config
-
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-else:
-    UTC = timezone.utc
 
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
@@ -316,7 +310,7 @@ class TP4100Collector:
                 if key.strip() == "Title":
                     title_val, rest = val.split("(", maxsplit=1)
                     headers[key.strip()] = title_val
-                    metr_str, inner_info = rest.split("):", maxsplit=1)
+                    _metr_str, inner_info = rest.split("):", maxsplit=1)
                     headers.update(
                         {k.strip(): v for k, v in (x.split(" = ", maxsplit=1) for x in inner_info.split(", "))}
                     )
