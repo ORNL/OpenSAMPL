@@ -48,10 +48,14 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🔐 Updates fastapi from 0.143.3 to 0.146.0
 - 🔐 Updates pytest-mock from 3.16.0 to 3.17.0
 - 🔐 Updates telnet3 from 2.0.4 to 5.0.1
+- 🔐 Updates Pillow to 13.0.0
 
 ### Changed
 - ⚡ updated `OPENSAMPL_VERSION` in the Dockerfiles
 - ⚡ updated workflows so Ubuntu 26.0.4 has access to Postgres 16
+
+### Removed
+- 🗡️  Removed support for EOL Python 3.10
 
 
 ## [1.2.5] = 2026-10-21
