@@ -3,7 +3,7 @@
 import random
 from abc import abstractmethod
 from collections.abc import Callable
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +53,7 @@ class RandomDataMixin:
         def define_start_time(self):
             """If start_time is None at the end of validation,"""
             if self.start_time is None:
-                self.start_time = datetime.now(tz=timezone.utc) - timedelta(hours=self.duration_hours)
+                self.start_time = datetime.now(tz=UTC) - timedelta(hours=self.duration_hours)
             return self
 
         @field_validator("*", mode="before")

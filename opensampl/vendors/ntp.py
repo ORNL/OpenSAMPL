@@ -10,7 +10,7 @@ import socket
 import subprocess
 import textwrap
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
@@ -90,7 +90,7 @@ class NTPCollector(BaseModel):
 
         Each distinct metric type will get it's own data artifact
         """
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         include_list = {
             f
             for f, field_info in type(self).model_fields.items()
@@ -144,7 +144,7 @@ class NTPCollector(BaseModel):
         """Invert metric map to go from MetricType.name to string"""
         return {v.name: k for k, v in cls.metric_map.items()}
 
-    def determine_reference(self) -> tuple[ReferenceType, None | dict[str, Any]]:
+    def determine_reference(self) -> tuple[ReferenceType, dict[str, Any] | None]:
         """Get the reference type and compound reference details"""
         return REF_TYPES.PROBE, {"ip_address": self.collection_ip, "probe_id": self.collection_id}
 

@@ -3,7 +3,7 @@
 import json
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -137,7 +137,7 @@ class CollectMixin(ABC):
         if collect_config.output_dir:
             file_content = cls.create_file_content(data)
             collect_config.output_dir.mkdir(parents=True, exist_ok=True)
-            now_stamp = datetime.now(tz=timezone.utc).timestamp()
+            now_stamp = datetime.now(tz=UTC).timestamp()
             output = collect_config.output_dir / f"{cls.vendor.parser_class}_{data.probe_key!r}_{now_stamp}.txt"
             output.write_text(file_content)
 

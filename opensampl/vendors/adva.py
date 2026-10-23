@@ -3,7 +3,7 @@
 import gzip
 import random
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar, TextIO
 
@@ -90,7 +90,7 @@ class AdvaProbe(BaseProbe, RandomDataMixin):
             )
 
             # Convert timestamp to datetime object
-            timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").astimezone(tz=timezone.utc)
+            timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").astimezone(tz=UTC)
 
             return ProbeKey(probe_id=probe_id, ip_address=ip_address), timestamp
         raise ValueError(f"Could not parse file name {file_name} into probe key and timestamp for ADVA probe")
@@ -159,7 +159,7 @@ class AdvaProbe(BaseProbe, RandomDataMixin):
                 else:
                     freeform_header[key] = value
         headers["additional_metadata"] = freeform_header
-        self.start_time = datetime.strptime(headers["start"], "%Y/%m/%d %H:%M:%S").astimezone(tz=timezone.utc)
+        self.start_time = datetime.strptime(headers["start"], "%Y/%m/%d %H:%M:%S").astimezone(tz=UTC)
         self.metadata_parsed = True
         return headers
 
