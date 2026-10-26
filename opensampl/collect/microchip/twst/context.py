@@ -7,7 +7,7 @@ including local and remote station information.
 
 import re
 import textwrap
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any
 
@@ -145,7 +145,7 @@ class ModemContextReader(ModemReader):
         and remote station tracking data.
         """
         async with self.connect():
-            self.result.timestamp = datetime.now(tz=timezone.utc).isoformat() + "Z"
+            self.result.timestamp = datetime.now(tz=UTC).isoformat() + "Z"
             self.result.local = SimpleNamespace()
             self.result.remotes = {}
 

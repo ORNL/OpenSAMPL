@@ -2,7 +2,7 @@
 
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Optional
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
@@ -42,7 +42,7 @@ class APIAccessKey(Base):
             True if the key is expired, False otherwise.
 
         """
-        return self.expires_at is not None and datetime.now(tz=timezone.utc) > self.expires_at
+        return self.expires_at is not None and datetime.now(tz=UTC) > self.expires_at
 
 
 class Views(Base):
