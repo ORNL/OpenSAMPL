@@ -1,3 +1,16 @@
+# Deployment
+# Update  --version <Latest github oci version>
+
+helm install opensampl-test \
+  oci://ghcr.io/ornl/charts/opensampl \
+  --version 0.1.7 \
+  --namespace opensampl-test \
+  --create-namespace \
+  --dry-run \
+  --debug
+
+
+
 charts/
 └── opensampl/
     ├── Chart.yaml
