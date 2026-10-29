@@ -1,0 +1,8 @@
+psycopg2-binary
+fastapi
+uvicorn
+sqlalchemy
+loguru
+python-multipart
+prometheus-client
+opensampl==1.1.5
