@@ -5,7 +5,7 @@ FROM scratch AS wheel
 
 FROM python:3.14
 
-ARG OPENSAMPL_VERSION=1.2.6
+ARG OPENSAMPL_VERSION=1.2.7
 
 WORKDIR /
 RUN --mount=type=bind,from=wheel,target=/wheels \
