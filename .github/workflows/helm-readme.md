@@ -1,27 +1,16 @@
-### 1. **Smart Image Tagging**
-Images now get tagged with:
-- `pr-123` for pull requests
-- `helm-deploy-abc123` for branch commits
-- `latest` for main branch
+# Helm chart workflow (`helm-chart.yml`)
 
-### 2. **New Test Job** (`test-helm-chart`)
-- **Only runs on PRs** (not regular pushes)
-- Spins up local Kubernetes (minikube)
-- Installs your Helm chart with PR-tagged images
-- Verifies pods start successfully
-- Shows detailed logs if anything fails
+Artifacts are published **only after a merge to `main`**. Pull requests validate but never push.
 
-### 3. **Separated Helm Packaging**
-- `helm-package` job only runs on **direct pushes** (not PRs)
-- Lints, packages, and pushes the chart
-
-## Workflow Flow
-
-**On Pull Request:**
+## On pull requests to `main`
 ```
-Build Images (with pr-123 tags) → Test in Kubernetes → ✓ Pass/Fail
+Build images (not pushed) -> load into minikube -> helm install test
+Helm lint + template, and a check that helm/Chart.yaml version was bumped if helm/ changed
 ```
+- Images are built with the `pr-local` tag, shared as short-lived workflow artifacts, and loaded into minikube with `imagePullPolicy=Never`, so nothing is pulled from or pushed to GHCR.
+- If anything under `helm/` changes, bump `version` in `helm/Chart.yaml` (otherwise `helm push` would collide with an existing version).
 
-**On Push to helm-deploy:**
+## On push to `main`
 ```
-Build Images (with latest tag) → Package & Push Helm Chart
+Build + push images (latest and the pyproject version) -> package + push chart to oci://ghcr.io/ornl/charts
+```
