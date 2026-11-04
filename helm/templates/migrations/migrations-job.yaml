@@ -6,6 +6,12 @@ metadata:
   labels:
     {{- include "opensampl.labels" . | nindent 4 }}
     role: migrations
+  annotations:
+    # Run as a Helm hook so migrations execute after the db exists on install and are re-run on every
+    # upgrade (a plain Job is immutable and would block or skip `helm upgrade`). A failed Job is kept
+    # for log inspection; a successful one is removed.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   template:
     spec:

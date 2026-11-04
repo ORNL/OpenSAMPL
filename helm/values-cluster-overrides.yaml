@@ -42,9 +42,9 @@ grafana:
   rootUrl: "https://opensampl-test.eig3-orc1.ornl.gov/grafana"
   serveFromSubPath: true
 
-# Migrations (disabled until ready)
+# Migrations (run as a post-install/post-upgrade Helm hook)
 migrations:
-  enabled: false
+  enabled: true
 
 # Ingress configuration
 ingress:
