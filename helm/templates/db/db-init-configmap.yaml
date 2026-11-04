@@ -8,9 +8,9 @@ data:
   020_create_grafana_user.sh: |
     #!/bin/bash
     set -e
-    
-    # This script creates additional database setup for Grafana
+
+    # Create the read-only role Grafana connects as. The migrations grant privileges to this role,
+    # so it must exist before they run. Mirrors opensampl/server/db/create-grafana.sh.
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-      -- Grant necessary privileges
-      GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};
+      CREATE ROLE grafana WITH LOGIN PASSWORD '${GF_SECURITY_ADMIN_PASSWORD}';
     EOSQL

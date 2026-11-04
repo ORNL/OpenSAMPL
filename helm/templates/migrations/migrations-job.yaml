@@ -13,6 +13,9 @@ metadata:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
+  # fail reasonably fast (the default of 6 retries with backoff takes ~8 minutes) so a broken
+  # migration is reported promptly
+  backoffLimit: 2
   template:
     spec:
       initContainers:
