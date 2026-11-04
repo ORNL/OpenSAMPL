@@ -1,38 +1,65 @@
 # Create your own Probe Type
-WARNING! This is an experimental tool, and may have breaking changes between release versions until it is marked as fully supported 
 
-Clock types can be added to generate new ORMs for different clock types via skeleton files, which can then be further
-configured to report the type of clock data that is being added to the database. 
+This workflow is still experimental. It is useful when you want to scaffold a new vendor /
+probe family inside a local clone of the repository.
 
-It is recommended that you only use `opensampl create` with the package cloned down. See [Installation for developers](../getting-started/installation.md#installation-for-developers) for more details on how to do so.
+## Recommended setup
+
+1. Clone the repository locally.
+2. Install OpenSAMPL in the development environment.
+3. Run `opensampl create` to generate the scaffold. 
+   4. include `--collect-mixin` flag if you intend to implement timing collection as well to prefill those functions
+4. Fill in the generated parser, metadata model, and any collector mixins you need.
+5. Run `opensampl init` or `opensampl create --update-db ...` to create the new tables in the database.
+
+```bash
+git clone git@github.com:ORNL/OpenSAMPL.git
+cd OpenSAMPL
+uv venv
+uv sync --all-extras --dev
+source .venv/bin/activate
+```
+
+If you plan to contribute the new probe type back to the repository, you will also need to
+add any required schema or migration updates alongside the generated code.
 
 ## Usage
 
-Command: `opensampl create <CONFIG PATH> [OPTIONS]` <br>
-Arguments: 
+Command: `opensampl create <CONFIG PATH> [OPTIONS]`
+
+Arguments:
 
 * `CONFIG PATH`: The path to the config file defining the new probe type
 
 Options:
 
-* `--update-db` (`-u`):  Update the database with the new probe type
+* `--update-db` (`-u`): Update the database with the new probe type
 
 ## Config File Formatting
 
-`name`: The name of the probe type. Should not have spaces or special characters outside of `-` or `_`  <br>
+`name`: The name of the probe type. It should not contain spaces or special characters
+outside of `-` or `_`.
 
-`parser_class`: Optional: The name of the object that manages your probe type. By default, will be `f'{name.capitalize()}Probe'`<br>
-`parser_module`: Optional: The module name for your probe type (ie, stem of the python file). By default, will be `name.lower()`<br>
-`metadata_orm`: Optional: The name of the sqlalchemy ORM representation of the database table storing your probe type's metadata. By default, will be `f'{name.capitalize()}Metadata'`<br>
-`metadata_table`: Optional: The table name that will store your probe type's metadata. By default, will be `f'{name.lower()}_metadata'`<br>
+`parser_class`: Optional. The class name for the probe implementation. By default it is
+`f'{name.capitalize()}Probe'`.
 
-`metadata_fields`: A dictionary of metadata fields that will be provided for your new probe type. 
+`parser_module`: Optional. The Python module name for your probe type. By default it is
+`name.lower()`.
 
-* The keys of this dict will be the names of the fields, and they will become columns in the dictionary table. 
-* The values of the dict are optional, but when provided they are the SQLALCHEMY type of that field (defaults to `Text`) 
+`metadata_orm`: Optional. The SQLAlchemy ORM class name for the metadata table. By default
+it is `f'{name.capitalize()}Metadata'`.
+
+`metadata_table`: Optional. The database table name for the metadata table. By default it is
+`f'{name.lower()}_metadata'`.
+
+`metadata_fields`: A dictionary of metadata fields that will be provided for your new probe type.
+
+* The keys become column names in the generated metadata table.
+* The values are optional SQLAlchemy type names. If omitted, the field defaults to `Text`.
 
 
-For a full example, this is the definition of the config that would create the (already existing) ADVA probe type.
+For a concrete example, this is the configuration that would scaffold the existing ADVA
+probe type:
 ```yaml
 name: ADVA
 parser_class: AdvaProbe

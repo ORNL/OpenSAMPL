@@ -1,6 +1,6 @@
 """Database table factory for handling CRUD operations with conflict resolution."""
 
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 from loguru import logger
 from sqlalchemy import UniqueConstraint, and_, inspect, select
@@ -89,7 +89,7 @@ class TableFactory:
         logger.debug(f"some or all columns from {cols} missing in data")
         return None
 
-    def print_filter_debug(self, filter_expr: Optional[Union[BinaryExpression, BooleanClauseList]], label: str):
+    def print_filter_debug(self, filter_expr: BinaryExpression | BooleanClauseList | None, label: str):
         """
         Print debug information for a filter expression.
 
@@ -102,7 +102,7 @@ class TableFactory:
             compiled = filter_expr.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
             logger.debug(f"{label}: {compiled}")
 
-    def find_existing(self, data: dict[str, Any]) -> Optional[Base]:
+    def find_existing(self, data: dict[str, Any]) -> Base | None:
         """
         Find an existing record that matches the provided data.
 

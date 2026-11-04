@@ -28,7 +28,10 @@ You can manually set `ROUTE_TO_BACKEND=false` using `opensampl config set ROUTE_
 
 ## opensampl-server
 By default, the server will be created using the `docker-compose.yaml` found in opensampl/server/. If you wish to set a different compose to further control
-your server, you can export the `OPENSAMPL_SERVER__COMPOSE_FILE` env var to be the full path to your own compose file. 
+your server, you can export the `OPENSAMPL_SERVER__COMPOSE_FILE` env var to be the full path to your own compose file.
+
+You can also use the `OPENSAMPL_SERVER__OVERRIDE_FILE` env var which will be applied overtop the existing default compose file. This allows a user to replace just ports 
+or other small changes to the existing architecture. 
 
 To customize your server, specify a new env file using the `OPENSAMPL_SERVER__DOCKER_ENV_FILE` env var. It will default to the one found in opensampl/server/default.env
 Here is what the default environment has configured:

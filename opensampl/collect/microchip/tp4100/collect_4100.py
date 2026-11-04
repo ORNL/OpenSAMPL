@@ -5,13 +5,12 @@ This tool utilizes the web interface that is accessible at the IP address of the
 See the user guide for how to configure access to the web interface.
 """
 
-import sys
 import textwrap
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import pandas as pd
 import requests
@@ -21,11 +20,6 @@ from urllib3.exceptions import InsecureRequestWarning
 
 from opensampl.collect.microchip.tp4100 import DEFAULT_MONITOR_CONFIG, MetricInfo, MonitoringConfig
 from opensampl.config.tp4100 import TP4100Config
-
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-else:
-    UTC = timezone.utc
 
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
@@ -44,8 +38,8 @@ class TP4100Collector:
         port: int = 443,
         output_dir: str = "./output",
         duration: int = 600,
-        channels: Optional[list[str]] = None,
-        metrics: Optional[list[str]] = None,
+        channels: list[str] | None = None,
+        metrics: list[str] | None = None,
         method: Literal["chart_data", "download_file"] = "chart_data",
         save_full_status: bool = False,
     ):
@@ -171,7 +165,7 @@ class TP4100Collector:
             elif self.method == "download_file":
                 self.download_files(request_tpl)
 
-    def get_filename(self, detail: Optional[str] = None, extension: str = ".txt"):
+    def get_filename(self, detail: str | None = None, extension: str = ".txt"):
         """
         Generate timestamped filename for probe connection
 
@@ -194,7 +188,7 @@ class TP4100Collector:
         return filename
 
     def collect_chart_data(
-        self, request_key: tuple[MonitoringConfig, int, MetricInfo], download_dict: Optional[dict[str, Any]] = None
+        self, request_key: tuple[MonitoringConfig, int, MetricInfo], download_dict: dict[str, Any] | None = None
     ):
         """
         Collect chart data for a specific metric and channel.
@@ -271,7 +265,7 @@ class TP4100Collector:
         df.to_csv(new_file, mode="a", index=False)
 
     def download_files(
-        self, request_key: tuple[MonitoringConfig, int, MetricInfo], download_dict: Optional[dict[str, Any]] = None
+        self, request_key: tuple[MonitoringConfig, int, MetricInfo], download_dict: dict[str, Any] | None = None
     ):
         """
         Download data files directly from the device.
@@ -316,7 +310,7 @@ class TP4100Collector:
                 if key.strip() == "Title":
                     title_val, rest = val.split("(", maxsplit=1)
                     headers[key.strip()] = title_val
-                    metr_str, inner_info = rest.split("):", maxsplit=1)
+                    _metr_str, inner_info = rest.split("):", maxsplit=1)
                     headers.update(
                         {k.strip(): v for k, v in (x.split(" = ", maxsplit=1) for x in inner_info.split(", "))}
                     )
@@ -341,8 +335,8 @@ def main(
     port: int = 443,
     output_dir: str = "./output",
     duration: int = 600,
-    channels: Optional[list[str]] = None,
-    metrics: Optional[list[str]] = None,
+    channels: list[str] | None = None,
+    metrics: list[str] | None = None,
     method: Literal["chart_data", "download_file"] = "chart_data",
     save_full_status: bool = False,
 ):

@@ -10,9 +10,11 @@ Note:
 
 """
 
+import textwrap
 from pathlib import Path
+from pprint import pformat
 from string import Template
-from typing import Any, Optional, Union
+from typing import Any
 
 import yaml
 from loguru import logger
@@ -34,8 +36,8 @@ class MetadataField(BaseModel):
     """
 
     name: str
-    sqlalchemy_type: Optional[str] = Field(default="Text")
-    primary_key: Optional[bool] = False
+    sqlalchemy_type: str | None = Field(default="Text")
+    primary_key: bool | None = False
 
 
 class DEFAULT_METADATA:  # noqa N801
@@ -68,7 +70,7 @@ class VendorConfig(VendorType):
     metadata_fields: list[MetadataField]
 
     @classmethod
-    def from_config_file(cls, config_path: Union[str, Path]) -> "VendorConfig":
+    def from_config_file(cls, config_path: str | Path) -> "VendorConfig":
         """
         Convert file config into Config object.
 
@@ -106,16 +108,16 @@ class VendorConfig(VendorType):
 
         # Generate default values if not provided
         if not data.get("metadata_table"):
-            data["metadata_table"] = f"{name.lower()}_metadata"
+            data["metadata_table"] = f"{name.lower().replace(' ', '_')}_metadata"
 
         if not data.get("metadata_orm"):
-            data["metadata_orm"] = f"{name.capitalize()}Metadata"
+            data["metadata_orm"] = f"{name.title().replace(' ', '')}Metadata"
 
         if not data.get("parser_class"):
-            data["parser_class"] = f"{name.capitalize()}Probe"
+            data["parser_class"] = f"{name.title().replace(' ', '')}Probe"
 
         if not data.get("parser_module"):
-            data["parser_module"] = f"{name.lower()}"
+            data["parser_module"] = f"{name.lower().replace(' ', '_')}"
 
         fields = []
         metadata_fields = data.get("metadata_fields", None)
@@ -134,7 +136,7 @@ class VendorConfig(VendorType):
         data["metadata_fields"] = fields
         return data
 
-    def create_probe_file(self) -> Path:
+    def create_probe_file(self, collect_mixin: bool = False) -> Path:
         """
         Create a new probe class file.
 
@@ -145,10 +147,17 @@ class VendorConfig(VendorType):
         # Create the probe file
         probe_file = self.base_path / "vendors" / f"{self.parser_module}.py"
         # TODO in write time data, optionally add value_str to df ensure maximum precision when sending through backend.
+        template_prefix = "collect_mixin" if collect_mixin else "parser"
+        template_file = Path(__file__).parent / "templates" / f"{template_prefix}_template.txt"
 
-        template_file = Path(__file__).parent / "templates" / "parser_template.txt"
+        raw = pformat([field.name for field in self.metadata_fields])
+        formatted_metadata = textwrap.indent(raw, prefix="\t\t")
+
         content = Template(template_file.read_text()).safe_substitute(
-            name=self.name, upper_name=self.parser_class.upper(), parser_class=self.parser_class
+            name=self.name,
+            upper_name=self.parser_module.replace(".", "_").upper(),
+            parser_class=self.parser_class,
+            metadata_fields=formatted_metadata,
         )
 
         probe_file.write_text(content)
@@ -223,8 +232,8 @@ class VendorConfig(VendorType):
         """Update the constants.py file with the new vendor type."""
         template_file = INSERT_MARKERS.VENDOR.template_path
         content = Template(template_file.read_text()).safe_substitute(
-            upper_name=self.parser_class.upper(),
-            name=self.name,
+            upper_name=self.parser_module.replace(".", "_").upper(),
+            name=self.name.replace(" ", "-"),
             parser_class=self.parser_class,
             parser_module=self.parser_module,
             metadata_table=self.metadata_table,
@@ -232,8 +241,8 @@ class VendorConfig(VendorType):
         )
         self.insert_content_at_marker(INSERT_MARKERS.VENDOR, content)
 
-    def create(self):
+    def create(self, collect_mixin: bool = False) -> None:
         """Create the new vendor by generating probe file, ORM class, and updating constants."""
-        self.create_probe_file()
+        self.create_probe_file(collect_mixin=collect_mixin)
         self.create_orm_class()
         self.update_constants()

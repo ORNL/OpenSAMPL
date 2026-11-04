@@ -8,10 +8,9 @@ The collect API enables automated collection of measurement data from network-co
 
 - **Microchip TWST Modems** (ATS6502 series): Collect offset and EBNO tracking values along with contextual information
 - **Microchip TimeProvider® 4100** (TP4100): Collect timing performance metrics from various input channels via web interface
+- **NTP**: Collect local synchronization state or query remote NTP servers
 
-## CLI Usage
-
-### Installation
+## Installation
 
 The collect functionality is included with the main OpenSAMPL installation:
 
@@ -19,9 +18,67 @@ The collect functionality is included with the main OpenSAMPL installation:
 pip install opensampl
 ```
 
-### Basic CLI Commands
+For NTP or Microchip collection, install the optional collect extras so additional requirements are available:
 
-The collect CLI is accessed through the `opensampl-collect` command:
+```bash
+pip install "opensampl[collect]"
+```
+
+
+## Basic CLI Commands
+
+The collect CLI for probes is accessed through the `opensampl collect` command.
+
+### Collecting from NTP Sources
+
+The NTP collector supports two modes:
+
+- `local`: reads host sync state from `chronyc`, `ntpq`, `timedatectl`, and `systemctl` when they are available
+- `remote`: sends an NTP query to a target host and records the returned delay, offset, stratum, and metadata
+
+Basic command structure:
+
+```bash
+opensampl collect ntp [OPTIONS]
+```
+
+#### Common options
+
+- `--probe-id`: stable identifier for the target probe written into `probe_metadata`
+- `--output-dir`: directory to write collected files instead of loading directly
+- `--load`: load the collected artifact directly into the configured database
+- `--interval`: seconds between samples; `0` means collect once and exit
+- `--count`: number of samples to collect when `--interval` is greater than `0`
+- `--collection-id`: override the collector host reference probe id
+- `--collection-ip`: override the collector host reference IP
+
+#### Local mode examples
+
+```bash
+opensampl collect ntp --mode local --probe-id local-chrony --output-dir ./ntp-out
+opensampl collect ntp --mode local --probe-id local-chrony --load
+```
+
+#### Remote mode examples
+
+```bash
+opensampl collect ntp --mode remote --host time.cloudflare.com --probe-id public-time --output-dir ./ntp-out
+opensampl collect ntp --mode remote --host 127.0.0.1 --port 10123 --probe-id mock-a --count 5 --interval 10 --load
+```
+
+#### NTP metadata behavior
+
+Each NTP collection writes metadata for two probes:
+
+- the collector host, marked with `reference: true`
+- the target probe being measured, which stores mode, target host/port, sync status, observed sources, and any extra metadata in `ntp_metadata`
+
+Remote single-response collections estimate jitter from delay and root dispersion when the server does not provide enough information to compute peer jitter directly. Local chrony and `ntpq` paths keep using measured jitter when it is available.
+
+
+## Microchip CLI Commands
+
+The collect CLI for Microchip TP4100 and TWST is accessed through the `opensampl-collect` command:
 
 ```bash
 # View available collection tools

@@ -1,8 +1,9 @@
 """Decorator which ensures we are routing our db operations through a backend if configured, or directly if not."""
 
 import json
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Literal, Optional
+from typing import Literal
 
 import requests
 import requests.exceptions
@@ -45,7 +46,7 @@ def route(route_endpoint: str, method: request_methods = "POST", send_file: bool
         """
 
         @wraps(func)
-        def wrapper(*args: list, **kwargs: dict) -> Optional[Callable]:
+        def wrapper(*args: list, **kwargs: dict) -> Callable | None:
             """
             Handle the actual routing logic.
 

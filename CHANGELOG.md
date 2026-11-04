@@ -36,7 +36,96 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 *Unreleased* versions radiate potential—-and dread. Once you merge an infernal PR, move its bullet under a new version heading with the actual release date.*
 
+
+
 -->
+## [1.2.6] = 2026-10-26
+### Security
+- 🔐 Remediated Dependabot alerts by raising python minor and patch groups
+- 🔐 Bumps the container-minor-and-patch group with 1 update in the / directory: astral-sh/uv.
+- 🔐 Updates astral-sh/uv from 0.13.1 to 0.13.4 in the docs Dockerfile
+- 🔐 Updates sqlalchemy from 2.0.54 to 2.0.55 
+- 🔐 Updates fastapi from 0.143.3 to 0.146.0
+- 🔐 Updates pytest-mock from 3.16.0 to 3.17.0
+- 🔐 Updates telnet3 from 2.0.4 to 5.0.1
+- 🔐 Updates Pillow to 13.0.0
+
+### Changed
+- ⚡ updated `OPENSAMPL_VERSION` in the Dockerfiles
+- ⚡ updated workflows so Ubuntu 26.0.4 has access to Postgres 16
+- ⚡ updated Ruff in lint action to 0.17.1
+
+### Removed
+- 🗡️  Removed support for EOL Python 3.10
+
+
+## [1.2.5] = 2026-10-21
+### Security
+- 🔐 Remediated Dependabot alerts by raising python minor and patch groups
+- 🔐 Updated pull_request target for Dependabot PRs to `bugfix/dependabot`
+- 🔐 Added weekly Dependabot updates and CI dependency auditing to prevent vulnerable dependency regressions.
+
+### Changed
+- ⚡ updated `OPENSAMPL_VERSION` in the Dockerfiles
+
+### Added
+- 🔥 ensure_branch job to the dependabot security review workflow
+
+## [1.2.4] = 2026-10-12
+### Security
+- 🔐 Remediated nine Dependabot alerts by raising the secure minimum versions of AnyIO, urllib3, PyMdown Extensions, Mako, and Material for MkDocs.
+- 🔐 Added weekly Dependabot updates and CI dependency auditing to prevent vulnerable dependency regressions.
+
+### Fixed
+- 🩹 Preserved backend and documentation compatibility across supported Python 3.10 through 3.14 environments after the security upgrades.
+
+## [1.2.3] = 2026-10-07
+### Changed
+- ⚡ updated database drivers to use psycopg2 in server
+- ⚡ pinned geoalchemy2 to `>=0.18.0,<1` to comply with sqlalchemy requirements
+
+### Added
+- 🔥 docker bake definition file for migrations and backend
+- 🔥 value backfill to migrate numeric `value_jsonb` to `value_float` for existing data in `probe_data` table
+
+### Fixed
+- 🩹 Bug in load data related to metric_type
+- 🩹 Bug in server/backend for loading api keys
+
+## [1.2.2] = 2026-09-30
+### Changed
+- ⚡ `probe_data` table now has `value_float` and `value_jsonb` columns instead of one `value` (jsonb type) column. 
+
+## [1.2.1] - 2026-07-08
+### Fixed
+- 🩹 Addressed CVEs by updating minimum package versions for urllib3 2.7.0, pillow 12.3.0, mako 1.3.12, starlette 1.3.1, fastapi 0.139.0, idna 3.18, pytest 9.1.1, python-dotenv 1.2.2, fonttools 4.63.0, requests 2.34.2, markdown 3.10.2, pymdown-extensions 10.21.3, pygments 2.20.0, and python-multipart 0.0.32.
+
+
+## [1.2.0] - 2026-04-29
+### Added
+- 🔥 First-class NTP vendor and probe support using the existing OpenSAMPL extension model
+- 🔥 Local and remote NTP collection paths, including `ntp_metadata` loading behavior
+- 🔥 NTP-focused metrics such as jitter, delay, stratum, reachability, root delay, root dispersion, poll interval, and sync health
+- 🔥 Additional NTP metadata handling for collector/target probe relationships and reference-backed loading
+- 🔥 Compact reference/source metadata views in dashboards to improve interpretation of NTP-backed timing data
+- 🔥 Documentation covering the NTP extension path, collection semantics, and geolocation behavior
+- 🔥 Additional unit and integration-style tests for NTP collection, loading, geolocation helpers, and seeded database defaults
+- 🔥 Moved alembic migration code into openSAMPL along with Docker image information
+- 🔥 Moved backend api code into openSAMPL along with Docker image information
+- 🔥 Docker-compose for developers which installs openSAMPL as editable on backend image
+
+### Changed
+- ⚡ Hardened dashboard queries and variables to avoid brittle empty-filter handling and varchar-versus-UUID failures
+- ⚡ Updated timing dashboards and wording to use reference-safe terminology for NTP-backed demo paths
+- ⚡ Reworked integration-style tests to use the project MockDB harness instead of requiring a locally spawned PostgreSQL instance
+- ⚡ Updated CI to install PostgreSQL/PostGIS tooling so the workflow can support `pytest-postgresql`-style environments when needed
+
+### Fixed
+- 🩹 Seeded default metric UUID handling in the MockDB test harness now points to the UNKNOWN metric as intended
+- 🩹 Bug which caused random data duration to always be 1 hour
+- 🩹 Issue with CI order causing linting to fail
+- 🩹 Fixed variable assignment for mkdocs-click integration
+
 ## [1.1.5] - 2025-09-22
 ### Fixed
 - 🩹 More durable timestamp extrapolation in time data insertion

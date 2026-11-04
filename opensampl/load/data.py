@@ -1,6 +1,6 @@
 """Data Factory for defining the unique probe/metric/reference combination to use for Data readings"""
 
-from typing import Any, Optional
+from typing import Any
 
 from loguru import logger
 from sqlalchemy.inspection import inspect
@@ -25,11 +25,11 @@ class DataFactory:
     object will also have the database object for any compound references filled as well.
     """
 
-    probe: Optional[DBProbe] = None
-    metric: Optional[DBMetricType] = None
-    db_ref_type: Optional[DBReferenceType] = None
-    reference: Optional[DBReference] = None
-    db_compound_reference: Optional[Base] = None
+    probe: DBProbe | None = None
+    metric: DBMetricType | None = None
+    db_ref_type: DBReferenceType | None = None
+    reference: DBReference | None = None
+    db_compound_reference: Base | None = None
 
     def __init__(
         self,
@@ -37,7 +37,7 @@ class DataFactory:
         metric_type: MetricType,
         reference_type: ReferenceType,
         session: Session,
-        compound_key: Optional[dict[str, Any]] = None,
+        compound_key: dict[str, Any] | None = None,
         strict: bool = True,
     ):
         """

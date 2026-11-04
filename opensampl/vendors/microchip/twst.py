@@ -4,7 +4,7 @@ import random
 import re
 from datetime import timedelta
 from pathlib import Path
-from typing import ClassVar, Optional, Union
+from typing import ClassVar
 
 import click
 import numpy as np
@@ -18,38 +18,39 @@ from sqlalchemy.exc import IntegrityError
 
 from opensampl.load_data import load_probe_metadata
 from opensampl.metrics import METRICS
+from opensampl.mixins.random_data import RandomDataMixin
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
 from opensampl.vendors.constants import VENDORS, ProbeKey
 
 
-class MicrochipTWSTProbe(BaseProbe):
+class MicrochipTWSTProbe(BaseProbe, RandomDataMixin):
     """MicrochipTWST Probe Object"""
 
     vendor = VENDORS.MICROCHIP_TWST
     MEASUREMENTS: ClassVar = {"meas:offset": METRICS.PHASE_OFFSET, "tracking:ebno": METRICS.EB_NO}
 
-    class RandomDataConfig(BaseProbe.RandomDataConfig):
+    class RandomDataConfig(RandomDataMixin.RandomDataConfig):
         """Model for storing random data generation configurations as provided by CLI or YAML"""
 
         # Time series parameters
-        base_value: Optional[float] = Field(
+        base_value: float | None = Field(
             default_factory=lambda: random.uniform(-1e-8, 1e-8), description="random.uniform(-1e-8, 1e-8)"
         )
-        noise_amplitude: Optional[float] = Field(
+        noise_amplitude: float | None = Field(
             default_factory=lambda: random.uniform(1e-10, 1e-9), description="random.uniform(1e-10, 1e-9)"
         )
-        drift_rate: Optional[float] = Field(
+        drift_rate: float | None = Field(
             default_factory=lambda: random.uniform(-1e-12, 1e-12), description="random.uniform(-1e-12, 1e-12)"
         )
 
-        ebno_base_value: Optional[float] = Field(
+        ebno_base_value: float | None = Field(
             default_factory=lambda: random.uniform(10.0, 20.0), description="random.uniform(10.0, 20.0)"
         )
-        ebno_noise_amplitude: Optional[float] = Field(
+        ebno_noise_amplitude: float | None = Field(
             default_factory=lambda: random.uniform(0.5, 2.0), description="random.uniform(0.5, 2.0)"
         )
-        ebno_drift_rate: Optional[float] = Field(
+        ebno_drift_rate: float | None = Field(
             default_factory=lambda: random.uniform(-0.01, 0.01), description="random.uniform(-0.01, 0.01)"
         )
 
@@ -90,41 +91,37 @@ class MicrochipTWSTProbe(BaseProbe):
             click.option(
                 "--num-channels",
                 type=int,
-                help=(
-                    f"Number of remote channels to generate data for "
-                    f"(default: {cls.RandomDataConfig.model_fields.get('num_channels').default})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("num_channels").default,
+                show_default=True,
+                help=("Number of remote channels to generate data for "),
             ),
             click.option(
                 "--ebno-base-value",
                 type=float,
-                help=(
-                    f"Base value for Eb/No measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('base_value').description!s})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("base_value").description,
+                show_default=True,
+                help=("Base value for Eb/No measurements "),
             ),
             click.option(
                 "--ebno-noise-amplitude",
                 type=float,
-                help=(
-                    f"Noise amplitude/standard deviation for Eb/No measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('noise_amplitude').description!s})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("noise_amplitude").description,
+                show_default=True,
+                help=("Noise amplitude/standard deviation for Eb/No measurements "),
             ),
             click.option(
                 "--ebno-drift-rate",
                 type=float,
-                help=(
-                    f"Linear drift rate per second for Eb/No measurements "
-                    f"(default = {cls.RandomDataConfig.model_fields.get('drift_rate').description!s})"
-                ),
+                default=cls.RandomDataConfig.model_fields.get("drift_rate").description,
+                show_default=True,
+                help=("Linear drift rate per second for Eb/No measurements "),
             ),
         ]
         return vendor_options + base_options
 
-    def __init__(self, input_file: Union[str, Path]):
+    def __init__(self, input_file: str | Path, **kwargs: dict):
         """Initialize MicrochipTWST object give input_file and determines probe identity from filename"""
-        super().__init__(input_file=input_file)
+        super().__init__(input_file=input_file, **kwargs)
         self.header = self.get_header()
         self.probe_key = ProbeKey(probe_id="modem", ip_address=self.header["local"]["ip"])
 

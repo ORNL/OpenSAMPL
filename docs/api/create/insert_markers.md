@@ -1,6 +1,6 @@
-# `opensampl.ats6502.modem`
+# `opensampl.create.insert_markers`
 
-::: opensampl.ats6502.modem
+::: opensampl.create.insert_markers
     options:
       show_root_heading: false
       show_submodules: true

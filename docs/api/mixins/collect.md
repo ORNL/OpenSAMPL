@@ -1,6 +1,6 @@
-# `opensampl.helpers.source_writer`
+# `opensampl.mixins.collect`
 
-::: opensampl.helpers.source_writer
+::: opensampl.mixins.collect
     options:
       show_root_heading: false
       show_submodules: true

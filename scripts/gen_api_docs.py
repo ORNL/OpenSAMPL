@@ -11,7 +11,9 @@ MKDOCS_YML = Path("mkdocs.yaml")
 
 click_progname_map = {
     'opensampl.cli': 'opensampl',
-    'opensampl.server.cli': 'opensampl-server'
+    'opensampl.server.cli': 'opensampl-server',
+    'opensampl.server.cli2': 'opensampl-server2',
+    'opensampl.collect.cli': 'opensampl-collect'
 }
 
 def get_click_command_name(file_path: Path) -> str | None:
@@ -94,7 +96,7 @@ def generate_api_docs_and_nav():
     nav_structure = [{"index": f"{API_DIR_NAME}/index.md"}]
 
     for py_file in sorted(SRC_DIR.rglob("*.py")):
-        if py_file.stem == "__init__":
+        if py_file.stem == "__init__" or 'migration' in str(py_file):
             continue
         rel_path = py_file.relative_to(SRC_DIR)
         doc_path = DOCS_API_DIR / rel_path.with_suffix(".md")

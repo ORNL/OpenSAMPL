@@ -1,7 +1,7 @@
 """Consolidated CLI entry point for opensampl.collect tools."""
 
 import sys
-from typing import Literal, Optional
+from typing import Literal
 
 import click
 from loguru import logger
@@ -84,8 +84,8 @@ def tp4100(
     port: int,
     output_dir: str,
     duration: int,
-    channels: Optional[list[str]],
-    metrics: Optional[list[str]],
+    channels: list[str] | None,
+    metrics: list[str] | None,
     method: Literal["chart_data", "download_file"],
     save_full_status: bool,
     verbose: bool,

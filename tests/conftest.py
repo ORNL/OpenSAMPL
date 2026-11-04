@@ -60,6 +60,7 @@ def mock_config():
         config.ROUTE_TO_BACKEND = False
         config.DATABASE_URL = "sqlite:///:memory:"
         config.LOG_LEVEL = "DEBUG"
+        config.ENABLE_GEOLOCATE = False
 
         mock.return_value = config
         yield mock

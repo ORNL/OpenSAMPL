@@ -24,7 +24,6 @@ import asyncio
 import csv
 import time
 from pathlib import Path
-from typing import Optional
 
 from loguru import logger
 
@@ -57,7 +56,7 @@ def collect_files(
     status_port: int = 1900,
     output_dir: str = "./output",
     dump_interval: int = 300,
-    total_duration: Optional[int] = None,
+    total_duration: int | None = None,
 ):
     """
     Continuously collect blocks of modem measurements and save to timestamped CSV files.

@@ -2,8 +2,8 @@
 
 import secrets
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, Union
+from datetime import UTC, datetime
+from typing import Optional
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Session, declarative_base, relationship
@@ -42,7 +42,7 @@ class APIAccessKey(Base):
             True if the key is expired, False otherwise.
 
         """
-        return self.expires_at is not None and datetime.now(tz=timezone.utc) > self.expires_at
+        return self.expires_at is not None and datetime.now(tz=UTC) > self.expires_at
 
 
 class Views(Base):
@@ -53,7 +53,7 @@ class Views(Base):
     name = Column(Text)
 
     @staticmethod
-    def get_view_by_name(session: Session, name: str) -> Optional[type["Views"]]:
+    def get_view_by_name(session: Session, name: str) -> type["Views"] | None:
         """
         Get view by name.
 
@@ -81,7 +81,7 @@ class Roles(Base):
     view_id = Column(Text, ForeignKey("views.view_id"))
 
     @staticmethod
-    def get_role_by_name(session: Session, name: str) -> Optional[type["Roles"]]:
+    def get_role_by_name(session: Session, name: str) -> type["Roles"] | None:
         """
         Get role by name.
 
@@ -135,7 +135,7 @@ class UserRole(Base):
     role_id = Column(Text, ForeignKey("roles.role_id"), primary_key=True)
 
 
-def add_user_role(emails: Union[str, list[str]], role_name: str, session: Session):
+def add_user_role(emails: str | list[str], role_name: str, session: Session):
     """
     Add user role to the database.
 

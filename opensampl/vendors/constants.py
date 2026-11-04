@@ -70,6 +70,14 @@ class VENDORS:
         metadata_orm="MicrochipTP4100Metadata",
     )
 
+    NTP = VendorType(
+        name="NTP",
+        parser_class="NtpProbe",
+        parser_module="ntp",
+        metadata_table="ntp_metadata",
+        metadata_orm="NtpMetadata",
+    )
+
     # --- CUSTOM VENDORS ---      !! Do not remove line, used as reference when inserting vendor
 
     # --- VENDOR FUNCTIONS ---
