@@ -59,16 +59,10 @@ loglevel = os.getenv("BACKEND_LOG_LEVEL", "INFO")
 app = FastAPI()
 
 
-REQUEST_COUNT = Counter(
-    "http_requests_total",
-    "Total number of HTTP requests",
-    ["method", "endpoint", "http_status"]
-)
+REQUEST_COUNT = Counter("http_requests_total", "Total number of HTTP requests", ["method", "endpoint", "http_status"])
 
 REQUEST_LATENCY = Histogram(
-    "http_request_duration_seconds",
-    "Duration of HTTP requests in seconds",
-    ["method", "endpoint"]
+    "http_request_duration_seconds", "Duration of HTTP requests in seconds", ["method", "endpoint"]
 )
 
 EXCLUDED_PATHS = {"/metrics", "/healthcheck", "/healthcheck_database", "/healthcheck_metadata"}
@@ -79,6 +73,7 @@ USE_API_KEY = os.getenv("USE_API_KEY", "false").lower() == "true"
 API_KEY_NAME = "access-key"
 
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
 
 def get_keys():
     """Return the valid API keys from the environment, falling back to the database."""
@@ -91,12 +86,7 @@ def get_keys():
         session_factory = sessionmaker(bind=engine)
         with session_factory() as session:
             now = datetime.now(tz=UTC).replace(tzinfo=None)
-            stmt = select(APIAccessKey.key).where(
-                or_(
-                    APIAccessKey.expires_at.is_(None),
-                    APIAccessKey.expires_at > now
-                )
-            )
+            stmt = select(APIAccessKey.key).where(or_(APIAccessKey.expires_at.is_(None), APIAccessKey.expires_at > now))
             result = session.execute(stmt)
             keys = [row[0] for row in result.all()]
             logger.debug("api access keys loaded from db")
@@ -105,6 +95,7 @@ def get_keys():
         logger.debug(f"exception attempting to load api access keys from db: {e}")
         return []
 
+
 def validate_api_key(api_key: str = Security(api_key_header)):
     """Validate the request API key when API key security is enabled."""
     if not USE_API_KEY:
@@ -112,6 +103,7 @@ def validate_api_key(api_key: str = Security(api_key_header)):
     if api_key not in get_keys():
         raise HTTPException(status_code=403, detail="Invalid or missing API key")
     return api_key
+
 
 def get_db():
     """Yield a database session and close it afterwards."""
@@ -124,6 +116,7 @@ def get_db():
         if session is not None:
             session.close()
 
+
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next: Callable) -> Response:
     """Middleware to track request metrics."""
@@ -133,16 +126,9 @@ async def metrics_middleware(request: Request, call_next: Callable) -> Response:
     response: Response = await call_next(request)
     duration = time.time() - start_time
 
-    REQUEST_COUNT.labels(
-        method=request.method,
-        endpoint=request.url.path,
-        http_status=response.status_code
-    ).inc()
+    REQUEST_COUNT.labels(method=request.method, endpoint=request.url.path, http_status=response.status_code).inc()
 
-    REQUEST_LATENCY.labels(
-        method=request.method,
-        endpoint=request.url.path
-    ).observe(duration)
+    REQUEST_LATENCY.labels(method=request.method, endpoint=request.url.path).observe(duration)
 
     return response
 
@@ -274,10 +260,12 @@ def load_probe_metadata(
     logger.debug(f"Received payload: {payload.model_dump()}")
 
     try:
-        load_data.load_probe_metadata(vendor=payload.vendor, probe_key=payload.probe_key, data=payload.data,
-                                      session=session)
+        load_data.load_probe_metadata(
+            vendor=payload.vendor, probe_key=payload.probe_key, data=payload.data, session=session
+        )
         logger.debug(
-            f"Successfully wrote to {ProbeMetadata.__tablename__} and {payload.vendor.metadata_table}: {payload.data}")
+            f"Successfully wrote to {ProbeMetadata.__tablename__} and {payload.vendor.metadata_table}: {payload.data}"
+        )
         return JSONResponse(content={"message": f"Succeeded loaded metadata for {payload.probe_key}"}, status_code=200)
     except IntegrityError as e:
         session.rollback()
@@ -340,6 +328,7 @@ def healthcheck():
     """Report that the service is up."""
     return {"status": "OK"}
 
+
 @app.get("/healthcheck_database")
 def healthcheck_db():
     """Report whether the database is reachable."""
@@ -358,7 +347,8 @@ def healthcheck_metadata():
     try:
         with engine.connect() as connection:
             result = connection.execute(
-                text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'castdb';"))
+                text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'castdb';")
+            )
             schema_exists = result.fetchone() is not None
         if schema_exists:
             return {"status": "OK"}

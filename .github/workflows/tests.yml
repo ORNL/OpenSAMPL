@@ -32,14 +32,14 @@ jobs:
         run: |
           sudo install -d /usr/share/postgresql-common/pgdg
 
-          sudo curl -fsSL \
+          sudo curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 --connect-timeout 20 \
             https://www.postgresql.org/media/keys/ACCC4CF8.asc \
              -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
           codename="$(. /etc/os-release && echo "$VERSION_CODENAME")"
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${codename}-pgdg main" \
               | sudo tee /etc/apt/sources.list.d/pgdg.list
-          sudo apt-get update
-          sudo apt-get install -y postgresql-16 postgresql-client-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts
+          sudo apt-get -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::Retries=5 install -y postgresql-16 postgresql-client-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts
           echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
 
       - name: Install the project
