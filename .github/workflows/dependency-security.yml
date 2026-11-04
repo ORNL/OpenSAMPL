@@ -3,7 +3,15 @@ name: Dependency security
 on:
   push:
     branches: [main]
+    paths:
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/dependency-security.yml"
   pull_request:
+    paths:
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/dependency-security.yml"
   schedule:
     - cron: "17 9 * * 1"
   workflow_dispatch:

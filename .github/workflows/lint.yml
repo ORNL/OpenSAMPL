@@ -4,7 +4,23 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "opensampl/**"
+      - "docs/**"
+      - "scripts/**"
+      - "mkdocs.yaml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/lint.yml"
   pull_request:
+    paths:
+      - "opensampl/**"
+      - "docs/**"
+      - "scripts/**"
+      - "mkdocs.yaml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/lint.yml"
   workflow_dispatch:
 
 permissions:

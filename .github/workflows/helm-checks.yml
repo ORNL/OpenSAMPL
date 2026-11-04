@@ -4,6 +4,13 @@ name: Helm chart checks
 # Nothing is published from this workflow; see publish-artifacts.yml for that.
 on:
   pull_request:
+    paths:
+      - "helm/**"
+      - "opensampl/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/helm-checks.yml"
+      - ".github/workflows/build-images.yml"
   workflow_dispatch:
 
 permissions:
