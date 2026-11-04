@@ -1,43 +1,55 @@
+"""FastAPI backend exposing OpenSAMPL database loading and health endpoints."""
+
 import io
 import json
 import os
 import sys
 import time
-from typing import Any, Dict, Callable, Optional
-from datetime import datetime, timedelta
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
 import pandas as pd
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Request, Response, Security, Depends
-from fastapi.security.api_key import APIKeyHeader
+import psycopg2
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, Security, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.security.api_key import APIKeyHeader
 from loguru import logger
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from pydantic import BaseModel
-from sqlalchemy import create_engine, text, select, or_, and_
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from sqlalchemy.orm import sessionmaker, Session
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-from opensampl.db.access_orm import APIAccessKey
+from sqlalchemy import create_engine, or_, select, text
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import Session, sessionmaker
+
 from opensampl import load_data
+from opensampl.db.access_orm import APIAccessKey
 from opensampl.db.orm import ProbeMetadata
-from opensampl.vendors.constants import VendorType, ProbeKey
 from opensampl.metrics import METRICS, MetricType
 from opensampl.references import REF_TYPES, CompoundReferenceType, ReferenceType
-import psycopg2
+from opensampl.vendors.constants import ProbeKey, VendorType
+
 
 class TimeDataPoint(BaseModel):
+    """A single time/value sample."""
+
     time: str
     value: float
 
 
 class WriteTablePayload(BaseModel):
+    """Payload for writing a row to a table."""
+
     table: str
-    data: Dict[str, Any]
-    if_exists: load_data.conflict_actions = 'update'
+    data: dict[str, Any]
+    if_exists: load_data.conflict_actions = "update"
 
 
 class ProbeMetadataPayload(BaseModel):
+    """Payload for loading probe metadata."""
+
     vendor: VendorType
     probe_key: ProbeKey
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
 
 DATABASE_URI = os.getenv("DATABASE_URL")
@@ -69,18 +81,19 @@ API_KEY_NAME = "access-key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
 def get_keys():
-    env_keys = os.getenv('API_KEYS', '').strip()
-    keys = [k.strip() for k in env_keys.split(',') if k.strip()]
+    """Return the valid API keys from the environment, falling back to the database."""
+    env_keys = os.getenv("API_KEYS", "").strip()
+    keys = [k.strip() for k in env_keys.split(",") if k.strip()]
     if keys:
         logger.debug("api access keys loaded from env")
         return keys
     try:
-        Session = sessionmaker(bind=engine)
-        with Session() as session:
-            now = datetime.utcnow()
+        session_factory = sessionmaker(bind=engine)
+        with session_factory() as session:
+            now = datetime.now(tz=UTC).replace(tzinfo=None)
             stmt = select(APIAccessKey.key).where(
                 or_(
-                    APIAccessKey.expires_at == None,
+                    APIAccessKey.expires_at.is_(None),
                     APIAccessKey.expires_at > now
                 )
             )
@@ -93,19 +106,23 @@ def get_keys():
         return []
 
 def validate_api_key(api_key: str = Security(api_key_header)):
+    """Validate the request API key when API key security is enabled."""
     if not USE_API_KEY:
-        return  # Security is disabled
+        return None  # Security is disabled
     if api_key not in get_keys():
         raise HTTPException(status_code=403, detail="Invalid or missing API key")
     return api_key
 
 def get_db():
-    Session = sessionmaker(bind=engine)
+    """Yield a database session and close it afterwards."""
+    session_factory = sessionmaker(bind=engine)
+    session = None
     try:
-        session = Session()
+        session = session_factory()
         yield session
     finally:
-        session.close()
+        if session is not None:
+            session.close()
 
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next: Callable) -> Response:
@@ -133,14 +150,13 @@ async def metrics_middleware(request: Request, call_next: Callable) -> Response:
 # add route to docs from / to /docs
 @app.get("/", include_in_schema=False)
 async def docs_redirect():
-    return RedirectResponse(url='/docs')
+    """Redirect the root path to the API docs."""
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/setloglevel")
 def set_log_level(newloglevel: str, api_key: str = Depends(validate_api_key)):
-    """
-    change visible log level in backend container
-    """
+    """Change visible log level in backend container"""
     newloglevel = newloglevel.upper()
     logger.configure(handlers=[{"sink": sys.stderr, "level": newloglevel}])
     return {"loglevel": newloglevel}
@@ -148,120 +164,120 @@ def set_log_level(newloglevel: str, api_key: str = Depends(validate_api_key)):
 
 @app.get("/checkloglevel")
 def check_log_level(api_key: str = Depends(validate_api_key)):
-    """
-    This is to check which log levels are visible in backend container
-    """
-    logger.debug('Debug test')
-    logger.info('Info test')
-    logger.warning('Warning test')
-    logger.error('Error test')
-    current_level = list(logger._core.handlers.values())[0]["level"].name
+    """Report which log level is currently visible in the backend container."""
+    logger.debug("Debug test")
+    logger.info("Info test")
+    logger.warning("Warning test")
+    logger.error("Error test")
+    current_level = next(iter(logger._core.handlers.values()))["level"].name  # noqa: SLF001
     return {"loglevel": current_level}
 
 
 @app.post("/write_to_table")
-def write_to_table(payload: WriteTablePayload, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)):
+def write_to_table(
+    payload: WriteTablePayload, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)
+):
+    """Write a row of data to the given table."""
     try:
         load_data.write_to_table(table=payload.table, data=payload.data, if_exists=payload.if_exists, session=session)
-        logger.debug(f'Successfully wrote to {payload.table} using: {payload.data}')
+        logger.debug(f"Successfully wrote to {payload.table} using: {payload.data}")
         return JSONResponse(content={"message": f"Succeeded loading data into {payload.table}"}, status_code=200)
     except IntegrityError as e:
         if isinstance(e.orig, psycopg2.errors.UniqueViolation):
             return JSONResponse(content={"message": f"Unique violation error: {e}"}, status_code=409)
         return JSONResponse(content={"message": f"Integrity error: {e}"}, status_code=500)
     except SQLAlchemyError as e:
-        logger.error(f'SQLAlchemy error: {e}')
+        logger.error(f"SQLAlchemy error: {e}")
         return JSONResponse(content={"message": f"Database error: {e}"}, status_code=500)
     except json.JSONDecodeError as e:
-        logger.error(f'JSON decode error: {e}')
+        logger.error(f"JSON decode error: {e}")
         return JSONResponse(content={"message": f"Invalid JSON data: {e}"}, status_code=400)
     except Exception as e:
-        logger.error(f'Unexpected error: {e}')
+        logger.error(f"Unexpected error: {e}")
         return JSONResponse(content={"message": f"Failed to load JSON into database: {e}"}, status_code=500)
 
 
+def _parse_metric_type(metric_type_str: str | None) -> MetricType:
+    if metric_type_str is None:
+        return METRICS.UNKNOWN
+    return MetricType(**json.loads(metric_type_str))
+
+
+def _parse_reference_type(reference_type_str: str | None) -> ReferenceType | CompoundReferenceType:
+    if reference_type_str is None:
+        return REF_TYPES.UNKNOWN
+    reference_type_dict = json.loads(reference_type_str)
+    if "reference_table" in reference_type_dict:
+        return CompoundReferenceType(**reference_type_dict)
+    return ReferenceType(**reference_type_dict)
+
+
+def _discard_session(session: Session | None) -> None:
+    if session:
+        session.rollback()
+        session.close()
+
+
 @app.post("/load_time_data")
-async def load_time_data(probe_key_str: str = Form(...),
-                        metric_type_str: Optional[str] = Form(None),
-                        reference_type_str: Optional[str] = Form(None),
-                        compound_key_str: Optional[str] = Form(None),
-                         file: UploadFile = File(...),
-                         api_key: str = Depends(validate_api_key),
-                         session: Session = Depends(get_db)):
+async def load_time_data(
+    probe_key_str: str = Form(...),
+    metric_type_str: str | None = Form(None),
+    reference_type_str: str | None = Form(None),
+    compound_key_str: str | None = Form(None),
+    file: UploadFile = File(...),
+    api_key: str = Depends(validate_api_key),
+    session: Session = Depends(get_db),
+):
+    """Load a CSV of time series data for a probe."""
     try:
-
         probe_key = ProbeKey(**json.loads(probe_key_str))
-
-        if metric_type_str is not None:
-            metric_type_dict = json.loads(metric_type_str)
-            metric_type = MetricType(**metric_type_dict)
-        else:
-            metric_type = METRICS.UNKNOWN
-
-        if reference_type_str is not None:
-            reference_type_dict = json.loads(reference_type_str)
-            if 'reference_table' in reference_type_dict:
-                reference_type = CompoundReferenceType(**reference_type_dict)
-            else:
-                reference_type = ReferenceType(**reference_type_dict)
-        else:
-            reference_type = REF_TYPES.UNKNOWN
-
+        metric_type = _parse_metric_type(metric_type_str)
+        reference_type = _parse_reference_type(reference_type_str)
         compound_key = None if compound_key_str is None else json.loads(compound_key_str)
 
         content = await file.read()
         df = pd.read_csv(io.BytesIO(content))
         logger.info(df.head())
         # Convert time strings back to datetime
-        df['time'] = pd.to_datetime(df['time'])
+        df["time"] = pd.to_datetime(df["time"])
 
-        # Convert value strings back to float64
-        # df['value'] = df['value'].astype('float64')
-
-        # Use the same load_time_data function as before
         load_data.load_time_data(
             probe_key=probe_key,
             metric_type=metric_type,
             reference_type=reference_type,
             compound_key=compound_key,
             data=df,
-            session=session
+            session=session,
         )
 
-        return JSONResponse(
-            content={"message": f"Successfully loaded {len(df)} data points"},
-            status_code=200
-        )
+        return JSONResponse(content={"message": f"Successfully loaded {len(df)} data points"}, status_code=200)
     except IntegrityError as e:
-        if session:
-            session.rollback()
-            session.close()
+        _discard_session(session)
         if isinstance(e.orig, psycopg2.errors.UniqueViolation):
             return JSONResponse(content={"message": f"Unique violation error: {e}"}, status_code=409)
         return JSONResponse(content={"message": f"Integrity error: {e}"}, status_code=500)
     except SQLAlchemyError as e:
-        logger.error(f'Database error: {e}')
-        if session:
-            session.rollback()
-            session.close()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        logger.error(f"Database error: {e}")
+        _discard_session(session)
+        raise HTTPException(status_code=500, detail=f"Database error: {e!s}") from e
     except Exception as e:
-        logger.error(f'Unexpected error: {e}')
-        if session:
-            session.rollback()
-            session.close()
-        raise HTTPException(status_code=500, detail=f"Error processing time series data: {str(e)}")
+        logger.error(f"Unexpected error: {e}")
+        _discard_session(session)
+        raise HTTPException(status_code=500, detail=f"Error processing time series data: {e!s}") from e
 
 
 @app.post("/load_probe_metadata")
-def load_probe_metadata(payload: ProbeMetadataPayload, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)):
+def load_probe_metadata(
+    payload: ProbeMetadataPayload, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)
+):
+    """Load metadata for a probe."""
     logger.debug(f"Received payload: {payload.model_dump()}")
 
     try:
         load_data.load_probe_metadata(vendor=payload.vendor, probe_key=payload.probe_key, data=payload.data,
                                       session=session)
         logger.debug(
-            f'Successfully wrote to {ProbeMetadata.__tablename__} and {payload.vendor.metadata_table}: {payload.data}')
+            f"Successfully wrote to {ProbeMetadata.__tablename__} and {payload.vendor.metadata_table}: {payload.data}")
         return JSONResponse(content={"message": f"Succeeded loaded metadata for {payload.probe_key}"}, status_code=200)
     except IntegrityError as e:
         session.rollback()
@@ -269,69 +285,76 @@ def load_probe_metadata(payload: ProbeMetadataPayload, api_key: str = Depends(va
             return JSONResponse(content={"message": f"Unique violation error: {e}"}, status_code=409)
         return JSONResponse(content={"message": f"Integrity error: {e}"}, status_code=500)
     except SQLAlchemyError as e:
-        logger.error(f'SQLAlchemy error: {e}')
+        logger.error(f"SQLAlchemy error: {e}")
         return JSONResponse(content={"message": f"Database error: {e}"}, status_code=500)
     except json.JSONDecodeError as e:
-        logger.error(f'JSON decode error: {e}')
+        logger.error(f"JSON decode error: {e}")
         return JSONResponse(content={"message": f"Invalid JSON data: {e}"}, status_code=400)
     except Exception as e:
-        logger.exception(f'Unexpected error: {e}')
+        logger.exception(f"Unexpected error: {e}")
         return JSONResponse(content={"message": f"Failed to load JSON into database: {e}"}, status_code=500)
 
 
 @app.get("/create_new_tables")
-def create_new_tables(create_schema: bool = True, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)):
+def create_new_tables(
+    create_schema: bool = True, api_key: str = Depends(validate_api_key), session: Session = Depends(get_db)
+):
+    """Create any tables that do not yet exist."""
     try:
         load_data.create_new_tables(create_schema=create_schema, session=session)
-        return JSONResponse(content={"message": f"Succeeded in creating any new tables"}, status_code=200)
+        return JSONResponse(content={"message": "Succeeded in creating any new tables"}, status_code=200)
     except SQLAlchemyError as e:
-        logger.error(f'SQLAlchemy error: {e}')
+        logger.error(f"SQLAlchemy error: {e}")
         return JSONResponse(content={"message": f"Database error: {e}"}, status_code=500)
     except json.JSONDecodeError as e:
-        logger.error(f'JSON decode error: {e}')
+        logger.error(f"JSON decode error: {e}")
         return JSONResponse(content={"message": f"Invalid JSON data: {e}"}, status_code=400)
     except Exception as e:
-        logger.error(f'Unexpected error: {e}')
+        logger.error(f"Unexpected error: {e}")
         return JSONResponse(content={"message": f"Failed to load JSON into database: {e}"}, status_code=500)
 
 
 @app.get("/gen_api_key")
-def generate_api_key(expire_after: Optional[int] = None, session: Session = Depends(get_db)):
+def generate_api_key(expire_after: int | None = None, session: Session = Depends(get_db)):
+    """Generate a new API access key, optionally expiring after the given number of days."""
     try:
-
         new_key = APIAccessKey()
         new_key.generate_key()
         if expire_after:
-            new_key.expires_at = datetime.utcnow() + timedelta(days=expire_after)
+            new_key.expires_at = datetime.now(tz=UTC).replace(tzinfo=None) + timedelta(days=expire_after)
 
         session.add(new_key)
 
         session.commit()
-        return JSONResponse(content={"message": f"Succeeded in creating new access key"}, status_code=200)
+        return JSONResponse(content={"message": "Succeeded in creating new access key"}, status_code=200)
     except SQLAlchemyError as e:
-        logger.error(f'SQLAlchemy error: {e}')
+        logger.error(f"SQLAlchemy error: {e}")
         return JSONResponse(content={"message": f"Database error: {e}"}, status_code=500)
     except Exception as e:
-        logger.error(f'Unexpected error: {e}')
+        logger.error(f"Unexpected error: {e}")
         return JSONResponse(content={"message": f"Failed to create new access key: {e}"}, status_code=500)
 
 
 @app.get("/healthcheck")
 def healthcheck():
+    """Report that the service is up."""
     return {"status": "OK"}
 
 @app.get("/healthcheck_database")
 def healthcheck_db():
+    """Report whether the database is reachable."""
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=503, detail="Database connection error") from e
+    else:
         return {"status": "OK"}
-    except SQLAlchemyError:
-        raise HTTPException(status_code=503, detail="Database connection error")
 
 
 @app.get("/healthcheck_metadata")
 def healthcheck_metadata():
+    """Report whether the castdb schema exists."""
     try:
         with engine.connect() as connection:
             result = connection.execute(
@@ -339,15 +362,12 @@ def healthcheck_metadata():
             schema_exists = result.fetchone() is not None
         if schema_exists:
             return {"status": "OK"}
-        else:
-            raise HTTPException(status_code=500, detail="Schema 'castdb' does not exist")
+        raise HTTPException(status_code=500, detail="Schema 'castdb' does not exist")
     except SQLAlchemyError as e:
-        raise HTTPException(status_code=503, detail=f"Database connection error: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"Database connection error: {e!s}") from e
 
 
 @app.get("/metrics", include_in_schema=False)
 def metrics():
-    """
-    Expose Prometheus metrics.
-    """
+    """Expose Prometheus metrics."""
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
