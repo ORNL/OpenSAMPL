@@ -4,7 +4,7 @@ global:
 
 busybox:
   image:
-    repository: ghcr.io/ornl/opensampl-busybox
+    repository: busybox
     tag: "1.36.1"
 
 # PostgreSQL Database
