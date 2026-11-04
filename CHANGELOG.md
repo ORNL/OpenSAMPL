@@ -39,6 +39,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 
 -->
+## [1.2.7] = YYYY-MM-DD
+### Added
+- 🔥 Helm chart and OCI artifact workflow
+
+### Changed
+- ⚡ Updated GitHub Workflows
+
 ## [1.2.6] = 2026-10-26
 ### Security
 - 🔐 Remediated Dependabot alerts by raising python minor and patch groups
