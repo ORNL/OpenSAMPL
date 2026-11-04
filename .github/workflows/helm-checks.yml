@@ -1,0 +1,120 @@
+name: Helm chart checks
+
+# Runs on every pull request. Builds images without pushing, lints the chart and test-installs it.
+# Nothing is published from this workflow; see publish-artifacts.yml for that.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helm-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-images:
+    uses: ./.github/workflows/build-images.yml
+    with:
+      push: false
+
+  helm-validate:
+    name: Lint Helm chart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Helm lint
+        run: |
+          helm lint ./helm
+          helm lint ./helm -f ./helm/values-cluster-overrides.yaml
+
+      - name: Render Helm chart
+        run: |
+          helm template opensampl ./helm \
+            -f ./helm/values-cluster-overrides.yaml \
+            --namespace opensampl-test \
+            > "$RUNNER_TEMP/opensampl-rendered.yaml"
+
+      - name: Require chart version bump when chart changes
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin main --depth=1
+          if ! git diff --quiet origin/main -- helm; then
+            base="$(git show origin/main:helm/Chart.yaml | grep -m1 '^version:' | awk '{print $2}')"
+            head="$(grep -m1 '^version:' helm/Chart.yaml | awk '{print $2}')"
+            if [ "$base" = "$head" ]; then
+              echo "::error file=helm/Chart.yaml::helm/ changed but chart version is still $head; bump it so the push to GHCR does not collide."
+              exit 1
+            fi
+          fi
+
+  test-helm-chart:
+    name: Test Helm chart deployment
+    runs-on: ubuntu-latest
+    needs: build-images
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start minikube
+        uses: medyagh/setup-minikube@latest
+
+      - name: Download built images
+        uses: actions/download-artifact@v4
+        with:
+          pattern: image-*
+          path: ${{ runner.temp }}/images
+          merge-multiple: true
+
+      - name: Load images into minikube
+        run: |
+          for tar in "$RUNNER_TEMP"/images/*.tar; do
+            minikube image load "$tar"
+          done
+          minikube image ls
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install Helm chart
+        working-directory: helm/
+        run: |
+          helm install test-opensampl . \
+            --set global.imagePullPolicy=Never \
+            --set db.image.tag=pr-local \
+            --set backend.image.tag=pr-local \
+            --set grafana.image.tag=pr-local \
+            --set migrations.image.tag=pr-local \
+            --set migrations.enabled=true \
+            --set ingress.enabled=false \
+            --wait \
+            --wait-for-jobs \
+            --timeout 15m
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods
+          kubectl get services
+          kubectl get pvc
+          kubectl get jobs
+
+      - name: Show pod logs on failure
+        if: failure()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods
+          echo "=== Pod Descriptions ==="
+          kubectl describe pods
+          echo "=== Pod Logs ==="
+          for pod in $(kubectl get pods -o name); do
+            echo "Logs for $pod:"
+            kubectl logs "$pod" --all-containers=true || true
+          done

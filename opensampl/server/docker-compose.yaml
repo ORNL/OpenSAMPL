@@ -1,6 +1,8 @@
 services:
   db:
     image: savannah.ornl.gov/opensampl/db:latest
+    build:
+      context: ./db
     ports:
       - "5415:5432"
     volumes:

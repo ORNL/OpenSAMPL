@@ -4,8 +4,6 @@ Welcome to the OpenSAMPL API documentation.
 
 Browse the modules and packages below:
 
-- Backend
-    - [Main](backend/main.md)
 - [Cli](cli.md)
 - Collect
     - [Cli](collect/cli.md)

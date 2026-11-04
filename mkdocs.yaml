@@ -20,8 +20,6 @@ nav:
   - Random Data: guides/random-data-generation.md
 - API:
   - index: api/index.md
-  - backend:
-    - main: api/backend/main.md
   - cli: api/cli.md
   - collect:
     - cli: api/collect/cli.md
