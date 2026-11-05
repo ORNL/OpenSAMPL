@@ -1,54 +1,53 @@
 version: 2
 
+# Security-only configuration.
+#
+# `open-pull-requests-limit: 0` turns off routine version-update PRs for an ecosystem while
+# Dependabot *security* updates (PRs for dependencies with known advisories/CVEs) keep working.
+# The `schedule` block is still required by the schema, but it only affects version updates.
+# Prerequisite: "Dependabot security updates" must be enabled in the repository's
+# Settings > Code security.
+#
+# The `security-updates` groups below batch advisory fixes for an ecosystem into a single PR.
+
 updates:
   - package-ecosystem: uv
     directory: /
     target-branch: bugfix/dependabot
+    open-pull-requests-limit: 0
     schedule:
       interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
     groups:
-      python-minor-and-patch:
+      python-security:
+        applies-to: security-updates
         patterns:
           - "*"
-        update-types:
-          - minor
-          - patch
 
   - package-ecosystem: github-actions
     directory: /
     target-branch: bugfix/dependabot
+    open-pull-requests-limit: 0
     schedule:
       interval: weekly
-      day: monday
-      time: "09:15"
-      timezone: America/New_York
     groups:
-      actions-minor-and-patch:
+      actions-security:
+        applies-to: security-updates
         patterns:
           - "*"
-        update-types:
-          - minor
-          - patch
 
   - package-ecosystem: docker
     directories:
       - /
       - /opensampl/server/backend
+      - /opensampl/server/db
       - /opensampl/server/grafana
       - /opensampl/server/migrations
     target-branch: bugfix/dependabot
+    open-pull-requests-limit: 0
     schedule:
       interval: weekly
-      day: monday
-      time: "09:30"
-      timezone: America/New_York
     groups:
-      container-minor-and-patch:
+      container-security:
+        applies-to: security-updates
         patterns:
           - "*"
-        update-types:
-          - minor
-          - patch

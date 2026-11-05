@@ -1,0 +1,44 @@
+# Common VCS directories
+.git/
+.gitignore
+.github/
+
+# Mac / Windows system files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.bak
+*.tmp
+*.orig
+*.log
+
+# Python / build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Tests and CI/CD
+tests/
+*.test
+*.coverage
+.coverage
+.env
+.vscode/
+.idea/
+
+# Docs and misc
+docs/
+*.md
+LICENSE
+CHANGELOG.md
+README-PACKAGE.md
+
+# Docker and Compose files
+docker-compose.yaml
+Dockerfile
+*.Dockerfile
