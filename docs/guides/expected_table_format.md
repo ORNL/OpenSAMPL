@@ -31,7 +31,7 @@ end_date: "2024-01-07T00:00:00"  # Test end timestamp
 ```
 
 ## castdb.probe_metadata
-Creation of minimal probe entries are automatically handled for new probes during `opensampl load [probe]`, which will
+Creation of minimal probe entries are automatically handled for new probes during `opensampl load <TYPE> <INPUT PATH>`, which will
 automatically detect probe_id, ip_address, vendor, and model. 
 
 To assign other fields, use `opensampl load table probe_metadata`
@@ -64,7 +64,7 @@ test_uuid: "full-uuid-from-database"
 openSAMPL will automatically resolve the uuid based on the name, and insert that into the probe_metadata table. 
 
 ## castdb.probe_data
-Time series data from probes, storing timestamps and measured values. Insertion handled by `opensampl load [Probe]`.
+Time series data from probes, storing timestamps and measured values. Insertion handled by `opensampl load <TYPE> <INPUT PATH>`.
 If you truly needed to enter a time value manually, you must provide:
 ```yaml
 time: "2024-01-01T00:00:00"  # Timestamp of measurement (UTC)

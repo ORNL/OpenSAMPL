@@ -5,7 +5,7 @@ WORKDIR /app
 COPY --from=uv /uv /uvx /bin/
 COPY . .
 RUN uv sync --locked --all-extras --all-groups
-RUN uv run python scripts/gen_api_docs.py && uv run mkdocs build --clean
+RUN uv run python scripts/gen_api_docs.py && uv run mkdocs build --clean --strict
 
 FROM nginxinc/nginx-unprivileged:alpine-perl
 COPY --from=builder /app/site/ /usr/share/nginx/html

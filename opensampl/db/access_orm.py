@@ -20,10 +20,10 @@ class APIAccessKey(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String(64), unique=True, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None), nullable=False)
     expires_at = Column(DateTime, nullable=True)
 
-    def generate_key(self):
+    def generate_key(self) -> str:
         """
         Generate the API access key.
 
@@ -34,7 +34,7 @@ class APIAccessKey(Base):
         self.key = secrets.token_urlsafe(48)
         return self.key
 
-    def is_expired(self):
+    def is_expired(self) -> bool:
         """
         Check if API access key is expired.
 
@@ -42,14 +42,19 @@ class APIAccessKey(Base):
             True if the key is expired, False otherwise.
 
         """
-        return self.expires_at is not None and datetime.now(tz=UTC) > self.expires_at
+        if self.expires_at is None:
+            return False
+        expiry = self.expires_at
+        if expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=UTC)
+        return datetime.now(tz=UTC) > expiry
 
 
 class Views(Base):
     """Table for recording and managing views."""
 
     __tablename__ = "views"
-    view_id = Column(Text, primary_key=True, default=str(uuid.uuid4()))
+    view_id = Column(Text, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(Text)
 
     @staticmethod
@@ -76,7 +81,7 @@ class Roles(Base):
     """Table for recording and managing roles."""
 
     __tablename__ = "roles"
-    role_id = Column(Text, primary_key=True, default=str(uuid.uuid4()))
+    role_id = Column(Text, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(Text)
     view_id = Column(Text, ForeignKey("views.view_id"))
 
@@ -104,7 +109,7 @@ class Users(Base):
     """Table for recording and managing users."""
 
     __tablename__ = "users"
-    user_id = Column(Text, primary_key=True, default=str(uuid.uuid4()))
+    user_id = Column(Text, primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(Text)
 
     @staticmethod
@@ -148,13 +153,13 @@ def add_user_role(emails: str | list[str], role_name: str, session: Session):
     if isinstance(emails, str):
         emails = [emails]
 
-    role = Roles.get_role_by_name(name=role_name)
+    role = Roles.get_role_by_name(session=session, name=role_name)
     if role is None:
         print(f"Role with name {role_name} not found")  # noqa: T201
         return
 
     for email in emails:
-        user = Users.get_user_by_email(email=email)
+        user = Users.get_user_by_email(session=session, email=email)
         if user is None:
             # Create a new user if not found
             user = Users(email=email)

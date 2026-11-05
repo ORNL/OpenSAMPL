@@ -87,23 +87,24 @@ api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
 def get_keys():
     """Get active API keys"""
-    env_keys = os.getenv("API_KEYS", "").strip()
+    env_keys = os.getenv("API_KEYS", os.getenv("API_KEY", "")).strip()
     keys = [k.strip() for k in env_keys.split(",") if k.strip()]
     if keys:
         logger.debug("api access keys loaded from env")
-        return keys
     try:
         Session = sessionmaker(bind=engine)  # noqa: N806
         with Session() as session:
             now = datetime.now(tz=UTC)
             stmt = select(APIAccessKey.key).where(or_(APIAccessKey.expires_at.is_(None), APIAccessKey.expires_at > now))
             result = session.execute(stmt)
-            keys = [row[0] for row in result.all()]
+            keys.extend(row[0] for row in result.all())
             logger.debug("api access keys loaded from db")
             return keys
     except Exception as e:
         logger.debug(f"exception attempting to load api access keys from db: {e}")
-        return []
+        if keys:
+            return keys
+        raise HTTPException(status_code=503, detail="API key lookup unavailable") from e
 
 
 def require_api_key(bootstrap: bool = False):
@@ -208,6 +209,7 @@ async def load_time_data(  # noqa: PLR0912, C901
     reference_type_str: str | None = Form(None),
     compound_key_str: str | None = Form(None),
     file: UploadFile = File(...),
+    strict: bool = Form(True),
     api_key: str = Depends(require_api_key()),
     session: Session = Depends(get_db),
 ):
@@ -244,6 +246,7 @@ async def load_time_data(  # noqa: PLR0912, C901
             metric_type=metric_type,
             reference_type=reference_type,
             compound_key=compound_key,
+            strict=strict,
             data=df,
             session=session,
         )
@@ -336,7 +339,9 @@ def generate_api_key(
         session.add(new_key)
 
         session.commit()
-        return JSONResponse(content={"message": "Succeeded in creating new access key"}, status_code=200)
+        return JSONResponse(
+            content={"message": "Succeeded in creating new access key", "key": new_key.key}, status_code=200
+        )
     except SQLAlchemyError as e:
         logger.error(f"SQLAlchemy error: {e}")
         return JSONResponse(content={"message": f"Database error: {e}"}, status_code=500)

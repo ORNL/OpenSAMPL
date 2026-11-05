@@ -38,9 +38,19 @@ spec:
                 secretKeyRef:
                   name: {{ include "opensampl.fullname" . }}-db-secret
                   key: POSTGRES_PASSWORD
-            # For testing in Mariner
+            - name: OPENSAMPL_DATASOURCE_HOST
+              value: {{ include "opensampl.fullname" . }}-db:{{ .Values.db.port }}
+            - name: POSTGRES_DB
+              value: {{ .Values.db.database | quote }}
+            {{- with .Values.grafana.rootUrl }}
             - name: GF_SERVER_ROOT_URL
-              value: "https://opensampl-test.ornl.gov/grafana"
+              value: {{ . | quote }}
+            {{- end }}
+            - name: OPENSAMPL_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "opensampl.fullname" . }}-db-secret
+                  key: GF_SECURITY_ADMIN_PASSWORD
             - name: GF_SERVER_SERVE_FROM_SUB_PATH
               value: {{ .Values.grafana.serveFromSubPath | default "false" | quote }}
           readinessProbe:
