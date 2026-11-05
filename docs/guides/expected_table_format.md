@@ -11,7 +11,7 @@ public: true  # Optional boolean for public visibility. Defaults to `NULL`
 ```
 
 If you want to update an existing location, you can either use the name or grab the uuid, both of these yamls would
-update public to false with `opensampl load table locations --if-exists replace` 
+update public to false with `opensampl load table locations update.yaml --if-exists replace`
 ```yaml
 uuid: "entire-uuid-string"  
 public: false  
@@ -67,9 +67,9 @@ openSAMPL will automatically resolve the uuid based on the name, and insert that
 Time series data from probes, storing timestamps and measured values. Insertion handled by `opensampl load [Probe]`.
 If you truly needed to enter a time value manually, you must provide:
 ```yaml
-time: "2024-01-01T00:00:00"  # Timestamp of measurement, without time zone
+time: "2024-01-01T00:00:00"  # Timestamp of measurement (UTC)
 probe_uuid: "full-uuid-of-associated-probe"
-value: 1.234e-09  # Measured value
+value_float: 1.234e-09  # Numeric value; use value_jsonb for structured values
 ```
 
 ## castdb.adva_metadata
