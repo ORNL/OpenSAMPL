@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "opensampl.fullname" . }}-db
+  labels:
+    {{- include "opensampl.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgres
+      port: {{ .Values.db.port }}
+      targetPort: {{ .Values.db.port }}
+  selector:
+    app.kubernetes.io/name: {{ include "opensampl.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    role: db

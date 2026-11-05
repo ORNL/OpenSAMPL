@@ -1,0 +1,53 @@
+name: Publish images and Helm chart
+
+# Publishes container images and the Helm chart to GHCR. Only runs for main.
+# Pull request validation lives in helm-checks.yml.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: publish-artifacts
+  cancel-in-progress: false
+
+jobs:
+  build-images:
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-images.yml
+    with:
+      push: true
+
+  helm-package:
+    name: Package and push Helm chart
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Helm lint
+        run: |
+          helm lint ./helm
+          helm lint ./helm -f ./helm/values-cluster-overrides.yaml
+
+      - name: Package chart
+        run: helm package ./helm
+
+      - name: Push to GHCR
+        env:
+          CR_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          helm registry login ghcr.io -u "$GITHUB_ACTOR" -p "$CR_PAT"
+          helm push opensampl-*.tgz oci://ghcr.io/ornl/charts

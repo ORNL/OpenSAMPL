@@ -4,6 +4,8 @@ The `opensampl-server` CLI is a thin wrapper around the packaged Docker Compose 
 
 It is useful when you want a local database, backend API, migrations container, and Grafana instance without managing the compose arguments yourself.
 
+For cluster deployments, see [Deploying on Kubernetes with Helm](kubernetes-helm.md).
+
 ## Prerequisites
 
 - Docker with either `docker compose` or `docker-compose`

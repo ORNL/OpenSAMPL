@@ -126,6 +126,7 @@ include = [
     "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
     "opensampl/server/backend/*",
+    "opensampl/server/db/*",
     "opensampl/create/templates/*",
     "opensampl/**/*.py",
 ]
@@ -139,6 +140,7 @@ include = [
     "opensampl/server/migrations/*",
     "opensampl/server/grafana/*",
     "opensampl/server/backend/*",
+    "opensampl/server/db/*",
     "opensampl/create/templates/*",
     "opensampl/**/*.py",
 ]
