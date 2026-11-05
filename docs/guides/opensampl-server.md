@@ -138,3 +138,13 @@ opensampl-server ps
 opensampl load ADVA ./data
 opensampl-server down
 ```
+
+## Authentication and upgrades
+
+Set `USE_API_KEY=true` and comma-separated `API_KEYS` in the Docker environment file to enable backend authentication. The client uses a single `API_KEY`; `opensampl-server up` selects the first configured server key. The legacy server variable `API_KEY` is accepted when `API_KEYS` is absent.
+
+Environment keys and active database keys are both accepted. `/gen_api_key` retains its existing endpoint and message and returns the generated secret in the `key` field. Store that value securely. With authentication enabled, an empty key store permits initial bootstrap; a database lookup failure does not. If environment keys are available during an outage, they remain usable.
+
+Production Compose now mounts `grafana-data` at `/var/lib/grafana`. Before upgrading an existing container, export dashboards and configuration or copy its `/var/lib/grafana` contents while Grafana is stopped. A new volume does not automatically import the old container's files. Verify restored dashboards before removing the old container.
+
+Both Compose variants wait for the migration service to complete before starting the backend. Inspect migration logs if startup stops at this step.

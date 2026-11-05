@@ -5,7 +5,7 @@ This module provides the base ModemReader class and connection management
 for interfacing with modems via telnet.
 """
 
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from functools import wraps
 
@@ -20,7 +20,7 @@ except ImportError:
     sys.exit(1)
 
 
-def require_conn(method: Callable):
+def require_conn(method: Callable) -> Callable:
     """
     Ensure telnet connection is active before method execution.
 
@@ -77,7 +77,7 @@ class ModemReader:
         self.open: bool = False
 
     @asynccontextmanager
-    async def connect(self):
+    async def connect(self) -> AsyncIterator["ModemReader"]:
         """
         Async context manager for telnet connection.
 

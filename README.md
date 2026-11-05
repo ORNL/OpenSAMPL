@@ -39,7 +39,7 @@ Python tools for adding clock and timing data to a TimescaleDB database.
 
 ## Installation
 
-1. Ensure you have Python 3.10 or higher installed.
+1. Ensure you have Python 3.11–3.14 installed.
 2. Install the latest release:
 
 ```bash
@@ -77,7 +77,7 @@ Use `opensampl config show` to inspect the current resolved configuration.
 
 ## CLI
 
-The main CLI exposes `collect`, `config`, `create`, `init`, and `load`.
+The main CLI exposes `collect`, `config`, `create`, `init`, `load`, and `maintenance`.
 Use `opensampl --help` and `opensampl <command> --help` for current options.
 
 If you plan to use the NTP, Microchip TWST, or Microchip TP4100 collectors, install the optional collection dependencies:
@@ -88,7 +88,14 @@ pip install "opensampl[collect]"
 
 ### Load Probe Data
 
-Load data with the probe type name directly:
+Load a file or directory with an explicit probe type:
+
+```bash
+opensampl load <TYPE> <INPUT PATH> [OPTIONS]
+```
+
+Supported types include `ADVA`, `MicrochipTWST`, `MicrochipTP4100`, and `NTP`.
+For example, load ADVA files with:
 
 ```bash
 opensampl load ADVA path/to/file.txt.gz
@@ -195,7 +202,7 @@ end_date: "2024-01-07T00:00:00"  # Test end timestamp
 ```
 
 ## castdb.probe_metadata
-Contains information about timing probes, including their network location and associated metadata. Insertion handled by `opensampl load probe`.
+Contains information about timing probes, including their network location and associated metadata. Insertion is handled by `opensampl load <TYPE> <INPUT PATH>`.
 
 ```yaml
 probe_id: "1-1"  # Probe identifier
@@ -204,20 +211,20 @@ vendor: "ADVA"  # Vendor type
 model: "OSA 5422"  # Model number
 name: "GMC1"  # Human-readable name
 public: true  # Optional boolean for public visibility
-location_uiid: "123e4567-e89b-12d3-a456-426614174000"  # Optional reference to location
-test_uiid: "123e4567-e89b-12d3-a456-426614174001"  # Optional reference to test
+location_uuid: "123e4567-e89b-12d3-a456-426614174000"  # Optional reference to location
+test_uuid: "123e4567-e89b-12d3-a456-426614174001"  # Optional reference to test
 ```
 
 ## castdb.probe_data
-Time series data from probes, storing timestamps and measured values. Insertion handled by `opensampl load probe`.
+Time series data from probes, storing timestamps and measured values. Insertion is handled by `opensampl load <TYPE> <INPUT PATH>`.
 ```yaml
 time: "2024-01-01T00:00:00"  # Timestamp of measurement
 probe_uuid: "123e4567-e89b-12d3-a456-426614174000"  # Reference to probe
-value: 1.234e-09  # Measured value
+value_float: 1.234e-09  # Numeric value; use value_jsonb for structured values
 ```
 
 ## castdb.adva_metadata
-ADVA-specific configuration and status information for probes. Insertion handled by `opensampl load probe`.
+ADVA-specific configuration and status information for probes. Insertion handled by `opensampl load ADVA`.
 
 ```yaml
 probe_uuid: "123e4567-e89b-12d3-a456-426614174000"  # Reference to probe
@@ -240,7 +247,7 @@ adva_mask_margin: 0  # Mask margin
 
 ## Notes
 
-- All tables use UUIDs as primary keys which are automatically generated.
+- Most metadata tables use generated UUID keys; probe_data uses a composite key of time, probe, reference, and metric.
 - Table relationships are maintained through UUID references
 - Geographic coordinates use WGS84 projection (SRID 4326) by default
 - Boolean fields (public) are optional and can be null

@@ -39,12 +39,54 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 
 -->
+
+
 ## [1.2.7] = YYYY-MM-DD
 ### Added
-- 🔥 Helm chart and OCI artifact workflow
+- 🔥 Helm chart for deploying TimescaleDB, the backend API, Grafana, and database migrations on Kubernetes, with configurable storage, credentials, and ingress.
+- 🔥 Reusable container image build workflow that builds the OpenSAMPL wheel once and installs it into backend and migration images.
+- 🔥 OCI artifact publishing workflow for versioned container images and Helm charts on GHCR.
+- 🔥 Helm pull request checks covering chart linting, template rendering, chart version bumps, and installation into minikube using locally built images.
+- 🔥 Deployment smoke checks for backend database health and Grafana datasource connectivity after Helm installation.
+- 🔥 Regression tests for access management, authentication failures, ingestion errors, backend option forwarding, and deployment configuration.
+- 🔥 Probe loader tests covering every supported probe type, file and directory dispatch, option defaults, case-insensitive type selection, and invalid CLI arguments.
+- 🔥 Kubernetes deployment and CI/CD guides covering installation, release workflows, configuration, and storage upgrade procedures.
 
 ### Changed
-- ⚡ Updated GitHub Workflows
+- ⚡ Document probe loading consistently as `opensampl load <PROBE_TYPE> <INPUT PATH> [OPTIONS]` for all supported probe types. Existing direct probe-type commands remain supported without deprecation warnings.
+- ⚡ Updated README, quickstart, CLI, automatic ingestion, and table-format examples to distinguish shared probe loading behavior from vendor-specific file formats.
+- ⚡ Corrected schema examples to use `location_uuid`, `test_uuid`, and `value_float`, and clarified composite keys in `probe_data`.
+- ⚡ Aligned installation instructions and tox environments with Python 3.11 through 3.14, and clarified that the Docker-backed server launcher is included in the base package.
+- ⚡ Simplified tox linting and formatting to use Ruff, and updated package build and publishing documentation to match the current workflows.
+- ⚡ Enabled strict documentation builds in linting, GitHub Pages publishing, and the documentation container build; completed return annotations needed by generated API documentation.
+- ⚡ Updated the Helm chart to version 0.2.4 and aligned its application version with OpenSAMPL 1.2.7.
+- ⚡ Made the Grafana datasource host and password configurable independently of the Grafana administrator password, and replaced the chart's hardcoded external Grafana URL with `grafana.rootUrl`.
+- ⚡ Production and development Compose stacks now wait for successful database migrations before starting the backend.
+- ⚡ Added persistent Grafana storage to production Compose and documented how to preserve existing container data when adopting the volume.
+
+### Fixed
+- 🩹 Prevented non-duplicate database integrity errors during time-series ingestion from being swallowed and allowing failed input files to be archived.
+- 🩹 Preserved the `strict` setting when time-series data is routed through the backend; requests that omit the field retain the default of `true`.
+- 🩹 Generated distinct UUIDs for each new access view, role, and user instead of reusing values calculated at module import.
+- 🩹 Passed the active database session into role and user lookups during role assignment.
+- 🩹 Handled both naive UTC and timezone-aware API key expiry timestamps without comparison errors, and replaced deprecated UTC timestamp generation.
+- 🩹 Returned the generated API key in the `/gen_api_key` response while retaining its existing message field.
+- 🩹 Corrected `opensampl-server up` API key configuration so it copies the first configured server key into the client settings when authentication is enabled.
+- 🩹 Corrected Helm backend environment ordering so database credentials are available when Kubernetes expands `DATABASE_URL`.
+- 🩹 Supplied Grafana with the release-specific database service address, database name, and datasource role password in Helm deployments.
+- 🩹 Made `db.persistence.enabled` control StatefulSet storage: persistent claim templates when enabled and ephemeral storage when disabled, preserving existing database claim names.
+- 🩹 Restored missing Kubernetes and CI/CD documentation pages referenced by navigation and guide links.
+- 🩹 Corrected the documented chunk-size default to match the loader, which sends all records at once when no chunk size is specified.
+- 🩹 Added Alembic's `path_separator` setting to avoid the legacy path-splitting deprecation warning.
+- 🩹 Allowed optional Compose chunk interval and retention variables to remain unset without interpolation warnings.
+
+### Removed
+- 🗡️ Removed the unused standalone Helm database PVC; persistent database storage continues to use StatefulSet-managed claims.
+
+### Security
+- 🔐 Accepted both configured environment keys and active database keys, so configuring environment keys no longer prevents generated database keys from authenticating.
+- 🔐 Prevented database lookup failures from being interpreted as an empty API key store eligible for unauthenticated bootstrap; unavailable lookups return HTTP 503 when no environment keys are available.
+- 🔐 Standardized server configuration on `API_KEYS` with a legacy `API_KEY` fallback, while retaining the client's single-key `API_KEY` setting.
 
 ## [1.2.6] = 2026-10-26
 ### Security
