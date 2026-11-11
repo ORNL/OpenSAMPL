@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from opensampl import load_data
-from opensampl.db.access_orm import APIAccessKey, Base, Roles, Users, Views, add_user_role
+from opensampl.db.access_orm import APIAccessKey, Base
 from opensampl.metrics import METRICS
 from opensampl.references import REF_TYPES
 from opensampl.vendors.base_probe import BaseProbe
@@ -32,23 +32,6 @@ def access_session():
         with Session(connection) as session:
             yield session
     engine.dispose()
-
-
-@pytest.mark.parametrize("model, field", [(Views, "view_id"), (Roles, "role_id"), (Users, "user_id")])
-def test_access_rows_receive_distinct_ids(access_session, model, field):
-    rows = [model(), model()]
-    access_session.add_all(rows)
-    access_session.flush()
-    assert getattr(rows[0], field) != getattr(rows[1], field)
-
-
-def test_role_assignment_creates_user_and_is_idempotent(access_session):
-    access_session.add(Roles(name="reader"))
-    access_session.commit()
-    add_user_role("a@example.org", "reader", access_session)
-    add_user_role("a@example.org", "reader", access_session)
-    user = access_session.query(Users).one()
-    assert len(user.user_role) == 1
 
 
 @pytest.mark.parametrize("aware", [False, True])

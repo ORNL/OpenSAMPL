@@ -67,8 +67,6 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - 🩹 Prevented non-duplicate database integrity errors during time-series ingestion from being swallowed and allowing failed input files to be archived.
 - 🩹 Preserved the `strict` setting when time-series data is routed through the backend; requests that omit the field retain the default of `true`.
-- 🩹 Generated distinct UUIDs for each new access view, role, and user instead of reusing values calculated at module import.
-- 🩹 Passed the active database session into role and user lookups during role assignment.
 - 🩹 Handled both naive UTC and timezone-aware API key expiry timestamps without comparison errors, and replaced deprecated UTC timestamp generation.
 - 🩹 Returned the generated API key in the `/gen_api_key` response while retaining its existing message field.
 - 🩹 Corrected `opensampl-server up` API key configuration so it copies the first configured server key into the client settings when authentication is enabled.
