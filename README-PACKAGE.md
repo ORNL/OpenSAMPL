@@ -1,13 +1,9 @@
-# Python Package Build and Publish.
+# Package builds and publishing
 
-### The current approach:
+Package metadata and the release version live in `pyproject.toml`. Update the version before publishing a new release.
 
-Reads and displays the current version
-Shows a warning to remind developers to manually update the version
-Only publishes on main branch, using whatever version is currently in pyproject.toml
-We still verifies the build works on non-main branches
+The `publish.yml` workflow builds distributions and publishes to PyPI on pushes to `main` or manual runs. The test workflow builds distributions on its supported Python matrix. Container images and the Helm chart are published separately by `publish-artifacts.yml`.
 
-#### Linting 
+Ruff linting and formatting are configured in `pyproject.toml` and enforced by `lint.yml`. Run `uv run ruff check .` and `uv run ruff format --check .` locally. The equivalent tox environment is `tox -e lint`.
 
-Linting configuration is found in the tox.ini
-What is enforced is controlled under the [flake8] and [pylint] sections.
+See [CI/CD and Releases](docs/maintainers/ci-cd.md) for validation and release steps.

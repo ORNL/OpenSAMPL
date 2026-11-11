@@ -4,10 +4,10 @@ This quickstart uses the packaged Docker-backed server stack.
 
 ## Start the stack
 
-Install the server extra first:
+Install the package first:
 
 ```bash
-pip install "opensampl[server]"
+pip install opensampl
 ```
 
 Then start the default stack:

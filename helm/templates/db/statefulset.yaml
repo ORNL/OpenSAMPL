@@ -50,9 +50,14 @@ spec:
               mountPath: /docker-entrypoint-initdb.d/020_create_grafana_user.sh
               subPath: 020_create_grafana_user.sh
       volumes:
+        {{- if not .Values.db.persistence.enabled }}
+        - name: db-storage
+          emptyDir: {}
+        {{- end }}
         - name: init-script
           configMap:
             name: {{ include "opensampl.fullname" . }}-db-init
+  {{- if .Values.db.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: db-storage
@@ -64,3 +69,4 @@ spec:
         {{- if .Values.db.persistence.storageClass }}
         storageClassName: {{ .Values.db.persistence.storageClass }}
         {{- end }}
+  {{- end }}

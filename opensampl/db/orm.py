@@ -24,7 +24,7 @@ class BaseHelpers:
     constraint handling, and reference resolution.
     """
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert to dictionary, including changes to make it serializable.
 
@@ -470,8 +470,8 @@ def resolve_uuid(mapper, connection, target: ProbeMetadata):  # noqa: ARG001,ANN
     Resolve the location_uuid and test_uuid entries for a probe before the object is inserted into the database.
 
     Args:
-        mapper: SQLAlchemy mapper object.
-        connection: Database connection.
+        mapper (sqlalchemy.orm.Mapper): SQLAlchemy mapper object.
+        connection (sqlalchemy.engine.Connection): Database connection.
         target: ProbeMetadata instance being inserted.
 
     """
@@ -489,8 +489,8 @@ def set_probe_data_defaults(mapper, connection, target: ProbeData):  # noqa: ARG
     when the values are not explicitly provided.
 
     Args:
-        mapper: SQLAlchemy mapper object.
-        connection: Database connection.
+        mapper (sqlalchemy.orm.Mapper): SQLAlchemy mapper object.
+        connection (sqlalchemy.engine.Connection): Database connection.
         target: ProbeData instance being inserted.
 
     """
@@ -515,7 +515,7 @@ def set_probe_data_defaults(mapper, connection, target: ProbeData):  # noqa: ARG
         # Continue without setting defaults rather than failing the insert
 
 
-def get_table_names():
+def get_table_names() -> list[str]:
     """
     Get all table names from the ORM in opensampl.db.orm.
 

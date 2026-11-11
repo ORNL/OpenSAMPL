@@ -11,6 +11,7 @@ from typing import Any
 from dotenv import set_key
 from loguru import logger
 from pydantic import Field, field_serializer
+from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -82,7 +83,7 @@ class BaseConfig(BaseSettings):
         kwargs["env_file"] = resolved_env_file
         super().__init__(**kwargs)
 
-    def get_by_name(self, name: str):
+    def get_by_name(self, name: str) -> FieldInfo | None:
         """
         Return the field info object for the given model.
 

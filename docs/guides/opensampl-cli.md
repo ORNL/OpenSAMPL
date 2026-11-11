@@ -20,14 +20,14 @@ prerequisites, tuning options, Compose usage, and recovery instructions.
 ## Load Data
 
 ### Probe Data
-Command: `opensampl load <PROBE TYPE> <INPUT PATH> [OPTIONS]`  
+Command: `opensampl load <PROBE TYPE> <INPUT PATH> [OPTIONS]`
 Arguments:
 
 * `PROBE TYPE`: The loader implementation to use for the input files
 * `INPUT PATH`: A single file or a directory of files
 
 Supported probe types currently exposed by the CLI include `ADVA`, `MicrochipTWST`,
-`MicrochipTP4100`, `NTP`, and `random`.
+`MicrochipTP4100`, and `NTP`. Random data generation remains under `opensampl load random`.
 
 Options:
 
@@ -36,7 +36,7 @@ Options:
 * `--no-archive` (`-n`): Don't archive processed files
 * `--archive-path` (`-a`): Override default archive directory
 * `--max-workers` (`-w`): Maximum number of worker threads (default: 4)
-* `--chunk-size` (`-c`): Number of time data entries per batch (default: 10000)
+* `--chunk-size` (`-c`): Number of time data entries per batch (default: unset; sends all records at once)
 
 #### ADVA
 The CLI supports ADVA probe data files with the following naming convention:
@@ -73,7 +73,7 @@ Load data directly into a database table from a file. The file format can be YAM
 
 The file should contain either one dictionary or a list of dictionaries.
 
-Command: `opensampl load table <TABLE NAME> <INPUT PATH> [OPTIONS]`  
+Command: `opensampl load table <TABLE NAME> <INPUT PATH> [OPTIONS]`
 Arguments:
 
 * `TABLE NAME`: Which table to write to
