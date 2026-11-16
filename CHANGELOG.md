@@ -86,6 +86,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - 🔐 Accepted both configured environment keys and active database keys, so configuring environment keys no longer prevents generated database keys from authenticating.
 - 🔐 Prevented database lookup failures from being interpreted as an empty API key store eligible for unauthenticated bootstrap; unavailable lookups return HTTP 503 when no environment keys are available.
 - 🔐 Standardized server configuration on `API_KEYS` with a legacy `API_KEY` fallback, while retaining the client's single-key `API_KEY` setting.
+- 🔐 Upgraded OpenTelementry Python API from 1.45.1 due to CVE
+
 
 ## [1.2.6] = 2026-10-26
 ### Security
