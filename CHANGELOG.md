@@ -80,6 +80,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Removed
 - 🗡️ Removed the unused standalone Helm database PVC; persistent database storage continues to use StatefulSet-managed claims.
+- 🗡️ Removed the dead code surrounding access tables that were never created from the ORM
 
 ### Security
 - 🔐 Accepted both configured environment keys and active database keys, so configuring environment keys no longer prevents generated database keys from authenticating.
