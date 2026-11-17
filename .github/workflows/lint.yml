@@ -54,6 +54,6 @@ jobs:
       - name: Build static content
         run: |
           uv run --no-sync python ./scripts/gen_api_docs.py
-          uv run --no-sync mkdocs build --clean
+          uv run --no-sync mkdocs build --clean --strict
           test -s site/search/search_index.json
           test -n "$(find site/assets/javascripts -type f -name '*.js' -print -quit)"

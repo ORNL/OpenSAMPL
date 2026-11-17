@@ -6,6 +6,8 @@ on:
   pull_request:
     paths:
       - "helm/**"
+      - "tests/test_deployment_config.py"
+      - "scripts/check_deployment.py"
       - "opensampl/**"
       - "pyproject.toml"
       - "uv.lock"
@@ -50,6 +52,14 @@ jobs:
             -f ./helm/values-cluster-overrides.yaml \
             --namespace opensampl-test \
             > "$RUNNER_TEMP/opensampl-rendered.yaml"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.13.5"
+
+      - name: Check rendered deployment behavior
+        run: uv run --locked pytest tests/test_deployment_config.py -q
 
       - name: Require chart version bump when chart changes
         if: github.event_name == 'pull_request'
@@ -112,6 +122,11 @@ jobs:
           kubectl get services
           kubectl get pvc
           kubectl get jobs
+
+      - name: Query backend and Grafana datasource
+        run: |
+          kubectl exec -i deployment/opensampl-test-opensampl-backend -- \
+            python - http://opensampl-test-opensampl-grafana:3000 < scripts/check_deployment.py
 
       - name: Show pod logs on failure
         if: failure()

@@ -107,6 +107,7 @@ def load_time_data(
                 "metric_type_str": json.dumps(metric_type.model_dump()),
                 "reference_type_str": json.dumps(reference_type.model_dump()),
                 "compound_key_str": json.dumps(compound_key),
+                "strict": str(strict).lower(),
             },
             "files": {"file": ("time_data.csv", csv_data, "text/csv")},
         }

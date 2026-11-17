@@ -60,7 +60,7 @@ class DataFactory:
         self.strict = strict
         self.fill_db_values()
 
-    def dump_factory(self):
+    def dump_factory(self) -> dict[str, Any]:
         """
         Dump a dict version of the data factory
 
@@ -80,7 +80,7 @@ class DataFactory:
             "compound_key": self.compound_key,
         }
 
-    def fill_db_values(self):
+    def fill_db_values(self) -> "DataFactory":
         """
         Fill in the probe, metric, reference, and compound reference from the database.
 

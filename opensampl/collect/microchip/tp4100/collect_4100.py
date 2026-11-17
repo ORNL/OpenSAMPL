@@ -95,7 +95,7 @@ class TP4100Collector:
             logger.exception(f"Error trying to login to {login_url}; {e}")
             raise
 
-    def get_monitored_channels(self):
+    def get_monitored_channels(self) -> set[str]:
         """
         Retrieve list of currently monitored channels from the device.
 
@@ -165,7 +165,7 @@ class TP4100Collector:
             elif self.method == "download_file":
                 self.download_files(request_tpl)
 
-    def get_filename(self, detail: str | None = None, extension: str = ".txt"):
+    def get_filename(self, detail: str | None = None, extension: str = ".txt") -> str:
         """
         Generate timestamped filename for probe connection
 

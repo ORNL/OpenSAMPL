@@ -34,6 +34,8 @@ services:
     env_file:
       - grafana/grafana.env
     environment:
+      - OPENSAMPL_DATASOURCE_HOST=db:5432
+      - OPENSAMPL_DATASOURCE_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
     volumes:
@@ -87,6 +89,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
 
 volumes:
   castdb:

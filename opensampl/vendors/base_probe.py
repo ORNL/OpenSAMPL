@@ -279,6 +279,8 @@ class BaseProbe(ABC):
                         f"{filepath} violates unique constraint for time data, implying already loaded. "
                         f"Will move to archive if archiving is enabled."
                     )
+                else:
+                    raise
 
             if not no_archive:
                 probe.archive_file(archive_dir)

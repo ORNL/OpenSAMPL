@@ -80,8 +80,10 @@ def up(ctx: click.Context, extra_args: list):
     config.BACKEND_URL = "http://localhost:8015"
     config.ROUTE_TO_BACKEND = True
     config.DATABASE_URL = config.get_db_url()
-    if str(config.docker_env_values.get("USE_API_KEY", "false")).lower == "true":
-        config.API_KEY = config.docker_env_values.get("API_KEYS", "").split(",")[0].strip()
+    if str(config.docker_env_values.get("USE_API_KEY", "false")).lower() == "true":
+        config.API_KEY = (
+            config.docker_env_values.get("API_KEYS", config.docker_env_values.get("API_KEY", "")).split(",")[0].strip()
+        )
 
     command = config.build_docker_compose_base()
     command.extend(["up", "-d"])

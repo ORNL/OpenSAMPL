@@ -43,6 +43,8 @@ grafana:
     tag: latest
   replicas: 1
   port: 3000
+  rootUrl: ""
+  serveFromSubPath: false
   adminUser: admin
   adminPassword: admin
   database:

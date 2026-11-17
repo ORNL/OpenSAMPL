@@ -58,7 +58,7 @@ class ModemStatusReader(ModemReader):
         finally:
             await self.queue.put(SENTINEL)
 
-    def parse_line(self, line: str):
+    def parse_line(self, line: str) -> tuple[str, str, str] | None:
         """
         Parse a line of modem output.
 

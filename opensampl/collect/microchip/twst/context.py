@@ -70,7 +70,7 @@ class ModemContextReader(ModemReader):
             return error, line
         return error, None
 
-    def bracket_to_dict(self, raw_text: str):
+    def bracket_to_dict(self, raw_text: str) -> dict[str, Any]:
         """
         Convert bracketed text format to dictionary.
 
@@ -91,7 +91,7 @@ class ModemContextReader(ModemReader):
         return yaml.safe_load(yaml_ready)
 
     @require_conn
-    async def send_cmd(self, cmd: str):
+    async def send_cmd(self, cmd: str) -> dict[str, Any]:
         """
         Send a command to the modem and return parsed response.
 
@@ -111,7 +111,7 @@ class ModemContextReader(ModemReader):
         return self.bracket_to_dict(response)
 
     @require_conn
-    async def read_until_exit(self):
+    async def read_until_exit(self) -> str:
         """
         Read response lines until completion or error.
 
@@ -173,7 +173,7 @@ class ModemContextReader(ModemReader):
 
                 self.result.remotes[chan_num] = {"rx_channel": chan_num, "sid": sid, "prn": prn, "lat": lat, "lon": lon}
 
-    def get_result_as_yaml_comment(self):
+    def get_result_as_yaml_comment(self) -> str:
         """
         Get results formatted as YAML comments.
 
@@ -184,7 +184,7 @@ class ModemContextReader(ModemReader):
         yaml_text = yaml.dump(self.result_dict(), sort_keys=False)
         return textwrap.indent(yaml_text, prefix="# ")
 
-    def result_dict(self):
+    def result_dict(self) -> dict[str, Any]:
         """
         Convert result SimpleNamespace to dictionary.
 
