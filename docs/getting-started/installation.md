@@ -2,7 +2,7 @@
 
 ## User install
 
-OpenSAMPL requires Python 3.10 or newer.
+OpenSAMPL requires Python 3.11–3.14.
 
 Install the published package with `pip`:
 
@@ -16,11 +16,7 @@ If you plan to use collection features such as remote NTP or Microchip collector
 pip install "opensampl[collect]"
 ```
 
-If you want the packaged Docker-backed server tooling as well:
-
-```bash
-pip install "opensampl[server]"
-```
+The base package includes the Docker-backed server launcher. Install Docker Engine and Docker Compose separately to use `opensampl-server`. The `backend` and `migrations` extras are needed only when running those Python services outside their containers.
 
 ## Developer Installation
 

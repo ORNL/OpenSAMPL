@@ -13,11 +13,15 @@ nav:
     - Expected Table Format: guides/expected_table_format.md
     - Create: guides/create_probe_type.md
   - Server: guides/opensampl-server.md
+  - Kubernetes (Helm): guides/kubernetes-helm.md
   - Value Backfill: guides/value-backfill.md
   - Collect: guides/collection.md
   - Automatic Ingest: guides/automatic_ingest.md
   - NTP Extension: guides/ntp-extension.md
   - Random Data: guides/random-data-generation.md
+- Maintainers:
+  - CI/CD and Releases: maintainers/ci-cd.md
+  - Security Remediation: maintainers/security-remediation.md
 - API:
   - index: api/index.md
   - cli: api/cli.md

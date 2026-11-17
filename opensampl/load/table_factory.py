@@ -1,5 +1,6 @@
 """Database table factory for handling CRUD operations with conflict resolution."""
 
+from collections.abc import Sequence
 from typing import Any, Literal
 
 from loguru import logger
@@ -34,7 +35,7 @@ class TableFactory:
         self.identifiable_constraint = identifiable_const
         self.unique_constraints = unique_constraints
 
-    def resolve_table(self):
+    def resolve_table(self) -> type[Base]:
         """
         Retrieve the SQLAlchemy model class for the given table name.
 
@@ -50,7 +51,7 @@ class TableFactory:
                 return mapper.class_
         raise ValueError(f"Table {self.name} not found in database schema")
 
-    def extract_unique_constraints(self):
+    def extract_unique_constraints(self) -> tuple[list[str], list[list[str]]]:
         """
         Identify unique constraints that can be used to match existing entries.
 
@@ -70,7 +71,7 @@ class TableFactory:
                     unique_constraints.append(cols)
         return identifiable_constraint, unique_constraints
 
-    def create_col_filter(self, data: dict[str, Any], cols: list[str]):
+    def create_col_filter(self, data: dict[str, Any], cols: list[str]) -> BooleanClauseList | None:
         """
         Create a SQLAlchemy filter expression for the given columns and data.
 
@@ -150,7 +151,7 @@ class TableFactory:
 
         return None
 
-    def find_by_field(self, column_name: str, data: Any):
+    def find_by_field(self, column_name: str, data: Any) -> Sequence[Base]:
         """
         Get the entries where column = data.
 
@@ -173,7 +174,7 @@ class TableFactory:
         result = self.session.execute(stmt)
         return result.scalars().all()
 
-    def write(self, data: dict[str, Any], if_exists: conflict_actions = "update"):
+    def write(self, data: dict[str, Any], if_exists: conflict_actions = "update") -> Base:
         """
         Write data to the table that the factory refers to.
 

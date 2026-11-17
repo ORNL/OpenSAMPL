@@ -19,7 +19,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 request_methods = Literal["POST", "GET", "PUT", "DELETE"]
 
 
-def route(route_endpoint: str, method: request_methods = "POST", send_file: bool = False):
+def route(route_endpoint: str, method: request_methods = "POST", send_file: bool = False) -> Callable:
     """
     Handle routing to backend or direct database operations based on environment configuration via decorator.
 

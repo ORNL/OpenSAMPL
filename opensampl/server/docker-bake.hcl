@@ -23,14 +23,39 @@ variable "PLATFORMS" {
   default = ["linux/amd64", "linux/arm64"]
 }
 
+// Directory containing a locally built opensampl wheel (`uv build --wheel`).
+// If it holds no wheel the images install OPENSAMPL_VERSION from PyPI.
+variable "WHEEL_DIR" {
+  default = "../../dist"
+}
+
 group "default" {
-  targets = ["backend", "migrations"]
+  targets = ["db", "backend", "grafana", "migrations"]
+}
+
+target "db" {
+  context   = "./db"
+  platforms = PLATFORMS
+  tags = [
+    "${REGISTRY}/db:latest",
+    "${REGISTRY}/db:${OPENSAMPL_VERSION}",
+  ]
+}
+
+target "grafana" {
+  context   = "./grafana"
+  platforms = PLATFORMS
+  tags = [
+    "${REGISTRY}/grafana:latest",
+    "${REGISTRY}/grafana:${OPENSAMPL_VERSION}",
+  ]
 }
 
 target "backend" {
   context    = "./backend"
   dockerfile = "Dockerfile"
   target     = "prod"
+  contexts   = { wheel = WHEEL_DIR }
   platforms  = PLATFORMS
   args = {
     OPENSAMPL_VERSION = OPENSAMPL_VERSION
@@ -44,6 +69,7 @@ target "backend" {
 target "migrations" {
   context    = "./migrations"
   dockerfile = "Dockerfile"
+  contexts   = { wheel = WHEEL_DIR }
   platforms  = PLATFORMS
   args = {
     OPENSAMPL_VERSION = OPENSAMPL_VERSION

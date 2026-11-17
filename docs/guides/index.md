@@ -3,6 +3,7 @@
 * [Configuration](configuration.md)
 * [Using the `opensampl` CLI](opensampl-cli.md)
 * [Using the `opensampl-server` CLI](opensampl-server.md)
+* [Deploying on Kubernetes with Helm](kubernetes-helm.md)
 * [Value Backfill](value-backfill.md)
 * [Collection Guide](collection.md)
 * [Random Data Guide](random-data-generation.md)
